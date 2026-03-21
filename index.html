@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHEQ-AI | CTRG</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0e1117;--sidebar:#161b26;--card:#1c2230;--card2:#222a3a;--border:#2a3450;--accent:#2979ff;--text:#e0e6f0;--muted:#8896b0;--green:#00c853;--yellow:#ffab00;--red:#ff1744;--orange:#ff6d00;--teal:#00bcd4;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:14px;}
+/* SIDEBAR */
+#sidebar{width:220px;min-width:220px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .3s;}
+#sidebar.collapsed{width:54px;min-width:54px;}
+.sidebar-logo{padding:16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;}
+.sidebar-logo .logo-icon{font-size:22px;flex-shrink:0;}
+.sidebar-logo .logo-text{font-size:15px;font-weight:700;color:var(--accent);}
+#sidebar.collapsed .logo-text{display:none;}
+.nav-list{list-style:none;padding:8px 0;flex:1;overflow-y:auto;overflow-x:hidden;}
+.nav-item{position:relative;}
+.nav-link{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;border-radius:6px;margin:1px 6px;white-space:nowrap;overflow:hidden;color:var(--muted);transition:background .15s,color .15s;}
+.nav-link:hover{background:var(--card2);color:var(--text);}
+.nav-link.active{background:rgba(41,121,255,.18);color:var(--accent);}
+.nav-icon{font-size:17px;flex-shrink:0;width:22px;text-align:center;}
+.nav-label{font-size:13px;font-weight:500;}
+#sidebar.collapsed .nav-label{display:none;}
+.sidebar-footer{border-top:1px solid var(--border);padding:8px 6px;}
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#topbar{height:54px;background:var(--sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;}
+#toggle-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
+#toggle-btn:hover{color:var(--text);}
+#topbar-title{font-size:16px;font-weight:600;flex:1;}
+#topbar-date{font-size:12px;color:var(--muted);}
+/* CONTENT */
+#content{flex:1;overflow-y:auto;padding:20px;}
+.page{display:none;}
+.page.active{display:block;}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;}
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--kpi-color,var(--accent));}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.kpi-value{font-size:32px;font-weight:700;color:var(--kpi-color,var(--accent));}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+/* CHARTS */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+.chart-wrap{position:relative;height:220px;}
+/* TABLES */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--card2);color:var(--muted);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);}
+tbody tr{border-bottom:1px solid var(--border);}
+tbody tr:hover{background:rgba(255,255,255,.03);}
+tbody td{padding:9px 12px;vertical-align:middle;}
+/* PILLS */
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px;}
+.pill-green{background:rgba(0,200,83,.15);color:var(--green);}
+.pill-red{background:rgba(255,23,68,.15);color:var(--red);}
+.pill-yellow{background:rgba(255,171,0,.15);color:var(--yellow);}
+.pill-orange{background:rgba(255,109,0,.15);color:var(--orange);}
+.pill-teal{background:rgba(0,188,212,.15);color:var(--teal);}
+.pill-blue{background:rgba(41,121,255,.15);color:var(--accent);}
+.pill-gray{background:rgba(136,150,176,.15);color:var(--muted);}
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.toolbar input,.toolbar select{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:13px;outline:none;}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--accent);}
+.toolbar input{min-width:200px;}
+.btn{padding:7px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:opacity .15s;}
+.btn:hover{opacity:.85;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+.btn-success{background:var(--green);color:#000;}
+.btn-yellow{background:var(--yellow);color:#000;}
+.btn-orange{background:var(--orange);color:#fff;}
+/* STATS ROW */
+.stats-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.stat-chip{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:88vh;overflow-y:auto;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
+.modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px;outline:none;font-family:inherit;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{min-height:72px;resize:vertical;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+/* PAGINATION */
+.pagination{display:flex;align-items:center;gap:6px;margin-top:12px;justify-content:flex-end;}
+.pagination button{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px;}
+.pagination button.active{background:var(--accent);border-color:var(--accent);}
+.pagination button:disabled{opacity:.4;cursor:not-allowed;}
+.page-info{font-size:12px;color:var(--muted);margin:0 6px;}
+/* ACTIVITY FEED */
+.activity-feed{display:flex;flex-direction:column;gap:8px;}
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:8px;border-radius:6px;background:var(--card2);}
+.activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.activity-text{font-size:13px;}
+.activity-time{font-size:11px;color:var(--muted);margin-top:2px;}
+/* RISK MATRIX */
+.matrix-wrap{margin-bottom:18px;}
+.matrix-grid{display:grid;grid-template-columns:80px repeat(5,1fr);gap:2px;font-size:11px;}
+.matrix-header{display:flex;align-items:center;justify-content:center;padding:6px;background:var(--card2);border-radius:4px;font-weight:600;color:var(--muted);font-size:10px;text-align:center;}
+.matrix-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;font-weight:700;font-size:13px;transition:transform .1s;border:2px solid transparent;}
+.matrix-cell:hover{transform:scale(1.08);}
+.matrix-cell.selected{border-color:#fff;}
+.matrix-cell.cell-green{background:rgba(0,200,83,.25);color:var(--green);}
+.matrix-cell.cell-yellow{background:rgba(255,171,0,.25);color:var(--yellow);}
+.matrix-cell.cell-orange{background:rgba(255,109,0,.25);color:var(--orange);}
+.matrix-cell.cell-red{background:rgba(255,23,68,.25);color:var(--red);}
+.matrix-row-label{display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;color:var(--muted);text-align:right;}
+/* CALENDAR */
+.cal-year-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.cal-tab{padding:6px 18px;border-radius:6px;cursor:pointer;background:var(--card2);border:1px solid var(--border);color:var(--muted);font-weight:600;font-size:13px;}
+.cal-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.cal-table-wrap{overflow-x:auto;}
+.cal-table{border-collapse:collapse;font-size:12px;}
+.cal-table th{padding:8px 10px;background:var(--card2);border:1px solid var(--border);color:var(--muted);font-size:11px;white-space:nowrap;}
+.cal-table td{padding:4px;border:1px solid var(--border);}
+.cal-table .act-label{padding:6px 10px;font-size:12px;white-space:nowrap;background:var(--card2);}
+.cal-cell-box{width:48px;height:28px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;margin:auto;transition:background .15s;}
+.cal-cell-box.blank{background:var(--card2);border:1px dashed var(--border);}
+.cal-cell-box.planned{background:rgba(41,121,255,.25);color:var(--accent);}
+.cal-cell-box.completed{background:rgba(0,200,83,.25);color:var(--green);}
+.cal-cell-box.missed{background:rgba(255,23,68,.25);color:var(--red);}
+.cal-legend{display:flex;gap:16px;margin-top:10px;}
+.cal-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+.cal-legend-dot{width:12px;height:12px;border-radius:3px;}
+/* CHAT */
+#chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.msg{display:flex;flex-direction:column;max-width:75%;}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.ai{align-self:flex-start;align-items:flex-start;}
+.msg-bubble{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
+.msg.user .msg-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px;}
+.msg.ai .msg-bubble{background:var(--card2);border:1px solid var(--border);border-bottom-left-radius:3px;}
+.msg-label{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.typing-dots{display:flex;gap:4px;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:12px;border-bottom-left-radius:3px;}
+.typing-dots span{width:7px;height:7px;background:var(--muted);border-radius:50%;animation:bounce .9s infinite;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-6px);}}
+.chat-input-area{border-top:1px solid var(--border);padding:12px;display:flex;gap:8px;align-items:flex-end;}
+.chat-input-area textarea{flex:1;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;resize:none;outline:none;font-family:inherit;max-height:120px;}
+.chat-input-area textarea:focus{border-color:var(--accent);}
+.no-api-card{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;text-align:center;}
+.no-api-icon{font-size:48px;}
+/* REPORT */
+.report-doc{background:#fff;color:#111;padding:32px;border-radius:8px;font-size:13px;line-height:1.6;max-width:900px;margin:0 auto;}
+.report-doc h1{font-size:20px;text-align:center;margin-bottom:4px;}
+.report-doc h2{font-size:15px;border-bottom:2px solid #2979ff;padding-bottom:4px;margin:18px 0 10px;color:#2979ff;}
+.report-doc table{width:100%;border-collapse:collapse;margin:8px 0;}
+.report-doc th{background:#2979ff;color:#fff;padding:7px 10px;font-size:12px;}
+.report-doc td{border:1px solid #ddd;padding:6px 10px;font-size:12px;}
+.report-doc tr:nth-child(even) td{background:#f5f7ff;}
+.rag-red{background:#ff1744;color:#fff;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;}
+.rag-amber{background:#ffab00;color:#000;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;}
+.rag-green{background:#00c853;color:#000;border-radius:50%;width:14px;height:14px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;}
+@media print{#sidebar,#topbar,#report-controls{display:none!important;}.report-doc{box-shadow:none;}}
+/* RESPONSIVE */
+@media(max-width:768px){#sidebar{width:54px;min-width:54px;}.nav-label,.logo-text{display:none!important;}.kpi-grid{grid-template-columns:repeat(2,1fr);}.charts-row{grid-template-columns:1fr;}}
+/* SECTION HEADER */
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.section-title{font-size:18px;font-weight:700;}
+/* PTW status colors */
+.pill-pending{background:rgba(255,171,0,.15);color:var(--yellow);}
+.pill-active{background:rgba(0,200,83,.15);color:var(--green);}
+.pill-suspended{background:rgba(255,109,0,.15);color:var(--orange);}
+.pill-closed{background:rgba(136,150,176,.15);color:var(--muted);}
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">⚡</span>
+    <span class="logo-text">SHEQ-AI</span>
+  </div>
+  <ul class="nav-list">
+    <li class="nav-item"><div class="nav-link active" data-page="dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="observations"><span class="nav-icon">👁</span><span class="nav-label">Job Observations</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="nearmiss"><span class="nav-icon">⚡</span><span class="nav-label">Near Miss</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="incidents"><span class="nav-icon">🚨</span><span class="nav-label">Incidents</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="permits"><span class="nav-icon">📋</span><span class="nav-label">Permit to Work</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">⚠️</span><span class="nav-label">Risk Register</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">SHEQ Calendar</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📊</span><span class="nav-label">Monthly Report</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="chat"><span class="nav-icon">🤖</span><span class="nav-label">SHEQ-AI Chat</span></div></li>
+  </ul>
+  <div class="sidebar-footer">
+    <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
+  </div>
+</nav>
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <button id="toggle-btn">☰</button>
+    <span id="topbar-title">Dashboard</span>
+    <span style="flex:1"></span>
+    <span id="topbar-date"></span>
+  </div>
+  <div id="content">
+
+<!-- PAGE 1: DASHBOARD -->
+<div id="page-dashboard" class="page active">
+  <div class="section-header"><span class="section-title">Dashboard</span><span style="font-size:12px;color:var(--muted)">CTRG SHEQ Performance Overview</span></div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">Total Observations</div><div class="kpi-value" id="kpi-obs">0</div><div class="kpi-sub">This month</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--yellow)"><div class="kpi-label">Near Misses</div><div class="kpi-value" id="kpi-nm">0</div><div class="kpi-sub">YTD</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--red)"><div class="kpi-label">Open Incidents</div><div class="kpi-value" id="kpi-inc">0</div><div class="kpi-sub">Requiring action</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--orange)"><div class="kpi-label">Open CAPAs</div><div class="kpi-value" id="kpi-capa">0</div><div class="kpi-sub">Across all modules</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="card"><div class="card-title">Incident Trend Jan–Mar 2026</div><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
+    <div class="card"><div class="card-title">Observation Ratio</div><div class="chart-wrap"><canvas id="chart-obs-ratio"></canvas></div></div>
+  </div>
+  <div class="card" style="margin-bottom:18px"><div class="card-title">Risk Register by Rating</div><div class="chart-wrap" style="height:180px"><canvas id="chart-risk-bar"></canvas></div></div>
+  <div class="card"><div class="card-title">Recent Activity</div><div class="activity-feed" id="activity-feed"></div></div>
+</div>
+
+<!-- PAGE 2: JOB OBSERVATIONS -->
+<div id="page-observations" class="page">
+  <div class="section-header"><span class="section-title">Job Observations</span></div>
+  <div class="toolbar">
+    <input type="text" id="obs-search" placeholder="Search observations…">
+    <select id="obs-filter-type"><option value="">All Types</option><option value="SAFE">Safe</option><option value="AT-RISK">At-Risk</option><option value="IMPROVEMENT">Improvement</option></select>
+    <button class="btn btn-primary" onclick="openModal('obs-modal')">+ Add Observation</button>
+  </div>
+  <div class="stats-row" id="obs-stats"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Observer</th><th>Date</th><th>Location</th><th>Activity</th><th>Type</th><th>CAPA?</th><th>Actions</th></tr></thead>
+        <tbody id="obs-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="obs-pagination"></div>
+  </div>
+</div>
+
+<!-- PAGE 3: NEAR MISS -->
+<div id="page-nearmiss" class="page">
+  <div class="section-header"><span class="section-title">Near Miss Register</span></div>
+  <div class="toolbar">
+    <input type="text" id="nm-search" placeholder="Search near misses…">
+    <select id="nm-filter-sev"><option value="">All Severities</option><option value="1">1-Critical</option><option value="2">2-High</option><option value="3">3-Medium</option><option value="4">4-Low</option></select>
+    <button class="btn btn-primary" onclick="openModal('nm-modal')">+ Add Near Miss</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Reporter</th><th>Date</th><th>Location</th><th>Potential Outcome</th><th>HiPo</th><th>Severity</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="nm-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="nm-pagination"></div>
+  </div>
+</div>
+
+<!-- PAGE 4: INCIDENTS -->
+<div id="page-incidents" class="page">
+  <div class="section-header"><span class="section-title">Incident Register</span></div>
+  <div class="kpi-grid" id="inc-kpi-row" style="grid-template-columns:repeat(5,1fr)"></div>
+  <div class="toolbar" style="margin-top:14px">
+    <input type="text" id="inc-search" placeholder="Search incidents…">
+    <select id="inc-filter-sev"><option value="">All Severities</option><option value="1">1-Critical</option><option value="2">2-High</option><option value="3">3-Medium</option><option value="4">4-Low</option></select>
+    <button class="btn btn-primary" onclick="openModal('inc-modal')">+ Add Incident</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Type</th><th>Severity</th><th>Location</th><th>Description</th><th>Person</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="inc-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="inc-pagination"></div>
+  </div>
+</div>
+
+<!-- PAGE 5: PERMIT TO WORK -->
+<div id="page-permits" class="page">
+  <div class="section-header"><span class="section-title">Permit to Work</span></div>
+  <div class="toolbar">
+    <input type="text" id="ptw-search" placeholder="Search permits…">
+    <select id="ptw-filter-type"><option value="">All Types</option><option value="Hot Work">🔥 Hot Work</option><option value="Electrical">⚡ Electrical</option><option value="Confined Space">🚪 Confined Space</option><option value="Working at Height">🪜 Working at Height</option><option value="Line Breaking">🔧 Line Breaking</option></select>
+    <select id="ptw-filter-status"><option value="">All Statuses</option><option value="PENDING">Pending</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="CLOSED">Closed</option></select>
+    <button class="btn btn-primary" onclick="openModal('ptw-modal')">+ Add Permit</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>PTW#</th><th>Type</th><th>Requestor</th><th>Activity</th><th>Location</th><th>Valid From</th><th>Valid To</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="ptw-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="ptw-pagination"></div>
+  </div>
+</div>
+
+<!-- PAGE 6: RISK REGISTER -->
+<div id="page-risks" class="page">
+  <div class="section-header"><span class="section-title">Risk Register</span></div>
+  <div class="card matrix-wrap">
+    <div class="card-title">5×5 Risk Matrix — Click cell to select P×I for new risk</div>
+    <div style="display:flex;gap:8px;margin-bottom:6px;font-size:11px;color:var(--muted)">
+      <span style="flex:80px"></span>
+      <span style="flex:1;text-align:center">I1<br>Insignificant</span>
+      <span style="flex:1;text-align:center">I2<br>Minor</span>
+      <span style="flex:1;text-align:center">I3<br>Moderate</span>
+      <span style="flex:1;text-align:center">I4<br>Major</span>
+      <span style="flex:1;text-align:center">I5<br>Catastrophic</span>
+    </div>
+    <div id="risk-matrix-grid"></div>
+    <div style="display:flex;gap:14px;margin-top:8px;font-size:11px">
+      <span><span style="background:rgba(0,200,83,.25);color:var(--green);padding:2px 8px;border-radius:4px">LOW (1–4)</span></span>
+      <span><span style="background:rgba(255,171,0,.25);color:var(--yellow);padding:2px 8px;border-radius:4px">MEDIUM (5–9)</span></span>
+      <span><span style="background:rgba(255,109,0,.25);color:var(--orange);padding:2px 8px;border-radius:4px">HIGH (10–16)</span></span>
+      <span><span style="background:rgba(255,23,68,.25);color:var(--red);padding:2px 8px;border-radius:4px">EXTREME (17–25)</span></span>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="risk-search" placeholder="Search risks…">
+    <select id="risk-filter-rating"><option value="">All Ratings</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="EXTREME">Extreme</option></select>
+    <button class="btn btn-primary" onclick="openModal('risk-modal')">+ Add Risk</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Hazard</th><th>Category</th><th>Inherent Risk</th><th>Controls</th><th>Residual Risk</th><th>Owner</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="risk-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="risk-pagination"></div>
+  </div>
+</div>
+
+<!-- PAGE 7: LEGAL REGISTER -->
+<div id="page-legal" class="page">
+  <div class="section-header"><span class="section-title">Legal Register</span></div>
+  <div class="toolbar">
+    <input type="text" id="legal-search" placeholder="Search legal items…">
+    <select id="legal-filter-status"><option value="">All Statuses</option><option value="COMPLIANT">Compliant</option><option value="OVERDUE">Overdue</option><option value="PENDING">Pending</option></select>
+    <button class="btn btn-primary" onclick="openModal('legal-modal')">+ Add Item</button>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Law / Standard</th><th>Requirement</th><th>Responsible</th><th>Frequency</th><th>Last Complied</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="legal-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="legal-pagination"></div>
+  </div>
+</div>
+
+<!-- PAGE 8: SHEQ CALENDAR -->
+<div id="page-calendar" class="page">
+  <div class="section-header"><span class="section-title">SHEQ Calendar</span></div>
+  <div class="cal-year-tabs" id="cal-year-tabs"></div>
+  <div class="card">
+    <div class="cal-table-wrap" id="cal-table-wrap"></div>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--card2);border:1px dashed var(--border)"></div>Blank</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(41,121,255,.25)"></div>Planned</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(0,200,83,.25)"></div>Completed</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(255,23,68,.25)"></div>Missed</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 9: MONTHLY REPORT -->
+<div id="page-report" class="page">
+  <div class="section-header"><span class="section-title">Monthly SHEQ Report</span></div>
+  <div id="report-controls" class="toolbar" style="margin-bottom:18px">
+    <select id="report-month">
+      <option value="01">January</option><option value="02">February</option><option value="03" selected>March</option>
+      <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+      <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+      <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+    </select>
+    <select id="report-year"><option value="2026" selected>2026</option><option value="2027">2027</option><option value="2028">2028</option></select>
+    <select id="report-topic">
+      <option value="Heat Stress Management">Heat Stress Management</option>
+      <option value="Permit to Work Best Practices">Permit to Work Best Practices</option>
+      <option value="Electrical Safety">Electrical Safety</option>
+      <option value="Emergency Preparedness">Emergency Preparedness</option>
+      <option value="Chemical Handling">Chemical Handling</option>
+      <option value="Working at Height">Working at Height</option>
+    </select>
+    <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+    <button class="btn btn-ghost" onclick="window.print()">🖨 Print</button>
+  </div>
+  <div id="report-output"></div>
+</div>
+
+<!-- PAGE 10: SHEQ-AI CHAT -->
+<div id="page-chat" class="page" style="display:none;flex-direction:column;height:calc(100vh - 54px);">
+  <div id="chat-no-api" class="no-api-card" style="display:none">
+    <div class="no-api-icon">🔒</div>
+    <div style="font-size:16px;font-weight:700">API Key Required</div>
+    <div style="color:var(--muted);max-width:320px">Set your Anthropic API key in Settings to activate SHEQ-AI Chat.</div>
+    <button class="btn btn-primary" onclick="openModal('settings-modal')">Open Settings</button>
+  </div>
+  <div id="chat-interface" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div id="chat-messages"></div>
+    <div class="chat-input-area">
+      <textarea id="chat-input" rows="1" placeholder="Ask SHEQ-AI anything… (Enter to send, Shift+Enter for newline)"></textarea>
+      <button class="btn btn-primary" id="chat-send-btn" onclick="sendChatMessage()">Send</button>
+      <button class="btn btn-ghost" onclick="clearChat()">Clear</button>
+    </div>
+    <div style="padding:4px 12px;font-size:11px;color:var(--muted)" id="chat-status"></div>
+  </div>
+</div>
+
+</div><!-- end #content -->
+</div><!-- end #main -->
+
+<!-- =================== MODALS =================== -->
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <div class="modal-title">Settings <button class="modal-close" onclick="closeModal('settings-modal')">✕</button></div>
+    <div class="form-group"><label>Anthropic API Key</label><input type="password" id="api-key-input" placeholder="sk-ant-…"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="clearApiKey()">Clear Key</button>
+      <button class="btn btn-ghost" onclick="testApiKey()">Test Connection</button>
+      <button class="btn btn-primary" onclick="saveApiKey()">Save</button>
+    </div>
+    <div id="api-test-result" style="margin-top:10px;font-size:12px"></div>
+  </div>
+</div>
+
+<!-- OBSERVATION MODAL -->
+<div class="modal-overlay" id="obs-modal">
+  <div class="modal">
+    <div class="modal-title">Add Job Observation <button class="modal-close" onclick="closeModal('obs-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Observer Name</label><input type="text" id="obs-f-observer" placeholder="Full name"></div>
+      <div class="form-group"><label>Date</label><input type="date" id="obs-f-date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Location / Area</label><input type="text" id="obs-f-location" placeholder="e.g. Turbine Hall"></div>
+      <div class="form-group"><label>Work Activity</label><input type="text" id="obs-f-activity" placeholder="e.g. Electrical isolation"></div>
+    </div>
+    <div class="form-group"><label>Observation Type</label>
+      <select id="obs-f-type"><option value="SAFE">Safe</option><option value="AT-RISK">At-Risk</option><option value="IMPROVEMENT">Improvement</option></select>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="obs-f-desc" placeholder="Describe what was observed…"></textarea></div>
+    <div class="form-group"><label>Immediate Action Taken</label><textarea id="obs-f-action" placeholder="Action taken on the spot…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>CAPA Required?</label>
+        <select id="obs-f-capa" onchange="document.getElementById('obs-f-capa-ref-wrap').style.display=this.value==='Y'?'block':'none'">
+          <option value="N">No</option><option value="Y">Yes</option>
+        </select>
+      </div>
+      <div class="form-group" id="obs-f-capa-ref-wrap" style="display:none"><label>CAPA Reference</label><input type="text" id="obs-f-capa-ref" placeholder="e.g. CAPA-2026-001"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('obs-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveObservation()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEAR MISS MODAL -->
+<div class="modal-overlay" id="nm-modal">
+  <div class="modal">
+    <div class="modal-title">Add Near Miss <button class="modal-close" onclick="closeModal('nm-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Reporter</label><input type="text" id="nm-f-reporter" placeholder="Full name"></div>
+      <div class="form-group"><label>Date</label><input type="date" id="nm-f-date"></div>
+    </div>
+    <div class="form-group"><label>Location</label><input type="text" id="nm-f-location" placeholder="e.g. Cooling Tower"></div>
+    <div class="form-group"><label>Description</label><textarea id="nm-f-desc" placeholder="Describe the near miss event…"></textarea></div>
+    <div class="form-group"><label>Potential Outcome</label><input type="text" id="nm-f-outcome" placeholder="What could have happened?"></div>
+    <div class="form-row">
+      <div class="form-group"><label>High Potential (HiPo)?</label>
+        <select id="nm-f-hipo"><option value="0">No</option><option value="1">Yes</option></select>
+      </div>
+      <div class="form-group"><label>Severity</label>
+        <select id="nm-f-sev"><option value="1">1 – Critical</option><option value="2">2 – High</option><option value="3">3 – Medium</option><option value="4">4 – Low</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Immediate Action Taken</label><textarea id="nm-f-action" placeholder="Action taken immediately…"></textarea></div>
+    <div class="form-group"><label>Investigation Status</label>
+      <select id="nm-f-status"><option value="Open">Open</option><option value="Under Investigation">Under Investigation</option><option value="Closed">Closed</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('nm-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNearMiss()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- INCIDENT MODAL -->
+<div class="modal-overlay" id="inc-modal">
+  <div class="modal">
+    <div class="modal-title">Add Incident <button class="modal-close" onclick="closeModal('inc-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="inc-f-date"></div>
+      <div class="form-group"><label>Type</label>
+        <select id="inc-f-type"><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Quality">Quality</option><option value="Security">Security</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Severity</label>
+        <select id="inc-f-sev"><option value="1">1 – Critical</option><option value="2">2 – High</option><option value="3">3 – Medium</option><option value="4">4 – Low</option></select>
+      </div>
+      <div class="form-group"><label>Location</label><input type="text" id="inc-f-location" placeholder="e.g. Boiler House"></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="inc-f-desc" placeholder="Describe the incident…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Person Involved</label><input type="text" id="inc-f-person" placeholder="Name / Employee #"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="inc-f-status"><option value="Open">Open</option><option value="Under Investigation">Under Investigation</option><option value="CAPA Issued">CAPA Issued</option><option value="Closed">Closed</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Root Cause</label><textarea id="inc-f-rootcause" placeholder="Root cause analysis findings…"></textarea></div>
+    <div class="card-title" style="margin:10px 0 8px">CAPA Details (WHAT / WHO / WHEN / HOW)</div>
+    <div class="form-group"><label>WHAT – Corrective Action</label><textarea id="inc-f-capa-what" placeholder="What action must be taken?"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>WHO – Responsible</label><input type="text" id="inc-f-capa-who" placeholder="Name / Role"></div>
+      <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="inc-f-capa-when"></div>
+    </div>
+    <div class="form-group"><label>HOW – Method / Verification</label><textarea id="inc-f-capa-how" placeholder="How will completion be verified?"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('inc-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIncident()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PTW MODAL -->
+<div class="modal-overlay" id="ptw-modal">
+  <div class="modal">
+    <div class="modal-title">Add Permit to Work <button class="modal-close" onclick="closeModal('ptw-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="ptw-f-type"><option value="Hot Work">🔥 Hot Work</option><option value="Electrical">⚡ Electrical</option><option value="Confined Space">🚪 Confined Space</option><option value="Working at Height">🪜 Working at Height</option><option value="Line Breaking">🔧 Line Breaking</option></select>
+      </div>
+      <div class="form-group"><label>Requestor</label><input type="text" id="ptw-f-requestor" placeholder="Name"></div>
+    </div>
+    <div class="form-group"><label>Work Activity</label><input type="text" id="ptw-f-activity" placeholder="Describe the work to be done"></div>
+    <div class="form-group"><label>Location</label><input type="text" id="ptw-f-location" placeholder="e.g. Transformer Bay"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Valid From</label><input type="datetime-local" id="ptw-f-from"></div>
+      <div class="form-group"><label>Valid To</label><input type="datetime-local" id="ptw-f-to"></div>
+    </div>
+    <div class="form-group"><label>Precautions / Conditions</label><textarea id="ptw-f-precautions" placeholder="List all required precautions…"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('ptw-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePermit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- RISK MODAL -->
+<div class="modal-overlay" id="risk-modal">
+  <div class="modal">
+    <div class="modal-title">Add Risk <button class="modal-close" onclick="closeModal('risk-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Hazard</label><input type="text" id="risk-f-hazard" placeholder="e.g. Rotating machinery"></div>
+      <div class="form-group"><label>Category</label>
+        <select id="risk-f-category">
+          <option value="Safety">Safety</option><option value="Environmental">Environmental</option>
+          <option value="Health">Health</option><option value="Quality">Quality</option><option value="Security">Security</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Consequence</label><textarea id="risk-f-consequence" placeholder="Describe potential consequences…"></textarea></div>
+    <div class="card-title" style="margin:10px 0 8px">Inherent Risk (Before Controls)</div>
+    <div class="form-row">
+      <div class="form-group"><label>Probability (P)</label>
+        <select id="risk-f-ip" onchange="calcRisk('i')"><option value="1">P1 – Rare</option><option value="2">P2 – Unlikely</option><option value="3">P3 – Possible</option><option value="4">P4 – Likely</option><option value="5">P5 – Almost Certain</option></select>
+      </div>
+      <div class="form-group"><label>Impact (I)</label>
+        <select id="risk-f-ii" onchange="calcRisk('i')"><option value="1">I1 – Insignificant</option><option value="2">I2 – Minor</option><option value="3">I3 – Moderate</option><option value="4">I4 – Major</option><option value="5">I5 – Catastrophic</option></select>
+      </div>
+    </div>
+    <div id="risk-inherent-display" style="font-size:12px;color:var(--muted);margin-bottom:10px"></div>
+    <div class="form-group"><label>Controls</label><textarea id="risk-f-controls" placeholder="Describe existing controls…"></textarea></div>
+    <div class="card-title" style="margin:10px 0 8px">Residual Risk (After Controls)</div>
+    <div class="form-row">
+      <div class="form-group"><label>Probability (P)</label>
+        <select id="risk-f-rp" onchange="calcRisk('r')"><option value="1">P1 – Rare</option><option value="2">P2 – Unlikely</option><option value="3">P3 – Possible</option><option value="4">P4 – Likely</option><option value="5">P5 – Almost Certain</option></select>
+      </div>
+      <div class="form-group"><label>Impact (I)</label>
+        <select id="risk-f-ri" onchange="calcRisk('r')"><option value="1">I1 – Insignificant</option><option value="2">I2 – Minor</option><option value="3">I3 – Moderate</option><option value="4">I4 – Major</option><option value="5">I5 – Catastrophic</option></select>
+      </div>
+    </div>
+    <div id="risk-residual-display" style="font-size:12px;color:var(--muted);margin-bottom:10px"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Owner</label><input type="text" id="risk-f-owner" placeholder="Name / Department"></div>
+      <div class="form-group"><label>Review Date</label><input type="date" id="risk-f-review"></div>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select id="risk-f-status"><option value="Open">Open</option><option value="Under Review">Under Review</option><option value="Closed">Closed</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('risk-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRisk()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEGAL MODAL -->
+<div class="modal-overlay" id="legal-modal">
+  <div class="modal">
+    <div class="modal-title">Add Legal Item <button class="modal-close" onclick="closeModal('legal-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Law / Standard</label><input type="text" id="legal-f-law" placeholder="e.g. ISO 45001:2018"></div>
+      <div class="form-group"><label>Responsible</label><input type="text" id="legal-f-responsible" placeholder="Name / Role"></div>
+    </div>
+    <div class="form-group"><label>Requirement</label><textarea id="legal-f-req" placeholder="Describe the compliance requirement…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Frequency</label>
+        <select id="legal-f-freq"><option value="Monthly">Monthly</option><option value="Quarterly">Quarterly</option><option value="Semi-Annual">Semi-Annual</option><option value="Annual">Annual</option><option value="Ad-hoc">Ad-hoc</option></select>
+      </div>
+      <div class="form-group"><label>Last Complied</label><input type="date" id="legal-f-last"></div>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select id="legal-f-status"><option value="COMPLIANT">Compliant</option><option value="OVERDUE">Overdue</option><option value="PENDING">Pending</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('legal-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLegal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW MODAL (generic) -->
+<div class="modal-overlay" id="view-modal">
+  <div class="modal" style="width:640px">
+    <div class="modal-title" id="view-modal-title">Details <button class="modal-close" onclick="closeModal('view-modal')">✕</button></div>
+    <div id="view-modal-body"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('view-modal')">Close</button></div>
+  </div>
+</div>
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
+const STORAGE_KEY = 'sheqai_data';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { return {}; }
+}
+function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+
+function getData() {
+  let d = loadData();
+  if (!d.initialized) { d = getSampleData(); d.initialized = true; saveData(d); }
+  return d;
+}
+
+function getSampleData() {
+  return {
+    observations: [
+      {id:'OBS-001',observer:'João Machava',date:'2026-03-03',location:'Turbine Hall',activity:'Lubrication of bearings',type:'SAFE',desc:'All PPE worn correctly, LOTO applied.',action:'None required.',capa:'N',capaRef:''},
+      {id:'OBS-002',observer:'Maria Sitoe',date:'2026-03-05',location:'Cooling Tower',activity:'Chemical dosing',type:'AT-RISK',desc:'Operator not wearing chemical splash goggles.',action:'Stopped work, PPE provided on site.',capa:'Y',capaRef:'CAPA-2026-001'},
+      {id:'OBS-003',observer:'Carlos Tembe',date:'2026-03-06',location:'Electrical Workshop',activity:'Cable termination',type:'IMPROVEMENT',desc:'Cable drum storage causing trip hazard.',action:'Cables re-arranged.',capa:'N',capaRef:''},
+      {id:'OBS-004',observer:'Ana Muchanga',date:'2026-03-08',location:'Control Room',activity:'Routine monitoring',type:'SAFE',desc:'All procedures followed. Logbook up to date.',action:'None.',capa:'N',capaRef:''},
+      {id:'OBS-005',observer:'Pedro Mabunda',date:'2026-03-10',location:'Fuel Gas Area',activity:'Filter inspection',type:'AT-RISK',desc:'Valve tag missing on isolation point.',action:'Tag replaced immediately.',capa:'Y',capaRef:'CAPA-2026-002'},
+      {id:'OBS-006',observer:'Fatima Nuvunga',date:'2026-03-12',location:'Warehouse',activity:'Materials handling',type:'IMPROVEMENT',desc:'Forklift battery charging near flammables.',action:'Charging station relocated.',capa:'N',capaRef:''},
+      {id:'OBS-007',observer:'Ricardo Guambe',date:'2026-03-14',location:'Boiler House',activity:'Water treatment',type:'SAFE',desc:'Chemical handling procedure fully complied.',action:'None.',capa:'N',capaRef:''},
+      {id:'OBS-008',observer:'Lucia Bila',date:'2026-03-16',location:'Administration Block',activity:'Emergency drill prep',type:'IMPROVEMENT',desc:'Emergency exit sign not illuminated.',action:'Reported to maintenance for repair.',capa:'Y',capaRef:'CAPA-2026-003'}
+    ],
+    nearMisses: [
+      {id:'NM-001',reporter:'Carlos Tembe',date:'2026-03-04',location:'Turbine Hall',desc:'Loose grating nearly stepped through during routine rounds.',outcome:'Fall from height, potential fatality',hipo:1,sev:2,action:'Grating secured with bolts.',status:'Under Investigation'},
+      {id:'NM-002',reporter:'João Machava',date:'2026-03-07',location:'HV Switchgear Room',desc:'Isolation not verified before work commenced on panel.',outcome:'Electrocution / fatality',hipo:1,sev:1,action:'Work stopped, isolation confirmed, toolbox talk held.',status:'Open'},
+      {id:'NM-003',reporter:'Pedro Mabunda',date:'2026-03-11',location:'Fuel Gas Pipeline',desc:'Minor gas smell detected near flange connection.',outcome:'Fire / explosion',hipo:0,sev:3,action:'Area evacuated, leak located and clamped.',status:'Closed'},
+      {id:'NM-004',reporter:'Ana Muchanga',date:'2026-03-15',location:'Cooling Water Pump Bay',desc:'Spill of cooling water treatment chemical on walkway.',outcome:'Slip, chemical burn',hipo:0,sev:4,action:'Spill cleaned immediately, area barricaded.',status:'Closed'}
+    ],
+    incidents: [
+      {id:'INC-001',date:'2026-01-12',type:'Safety',sev:3,location:'Maintenance Workshop',desc:'Technician sustained laceration to hand from unguarded grinder.',person:'T. Nhantumbo',status:'Closed',rootCause:'Grinder guard removed and not replaced. No pre-use inspection.',capaWhat:'Install fixed guards on all angle grinders and implement pre-use checklist.',capaWho:'Maintenance Supervisor',capaWhen:'2026-01-25',capaHow:'Physical inspection by SHEQ Officer before close-out.'},
+      {id:'INC-002',date:'2026-01-28',type:'Environmental',sev:3,location:'Oil Separator',desc:'Minor oil spill (~20L) from separator overflow during heavy rain.',person:'N/A',status:'Closed',rootCause:'Level sensor alarm not functional. Blocked outlet.',capaWhat:'Repair level sensor and clear blockage. Inspect all oil separators.',capaWho:'Environmental Officer',capaWhen:'2026-02-10',capaHow:'Operational test witnessed by SHEQ and signed off.'},
+      {id:'INC-003',date:'2026-02-14',type:'Safety',sev:2,location:'Turbine Hall',desc:'Worker fell from scaffold platform at 2.5m height. Required hospital visit.',person:'A. Cossa',status:'CAPA Issued',rootCause:'Scaffold not inspected. No harness used for work >2m.',capaWhat:'Mandatory scaffold inspection register. Harness use policy enforced.',capaWho:'SHEQ Manager',capaWhen:'2026-03-01',capaHow:'Audit of scaffold inspection records monthly.'},
+      {id:'INC-004',date:'2026-03-02',type:'Safety',sev:4,location:'Control Room',desc:'Operator slipped on wet floor near coffee station.',person:'M. Sitoe',status:'Open',rootCause:'Wet floor sign not deployed after cleaning.',capaWhat:'Cleaning team to deploy wet floor signs. Awareness training.',capaWho:'Facilities Lead',capaWhen:'2026-03-15',capaHow:'SHEQ observation verification.'},
+      {id:'INC-005',date:'2026-03-10',type:'Quality',sev:4,location:'Laboratory',desc:'Water sample results not recorded in LIMS within required timeframe.',person:'Lab Technician',status:'Under Investigation',rootCause:'Under investigation.',capaWhat:'Pending investigation outcome.',capaWho:'Lab Manager',capaWhen:'2026-03-31',capaHow:'Review of LIMS submission logs.'}
+    ],
+    permits: [
+      {id:'PTW-001',type:'Hot Work',requestor:'Carlos Tembe',activity:'Welding on generator exhaust flange',location:'Generator Hall',from:'2026-03-17T08:00',to:'2026-03-17T16:00',precautions:'Fire watch, fire extinguishers placed, area barricaded.',status:'CLOSED'},
+      {id:'PTW-002',type:'Electrical',requestor:'Ricardo Guambe',activity:'Replacement of MCC starter panel',location:'HV Switchgear Room',from:'2026-03-18T07:30',to:'2026-03-18T12:00',precautions:'Full LOTO applied, isolation certificate issued, arc flash PPE.',status:'CLOSED'},
+      {id:'PTW-003',type:'Confined Space',requestor:'João Machava',activity:'Inspection of water storage tank interior',location:'Raw Water Tank',from:'2026-03-19T08:00',to:'2026-03-19T14:00',precautions:'Gas test clear, standby attendant, rescue equipment on site.',status:'ACTIVE'},
+      {id:'PTW-004',type:'Working at Height',requestor:'Pedro Mabunda',activity:'Painting of cooling tower exterior',location:'Cooling Tower No. 2',from:'2026-03-20T07:00',to:'2026-03-22T17:00',precautions:'Scaffold erected and inspected, full body harness required.',status:'PENDING'},
+      {id:'PTW-005',type:'Line Breaking',requestor:'Lucia Bila',activity:'Replacement of fuel gas filter element',location:'Fuel Gas Filter Skid',from:'2026-03-19T09:00',to:'2026-03-19T13:00',precautions:'Isolation confirmed, depressurised, H2S monitor worn.',status:'ACTIVE'},
+      {id:'PTW-006',type:'Electrical',requestor:'Ana Muchanga',activity:'Installation of additional lighting in warehouse',location:'Warehouse',from:'2026-03-21T08:00',to:'2026-03-21T16:00',precautions:'Circuit isolated and locked out, test before touch.',status:'PENDING'}
+    ],
+    risks: [
+      {id:'RSK-001',hazard:'Rotating machinery – turbine coupling',category:'Safety',consequence:'Entanglement, amputation, fatality',ip:4,ii:5,iScore:20,iRating:'EXTREME',controls:'Guards fitted, LOTO procedure, training.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Operations Manager',reviewDate:'2026-06-01',status:'Open'},
+      {id:'RSK-002',hazard:'High voltage electrical equipment',category:'Safety',consequence:'Electrocution, arc flash, fatality',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Isolation procedure, arc flash PPE, authorised persons only.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Electrical Supervisor',reviewDate:'2026-06-01',status:'Open'},
+      {id:'RSK-003',hazard:'Fuel gas leakage',category:'Safety',consequence:'Fire, explosion, mass casualty',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Gas detection system, ESD, no-ignition zone, PTW.',rp:2,ri:5,rScore:10,rRating:'HIGH',owner:'Process Engineer',reviewDate:'2026-09-01',status:'Open'},
+      {id:'RSK-004',hazard:'Working at height >2m',category:'Safety',consequence:'Fall, serious injury, fatality',ip:4,ii:4,iScore:16,iRating:'HIGH',controls:'Scaffold inspection, harness policy, exclusion zones.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'SHEQ Officer',reviewDate:'2026-06-01',status:'Open'},
+      {id:'RSK-005',hazard:'Chemical handling – water treatment',category:'Health',consequence:'Chemical burn, inhalation injury',ip:3,ii:3,iScore:9,iRating:'MEDIUM',controls:'SDS available, PPE, spill kit, training.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'Environmental Officer',reviewDate:'2026-09-01',status:'Open'},
+      {id:'RSK-006',hazard:'Oil spill to storm drain',category:'Environmental',consequence:'Soil and water contamination',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Bunded areas, oil separator, spill response plan.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'Environmental Officer',reviewDate:'2026-09-01',status:'Open'},
+      {id:'RSK-007',hazard:'Manual handling of heavy equipment',category:'Health',consequence:'Musculoskeletal injury',ip:4,ii:2,iScore:8,iRating:'MEDIUM',controls:'Lifting equipment, team lifts, training.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'Maintenance Supervisor',reviewDate:'2026-12-01',status:'Open'},
+      {id:'RSK-008',hazard:'Noise exposure in turbine hall',category:'Health',consequence:'Hearing damage (NIHL)',ip:5,ii:2,iScore:10,iRating:'HIGH',controls:'Hearing protection mandatory, audiometry programme.',rp:3,ri:2,rScore:6,rRating:'MEDIUM',owner:'Occupational Health',reviewDate:'2026-09-01',status:'Open'},
+      {id:'RSK-009',hazard:'Extreme heat – outdoor work',category:'Health',consequence:'Heat stroke, fatality',ip:4,ii:3,iScore:12,iRating:'HIGH',controls:'Heat stress policy, hydration stations, buddy system.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'SHEQ Manager',reviewDate:'2026-03-31',status:'Open'},
+      {id:'RSK-010',hazard:'Vehicle / pedestrian interface',category:'Safety',consequence:'Struck by vehicle, fatality',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Designated walkways, speed limits, marshalls for heavy vehicles.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'Security Manager',reviewDate:'2026-06-01',status:'Open'}
+    ],
+    legalItems: [
+      {id:'LEG-001',law:'Lei n.º 23/2007 (Labour Law)',requirement:'Maintain occupational accident register and report fatal/serious accidents within 24h.',responsible:'SHEQ Manager',freq:'Ad-hoc',lastComplied:'2026-03-01',status:'COMPLIANT'},
+      {id:'LEG-002',law:'Decreto n.º 94/2024',requirement:'Annual environmental compliance report to MITADER.',responsible:'Environmental Officer',freq:'Annual',lastComplied:'2026-01-15',status:'COMPLIANT'},
+      {id:'LEG-003',law:'Lei n.º 20/2014 (Environment Law)',requirement:'Environmental Impact Assessment review every 5 years.',responsible:'Environmental Officer',freq:'Annual',lastComplied:'2023-06-01',status:'PENDING'},
+      {id:'LEG-004',law:'ISO 45001:2018',requirement:'Internal audit of OH&S management system.',responsible:'SHEQ Manager',freq:'Annual',lastComplied:'2025-11-10',status:'COMPLIANT'},
+      {id:'LEG-005',law:'ISO 14001:2015',requirement:'Environmental aspects register review.',responsible:'Environmental Officer',freq:'Semi-Annual',lastComplied:'2025-09-15',status:'OVERDUE'},
+      {id:'LEG-006',law:'ISO 9001:2015',requirement:'Customer satisfaction survey and analysis.',responsible:'Quality Officer',freq:'Annual',lastComplied:'2025-12-01',status:'COMPLIANT'},
+      {id:'LEG-007',law:'Decreto n.º 94/2024',requirement:'Quarterly ambient air quality monitoring.',responsible:'Environmental Officer',freq:'Quarterly',lastComplied:'2026-01-10',status:'OVERDUE'},
+      {id:'LEG-008',law:'Lei n.º 23/2007',requirement:'Medical surveillance – pre-employment and annual.',responsible:'Occupational Health',freq:'Annual',lastComplied:'2025-08-01',status:'OVERDUE'},
+      {id:'LEG-009',law:'ISO 45001:2018',requirement:'Emergency response drill – fire.',responsible:'SHEQ Officer',freq:'Quarterly',lastComplied:'2026-01-20',status:'PENDING'},
+      {id:'LEG-010',law:'ISO 31000:2018',requirement:'Risk register formal review by management.',responsible:'SHEQ Manager',freq:'Semi-Annual',lastComplied:'2025-10-01',status:'OVERDUE'},
+      {id:'LEG-011',law:'ISO 9001:2015',requirement:'Calibration of measuring and test equipment.',responsible:'Quality Officer',freq:'Annual',lastComplied:'2026-02-10',status:'COMPLIANT'},
+      {id:'LEG-012',law:'Decreto n.º 94/2024',requirement:'Wastewater effluent quality testing.',responsible:'Environmental Officer',freq:'Monthly',lastComplied:'2026-03-05',status:'COMPLIANT'}
+    ],
+    calendar: buildDefaultCalendar()
+  };
+}
+
+function buildDefaultCalendar() {
+  const years = [2026,2027,2028,2029,2030];
+  const activities = [
+    'Fire Drill','Safety Inspection','IMS Internal Audit','Environmental Monitoring',
+    'Management Review','Emergency Drill','Medical Surveillance','PTW Compliance Audit',
+    'Risk Assessment Review','SHEQ Legal Register Review','Contractor Safety Briefing','SHEQ Meeting'
+  ];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const cal = {};
+  years.forEach(y => {
+    cal[y] = {};
+    activities.forEach(act => {
+      cal[y][act] = {};
+      months.forEach(m => { cal[y][act][m] = 'blank'; });
+    });
+  });
+  // Pre-fill 2026 with sample data
+  const planned2026 = {
+    'Fire Drill':['Mar','Jun','Sep'],
+    'Safety Inspection':['Jan','Feb','Mar'],
+    'IMS Internal Audit':['Nov'],
+    'Environmental Monitoring':['Jan','Feb','Mar'],
+    'Management Review':['Mar','Sep'],
+    'Emergency Drill':['Feb','May'],
+    'Medical Surveillance':['Aug'],
+    'PTW Compliance Audit':['Jan','Apr'],
+    'Risk Assessment Review':['Mar','Sep'],
+    'SHEQ Legal Register Review':['Jan','Apr'],
+    'Contractor Safety Briefing':['Jan','Feb','Mar'],
+    'SHEQ Meeting':['Jan','Feb','Mar']
+  };
+  const completed2026 = {
+    'Fire Drill':['Jan'],
+    'Safety Inspection':['Jan','Feb'],
+    'Environmental Monitoring':['Jan','Feb'],
+    'SHEQ Meeting':['Jan','Feb'],
+    'Contractor Safety Briefing':['Jan','Feb'],
+    'SHEQ Legal Register Review':['Jan'],
+    'PTW Compliance Audit':['Jan']
+  };
+  Object.keys(planned2026).forEach(act => {
+    planned2026[act].forEach(m => { if(cal[2026][act]) cal[2026][act][m]='planned'; });
+  });
+  Object.keys(completed2026).forEach(act => {
+    completed2026[act].forEach(m => { if(cal[2026][act]) cal[2026][act][m]='completed'; });
+  });
+  return cal;
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function riskRating(score) {
+  if(score<=4) return 'LOW';
+  if(score<=9) return 'MEDIUM';
+  if(score<=16) return 'HIGH';
+  return 'EXTREME';
+}
+function riskCellClass(score) {
+  if(score<=4) return 'cell-green';
+  if(score<=9) return 'cell-yellow';
+  if(score<=16) return 'cell-orange';
+  return 'cell-red';
+}
+function ratingPill(rating) {
+  const map = {LOW:'pill-green',MEDIUM:'pill-yellow',HIGH:'pill-orange',EXTREME:'pill-red'};
+  return `<span class="pill ${map[rating]||'pill-gray'}">${rating}</span>`;
+}
+function sevPill(sev) {
+  const labels = {1:'CRITICAL',2:'HIGH',3:'MEDIUM',4:'LOW'};
+  const classes = {1:'pill-red',2:'pill-orange',3:'pill-yellow',4:'pill-green'};
+  return `<span class="pill ${classes[sev]||'pill-gray'}">${labels[sev]||sev}</span>`;
+}
+function statusPill(s) {
+  const map = {'COMPLIANT':'pill-green','OVERDUE':'pill-red','PENDING':'pill-yellow',
+    'Open':'pill-orange','Closed':'pill-green','CLOSED':'pill-gray',
+    'ACTIVE':'pill-green','PENDING':'pill-yellow','SUSPENDED':'pill-orange',
+    'Under Investigation':'pill-yellow','CAPA Issued':'pill-orange'};
+  return `<span class="pill ${map[s]||'pill-gray'}">${s}</span>`;
+}
+function typePill(t) {
+  const map = {SAFE:'pill-green','AT-RISK':'pill-red',IMPROVEMENT:'pill-teal'};
+  return `<span class="pill ${map[t]||'pill-gray'}">${t}</span>`;
+}
+function ptwTypeIcon(t) {
+  const icons = {'Hot Work':'🔥','Electrical':'⚡','Confined Space':'🚪','Working at Height':'🪜','Line Breaking':'🔧'};
+  return (icons[t]||'📋')+' '+t;
+}
+function fmtDate(d) { return d ? d.substring(0,10) : ''; }
+function genId(prefix, arr) {
+  const nums = arr.map(x=>parseInt((x.id||'').replace(/\D/g,''))||0);
+  const next = (Math.max(0,...nums)+1).toString().padStart(3,'0');
+  return `${prefix}-${next}`;
+}
+function truncate(s,n=50) { return s && s.length>n ? s.substring(0,n)+'…' : s||''; }
+
+// ============================================================
+// MODAL HELPERS
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.getElementById(id).style.display='flex';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.getElementById(id).style.display='none';
+}
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => { m.classList.remove('open'); m.style.display='none'; });
+});
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) closeModal(o.id); }));
+
+// ============================================================
+// PAGINATION HELPER
+// ============================================================
+function paginate(data, page, perPage=10) {
+  const total = Math.ceil(data.length/perPage);
+  const start = (page-1)*perPage;
+  return { items: data.slice(start,start+perPage), total, page, perPage };
+}
+function renderPagination(containerId, total, page, onPage) {
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  if(total<=1){ el.innerHTML=''; return; }
+  let h = `<button ${page<=1?'disabled':''} onclick="(${onPage.toString()})(${page-1})">‹</button>`;
+  for(let i=1;i<=total;i++) h+=`<button class="${i===page?'active':''}" onclick="(${onPage.toString()})(${i})">${i}</button>`;
+  h+=`<button ${page>=total?'disabled':''} onclick="(${onPage.toString()})(${page+1})">›</button>`;
+  el.innerHTML=h;
+}
+
+// ============================================================
+// PAGE NAVIGATION
+// ============================================================
+let currentPage='dashboard';
+const pageTitles = {
+  dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss',
+  incidents:'Incidents',permits:'Permit to Work',risks:'Risk Register',
+  legal:'Legal Register',calendar:'SHEQ Calendar',report:'Monthly Report',chat:'SHEQ-AI Chat'
+};
+function navigateTo(page) {
+  document.querySelectorAll('.page').forEach(p=>{ p.classList.remove('active'); p.style.display='none'; });
+  const el = document.getElementById('page-'+page);
+  if(el){ el.classList.add('active'); el.style.display= page==='chat'?'flex':'block'; }
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  const link = document.querySelector(`.nav-link[data-page="${page}"]`);
+  if(link) link.classList.add('active');
+  document.getElementById('topbar-title').textContent = pageTitles[page]||page;
+  currentPage = page;
+  if(page==='dashboard') renderDashboard();
+  else if(page==='observations') renderObservations();
+  else if(page==='nearmiss') renderNearMiss();
+  else if(page==='incidents') renderIncidents();
+  else if(page==='permits') renderPermits();
+  else if(page==='risks') renderRisks();
+  else if(page==='legal') renderLegal();
+  else if(page==='calendar') renderCalendar();
+  else if(page==='report') {}
+  else if(page==='chat') initChat();
+}
+document.querySelectorAll('.nav-link[data-page]').forEach(l => l.addEventListener('click', ()=>navigateTo(l.dataset.page)));
+document.getElementById('toggle-btn').addEventListener('click', ()=>{
+  document.getElementById('sidebar').classList.toggle('collapsed');
+});
+
+// Set date
+document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+let trendChart, ratioChart, riskBarChart;
+function renderDashboard() {
+  const d = getData();
+  const obs = d.observations||[];
+  const nm = d.nearMisses||[];
+  const inc = d.incidents||[];
+  const risks = d.risks||[];
+  // KPIs
+  document.getElementById('kpi-obs').textContent = obs.length;
+  document.getElementById('kpi-nm').textContent = nm.length;
+  document.getElementById('kpi-inc').textContent = inc.filter(x=>x.status!=='Closed'&&x.status!=='CLOSED').length;
+  const openCapas = inc.filter(x=>x.status!=='Closed'&&x.capaWhat).length + obs.filter(x=>x.capa==='Y').length;
+  document.getElementById('kpi-capa').textContent = openCapas;
+  // Trend chart
+  const trendCtx = document.getElementById('chart-trend').getContext('2d');
+  if(trendChart) trendChart.destroy();
+  trendChart = new Chart(trendCtx, {
+    type:'line',
+    data:{
+      labels:['Jan','Feb','Mar'],
+      datasets:[
+        {label:'Incidents',data:[2,1,2],borderColor:'#ff1744',backgroundColor:'rgba(255,23,68,.1)',tension:.4,fill:true},
+        {label:'Near Misses',data:[1,1,2],borderColor:'#ffab00',backgroundColor:'rgba(255,171,0,.1)',tension:.4,fill:true},
+        {label:'Observations',data:[0,0,8],borderColor:'#2979ff',backgroundColor:'rgba(41,121,255,.1)',tension:.4,fill:true}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8896b0',font:{size:11}}}},scales:{x:{ticks:{color:'#8896b0'}},y:{ticks:{color:'#8896b0'}}}}
+  });
+  // Ratio donut
+  const safe = obs.filter(x=>x.type==='SAFE').length;
+  const atrisk = obs.filter(x=>x.type==='AT-RISK').length;
+  const imp = obs.filter(x=>x.type==='IMPROVEMENT').length;
+  const ratioCtx = document.getElementById('chart-obs-ratio').getContext('2d');
+  if(ratioChart) ratioChart.destroy();
+  ratioChart = new Chart(ratioCtx, {
+    type:'doughnut',
+    data:{
+      labels:['Safe','At-Risk','Improvement'],
+      datasets:[{data:[safe,atrisk,imp],backgroundColor:['rgba(0,200,83,.7)','rgba(255,23,68,.7)','rgba(0,188,212,.7)'],borderWidth:0}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#8896b0',font:{size:11}}}}}
+  });
+  // Risk bar
+  const ratingCounts = {LOW:0,MEDIUM:0,HIGH:0,EXTREME:0};
+  risks.forEach(r=>{ if(ratingCounts[r.rRating]!==undefined) ratingCounts[r.rRating]++; });
+  const riskCtx = document.getElementById('chart-risk-bar').getContext('2d');
+  if(riskBarChart) riskBarChart.destroy();
+  riskBarChart = new Chart(riskCtx, {
+    type:'bar',
+    data:{
+      labels:['LOW','MEDIUM','HIGH','EXTREME'],
+      datasets:[{label:'Risks (Residual)',data:[ratingCounts.LOW,ratingCounts.MEDIUM,ratingCounts.HIGH,ratingCounts.EXTREME],
+        backgroundColor:['rgba(0,200,83,.7)','rgba(255,171,0,.7)','rgba(255,109,0,.7)','rgba(255,23,68,.7)'],borderRadius:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#8896b0'}},y:{ticks:{color:'#8896b0',stepSize:1}}}}
+  });
+  // Activity feed
+  const events = [];
+  obs.slice(-2).forEach(o=>events.push({color:'var(--accent)',text:`Observation ${o.id}: ${truncate(o.desc,60)}`,time:o.date,mod:'Observations'}));
+  nm.slice(-1).forEach(n=>events.push({color:'var(--yellow)',text:`Near Miss ${n.id}: ${truncate(n.desc,60)}`,time:n.date,mod:'Near Miss'}));
+  inc.slice(-2).forEach(i=>events.push({color:'var(--red)',text:`Incident ${i.id}: ${truncate(i.desc,60)}`,time:i.date,mod:'Incidents'}));
+  events.sort((a,b)=>b.time.localeCompare(a.time));
+  const feed = document.getElementById('activity-feed');
+  feed.innerHTML = events.slice(0,5).map(e=>`
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${e.color}"></div>
+      <div><div class="activity-text">${e.text}</div><div class="activity-time">${e.mod} · ${fmtDate(e.time)}</div></div>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:13px">No recent activity.</div>';
+}
+
+// ============================================================
+// OBSERVATIONS
+// ============================================================
+let obsPage=1;
+function renderObservations(page=1) {
+  obsPage=page;
+  const d = getData();
+  const search = document.getElementById('obs-search').value.toLowerCase();
+  const typeFilter = document.getElementById('obs-filter-type').value;
+  let items = (d.observations||[]).filter(o=>{
+    const matchS = !search || [o.observer,o.location,o.activity,o.desc,o.id].some(v=>(v||'').toLowerCase().includes(search));
+    const matchT = !typeFilter || o.type===typeFilter;
+    return matchS&&matchT;
+  });
+  const safe = items.filter(x=>x.type==='SAFE').length;
+  const risk = items.filter(x=>x.type==='AT-RISK').length;
+  const imp = items.filter(x=>x.type==='IMPROVEMENT').length;
+  document.getElementById('obs-stats').innerHTML=`
+    <span class="stat-chip">Total: ${items.length}</span>
+    <span class="stat-chip" style="color:var(--green)">Safe: ${safe}</span>
+    <span class="stat-chip" style="color:var(--red)">At-Risk: ${risk}</span>
+    <span class="stat-chip" style="color:var(--teal)">Improvement: ${imp}</span>`;
+  const {items:rows,total} = paginate(items,page);
+  document.getElementById('obs-tbody').innerHTML = rows.map(o=>`
+    <tr>
+      <td><strong>${o.id}</strong></td>
+      <td>${o.observer}</td>
+      <td>${fmtDate(o.date)}</td>
+      <td>${o.location}</td>
+      <td>${truncate(o.activity,30)}</td>
+      <td>${typePill(o.type)}</td>
+      <td>${o.capa==='Y'?`<span class="pill pill-orange">YES</span>`:`<span class="pill pill-gray">NO</span>`}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="viewObs('${o.id}')">View</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteObs('${o.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('obs-pagination',total,page,renderObservations);
+}
+document.getElementById('obs-search').addEventListener('input',()=>renderObservations(1));
+document.getElementById('obs-filter-type').addEventListener('change',()=>renderObservations(1));
+
+function viewObs(id) {
+  const d = getData(); const o = (d.observations||[]).find(x=>x.id===id); if(!o) return;
+  document.getElementById('view-modal-title').textContent=`Observation: ${o.id}`;
+  document.getElementById('view-modal-body').innerHTML=`
+    <table style="width:100%;font-size:13px"><tbody>
+      <tr><td style="color:var(--muted);width:140px">Observer</td><td>${o.observer}</td></tr>
+      <tr><td style="color:var(--muted)">Date</td><td>${fmtDate(o.date)}</td></tr>
+      <tr><td style="color:var(--muted)">Location</td><td>${o.location}</td></tr>
+      <tr><td style="color:var(--muted)">Activity</td><td>${o.activity}</td></tr>
+      <tr><td style="color:var(--muted)">Type</td><td>${typePill(o.type)}</td></tr>
+      <tr><td style="color:var(--muted)">Description</td><td>${o.desc}</td></tr>
+      <tr><td style="color:var(--muted)">Immediate Action</td><td>${o.action}</td></tr>
+      <tr><td style="color:var(--muted)">CAPA Required</td><td>${o.capa}</td></tr>
+      ${o.capa==='Y'?`<tr><td style="color:var(--muted)">CAPA Ref</td><td>${o.capaRef}</td></tr>`:''}
+    </tbody></table>`;
+  openModal('view-modal');
+}
+function deleteObs(id) {
+  if(!confirm('Delete observation '+id+'?')) return;
+  const d=getData(); d.observations=(d.observations||[]).filter(x=>x.id!==id); saveData(d); renderObservations(obsPage);
+}
+function saveObservation() {
+  const d=getData();
+  const obs = d.observations||[];
+  const id = genId('OBS',obs);
+  obs.push({id,observer:document.getElementById('obs-f-observer').value||'Unknown',date:document.getElementById('obs-f-date').value||new Date().toISOString().substring(0,10),location:document.getElementById('obs-f-location').value||'',activity:document.getElementById('obs-f-activity').value||'',type:document.getElementById('obs-f-type').value,desc:document.getElementById('obs-f-desc').value||'',action:document.getElementById('obs-f-action').value||'',capa:document.getElementById('obs-f-capa').value,capaRef:document.getElementById('obs-f-capa-ref').value||''});
+  d.observations=obs; saveData(d); closeModal('obs-modal');
+  document.getElementById('obs-f-observer').value=''; document.getElementById('obs-f-location').value=''; document.getElementById('obs-f-activity').value=''; document.getElementById('obs-f-desc').value=''; document.getElementById('obs-f-action').value=''; document.getElementById('obs-f-capa-ref').value=''; document.getElementById('obs-f-capa').value='N';
+  renderObservations(1);
+}
+</script>
+<script>
+// ============================================================
+// NEAR MISS
+// ============================================================
+let nmPage=1;
+function renderNearMiss(page=1) {
+  nmPage=page;
+  const d=getData();
+  const search=document.getElementById('nm-search').value.toLowerCase();
+  const sevFilter=document.getElementById('nm-filter-sev').value;
+  let items=(d.nearMisses||[]).filter(n=>{
+    const matchS=!search||[n.reporter,n.location,n.desc,n.outcome,n.id].some(v=>(v||'').toLowerCase().includes(search));
+    const matchV=!sevFilter||String(n.sev)===sevFilter;
+    return matchS&&matchV;
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('nm-tbody').innerHTML=rows.map(n=>`
+    <tr>
+      <td><strong>${n.id}</strong></td>
+      <td>${n.reporter}</td>
+      <td>${fmtDate(n.date)}</td>
+      <td>${n.location}</td>
+      <td>${truncate(n.outcome,40)}</td>
+      <td style="text-align:center">${n.hipo?'🔴':'⚪'}</td>
+      <td>${sevPill(n.sev)}</td>
+      <td>${statusPill(n.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="viewNM('${n.id}')">View</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteNM('${n.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('nm-pagination',total,page,renderNearMiss);
+}
+document.getElementById('nm-search').addEventListener('input',()=>renderNearMiss(1));
+document.getElementById('nm-filter-sev').addEventListener('change',()=>renderNearMiss(1));
+
+function viewNM(id) {
+  const d=getData(); const n=(d.nearMisses||[]).find(x=>x.id===id); if(!n) return;
+  document.getElementById('view-modal-title').textContent=`Near Miss: ${n.id}`;
+  document.getElementById('view-modal-body').innerHTML=`
+    <table style="width:100%;font-size:13px"><tbody>
+      <tr><td style="color:var(--muted);width:140px">Reporter</td><td>${n.reporter}</td></tr>
+      <tr><td style="color:var(--muted)">Date</td><td>${fmtDate(n.date)}</td></tr>
+      <tr><td style="color:var(--muted)">Location</td><td>${n.location}</td></tr>
+      <tr><td style="color:var(--muted)">Description</td><td>${n.desc}</td></tr>
+      <tr><td style="color:var(--muted)">Potential Outcome</td><td>${n.outcome}</td></tr>
+      <tr><td style="color:var(--muted)">HiPo</td><td>${n.hipo?'🔴 Yes':'⚪ No'}</td></tr>
+      <tr><td style="color:var(--muted)">Severity</td><td>${sevPill(n.sev)}</td></tr>
+      <tr><td style="color:var(--muted)">Immediate Action</td><td>${n.action}</td></tr>
+      <tr><td style="color:var(--muted)">Status</td><td>${statusPill(n.status)}</td></tr>
+    </tbody></table>`;
+  openModal('view-modal');
+}
+function deleteNM(id) {
+  if(!confirm('Delete near miss '+id+'?')) return;
+  const d=getData(); d.nearMisses=(d.nearMisses||[]).filter(x=>x.id!==id); saveData(d); renderNearMiss(nmPage);
+}
+function saveNearMiss() {
+  const d=getData(); const nm=d.nearMisses||[];
+  nm.push({id:genId('NM',nm),reporter:document.getElementById('nm-f-reporter').value||'Unknown',date:document.getElementById('nm-f-date').value||new Date().toISOString().substring(0,10),location:document.getElementById('nm-f-location').value||'',desc:document.getElementById('nm-f-desc').value||'',outcome:document.getElementById('nm-f-outcome').value||'',hipo:parseInt(document.getElementById('nm-f-hipo').value)||0,sev:parseInt(document.getElementById('nm-f-sev').value)||3,action:document.getElementById('nm-f-action').value||'',status:document.getElementById('nm-f-status').value});
+  d.nearMisses=nm; saveData(d); closeModal('nm-modal');
+  ['nm-f-reporter','nm-f-location','nm-f-desc','nm-f-outcome','nm-f-action'].forEach(id=>document.getElementById(id).value='');
+  renderNearMiss(1);
+}
+
+// ============================================================
+// INCIDENTS
+// ============================================================
+let incPage=1;
+function renderIncidents(page=1) {
+  incPage=page;
+  const d=getData();
+  const search=document.getElementById('inc-search').value.toLowerCase();
+  const sevFilter=document.getElementById('inc-filter-sev').value;
+  let items=(d.incidents||[]).filter(i=>{
+    const matchS=!search||[i.id,i.type,i.location,i.desc,i.person].some(v=>(v||'').toLowerCase().includes(search));
+    const matchV=!sevFilter||String(i.sev)===sevFilter;
+    return matchS&&matchV;
+  });
+  // KPI row
+  const total=items.length, crit=items.filter(x=>x.sev===1).length, high=items.filter(x=>x.sev===2).length, med=items.filter(x=>x.sev===3).length, low=items.filter(x=>x.sev===4).length;
+  document.getElementById('inc-kpi-row').innerHTML=`
+    <div class="kpi-card" style="--kpi-color:var(--text)"><div class="kpi-label">Total</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--red)"><div class="kpi-label">Critical</div><div class="kpi-value">${crit}</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--orange)"><div class="kpi-label">High</div><div class="kpi-value">${high}</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--yellow)"><div class="kpi-label">Medium</div><div class="kpi-value">${med}</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Low</div><div class="kpi-value">${low}</div></div>`;
+  const {items:rows,total:pages}=paginate(items,page);
+  document.getElementById('inc-tbody').innerHTML=rows.map(i=>`
+    <tr>
+      <td><strong>${i.id}</strong></td>
+      <td>${fmtDate(i.date)}</td>
+      <td>${i.type}</td>
+      <td>${sevPill(i.sev)}</td>
+      <td>${i.location}</td>
+      <td>${truncate(i.desc,40)}</td>
+      <td>${i.person}</td>
+      <td>${statusPill(i.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="viewInc('${i.id}')">View</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteInc('${i.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('inc-pagination',pages,page,renderIncidents);
+}
+document.getElementById('inc-search').addEventListener('input',()=>renderIncidents(1));
+document.getElementById('inc-filter-sev').addEventListener('change',()=>renderIncidents(1));
+
+function viewInc(id) {
+  const d=getData(); const i=(d.incidents||[]).find(x=>x.id===id); if(!i) return;
+  document.getElementById('view-modal-title').textContent=`Incident: ${i.id}`;
+  document.getElementById('view-modal-body').innerHTML=`
+    <table style="width:100%;font-size:13px"><tbody>
+      <tr><td style="color:var(--muted);width:150px">Date</td><td>${fmtDate(i.date)}</td></tr>
+      <tr><td style="color:var(--muted)">Type</td><td>${i.type}</td></tr>
+      <tr><td style="color:var(--muted)">Severity</td><td>${sevPill(i.sev)}</td></tr>
+      <tr><td style="color:var(--muted)">Location</td><td>${i.location}</td></tr>
+      <tr><td style="color:var(--muted)">Description</td><td>${i.desc}</td></tr>
+      <tr><td style="color:var(--muted)">Person Involved</td><td>${i.person}</td></tr>
+      <tr><td style="color:var(--muted)">Status</td><td>${statusPill(i.status)}</td></tr>
+      <tr><td style="color:var(--muted)">Root Cause</td><td>${i.rootCause||'—'}</td></tr>
+      <tr><td colspan="2" style="padding-top:10px;font-weight:700;color:var(--accent)">CAPA Details</td></tr>
+      <tr><td style="color:var(--muted)">WHAT</td><td>${i.capaWhat||'—'}</td></tr>
+      <tr><td style="color:var(--muted)">WHO</td><td>${i.capaWho||'—'}</td></tr>
+      <tr><td style="color:var(--muted)">WHEN</td><td>${fmtDate(i.capaWhen)||'—'}</td></tr>
+      <tr><td style="color:var(--muted)">HOW</td><td>${i.capaHow||'—'}</td></tr>
+    </tbody></table>`;
+  openModal('view-modal');
+}
+function deleteInc(id) {
+  if(!confirm('Delete incident '+id+'?')) return;
+  const d=getData(); d.incidents=(d.incidents||[]).filter(x=>x.id!==id); saveData(d); renderIncidents(incPage);
+}
+function saveIncident() {
+  const d=getData(); const inc=d.incidents||[];
+  inc.push({id:genId('INC',inc),date:document.getElementById('inc-f-date').value||new Date().toISOString().substring(0,10),type:document.getElementById('inc-f-type').value,sev:parseInt(document.getElementById('inc-f-sev').value)||3,location:document.getElementById('inc-f-location').value||'',desc:document.getElementById('inc-f-desc').value||'',person:document.getElementById('inc-f-person').value||'',status:document.getElementById('inc-f-status').value,rootCause:document.getElementById('inc-f-rootcause').value||'',capaWhat:document.getElementById('inc-f-capa-what').value||'',capaWho:document.getElementById('inc-f-capa-who').value||'',capaWhen:document.getElementById('inc-f-capa-when').value||'',capaHow:document.getElementById('inc-f-capa-how').value||''});
+  d.incidents=inc; saveData(d); closeModal('inc-modal');
+  ['inc-f-location','inc-f-desc','inc-f-person','inc-f-rootcause','inc-f-capa-what','inc-f-capa-who','inc-f-capa-when','inc-f-capa-how'].forEach(id=>document.getElementById(id).value='');
+  renderIncidents(1);
+}
+
+// ============================================================
+// PERMITS TO WORK
+// ============================================================
+let ptwPage=1;
+function renderPermits(page=1) {
+  ptwPage=page;
+  const d=getData();
+  const search=document.getElementById('ptw-search').value.toLowerCase();
+  const typeFilter=document.getElementById('ptw-filter-type').value;
+  const statusFilter=document.getElementById('ptw-filter-status').value;
+  let items=(d.permits||[]).filter(p=>{
+    const matchS=!search||[p.id,p.type,p.requestor,p.activity,p.location].some(v=>(v||'').toLowerCase().includes(search));
+    const matchT=!typeFilter||p.type===typeFilter;
+    const matchSt=!statusFilter||p.status===statusFilter;
+    return matchS&&matchT&&matchSt;
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('ptw-tbody').innerHTML=rows.map(p=>`
+    <tr>
+      <td><strong>${p.id}</strong></td>
+      <td>${ptwTypeIcon(p.type)}</td>
+      <td>${p.requestor}</td>
+      <td>${truncate(p.activity,35)}</td>
+      <td>${p.location}</td>
+      <td>${p.from?p.from.replace('T',' ').substring(0,16):''}</td>
+      <td>${p.to?p.to.replace('T',' ').substring(0,16):''}</td>
+      <td>${statusPill(p.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="viewPTW('${p.id}')">View</button>
+        ${p.status==='PENDING'?`<button class="btn btn-sm btn-success" onclick="changePTWStatus('${p.id}','ACTIVE')">Activate</button>`:''}
+        ${p.status==='ACTIVE'?`<button class="btn btn-sm btn-yellow" onclick="changePTWStatus('${p.id}','SUSPENDED')">Suspend</button><button class="btn btn-sm btn-ghost" onclick="changePTWStatus('${p.id}','CLOSED')">Close</button>`:''}
+        ${p.status==='SUSPENDED'?`<button class="btn btn-sm btn-success" onclick="changePTWStatus('${p.id}','ACTIVE')">Resume</button><button class="btn btn-sm btn-ghost" onclick="changePTWStatus('${p.id}','CLOSED')">Close</button>`:''}
+        <button class="btn btn-sm btn-danger" onclick="deletePTW('${p.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('ptw-pagination',total,page,renderPermits);
+}
+document.getElementById('ptw-search').addEventListener('input',()=>renderPermits(1));
+document.getElementById('ptw-filter-type').addEventListener('change',()=>renderPermits(1));
+document.getElementById('ptw-filter-status').addEventListener('change',()=>renderPermits(1));
+
+function changePTWStatus(id,status) {
+  const d=getData(); const p=(d.permits||[]).find(x=>x.id===id); if(!p) return;
+  p.status=status; saveData(d); renderPermits(ptwPage);
+}
+function viewPTW(id) {
+  const d=getData(); const p=(d.permits||[]).find(x=>x.id===id); if(!p) return;
+  document.getElementById('view-modal-title').textContent=`Permit: ${p.id}`;
+  document.getElementById('view-modal-body').innerHTML=`
+    <table style="width:100%;font-size:13px"><tbody>
+      <tr><td style="color:var(--muted);width:130px">Type</td><td>${ptwTypeIcon(p.type)}</td></tr>
+      <tr><td style="color:var(--muted)">Requestor</td><td>${p.requestor}</td></tr>
+      <tr><td style="color:var(--muted)">Activity</td><td>${p.activity}</td></tr>
+      <tr><td style="color:var(--muted)">Location</td><td>${p.location}</td></tr>
+      <tr><td style="color:var(--muted)">Valid From</td><td>${p.from?p.from.replace('T',' '):''}</td></tr>
+      <tr><td style="color:var(--muted)">Valid To</td><td>${p.to?p.to.replace('T',' '):''}</td></tr>
+      <tr><td style="color:var(--muted)">Precautions</td><td>${p.precautions}</td></tr>
+      <tr><td style="color:var(--muted)">Status</td><td>${statusPill(p.status)}</td></tr>
+    </tbody></table>`;
+  openModal('view-modal');
+}
+function deletePTW(id) {
+  if(!confirm('Delete permit '+id+'?')) return;
+  const d=getData(); d.permits=(d.permits||[]).filter(x=>x.id!==id); saveData(d); renderPermits(ptwPage);
+}
+function savePermit() {
+  const d=getData(); const permits=d.permits||[];
+  permits.push({id:genId('PTW',permits),type:document.getElementById('ptw-f-type').value,requestor:document.getElementById('ptw-f-requestor').value||'',activity:document.getElementById('ptw-f-activity').value||'',location:document.getElementById('ptw-f-location').value||'',from:document.getElementById('ptw-f-from').value||'',to:document.getElementById('ptw-f-to').value||'',precautions:document.getElementById('ptw-f-precautions').value||'',status:'PENDING'});
+  d.permits=permits; saveData(d); closeModal('ptw-modal');
+  ['ptw-f-requestor','ptw-f-activity','ptw-f-location','ptw-f-from','ptw-f-to','ptw-f-precautions'].forEach(id=>document.getElementById(id).value='');
+  renderPermits(1);
+}
+</script>
+<script>
+// ============================================================
+// RISK REGISTER
+// ============================================================
+let riskPage=1;
+let selectedMatrixP=null, selectedMatrixI=null;
+
+function renderRiskMatrix() {
+  const rows=[5,4,3,2,1];
+  const labels5=['Almost Certain','Likely','Possible','Unlikely','Rare'];
+  let html='';
+  rows.forEach((p,pi)=>{
+    html+=`<div class="matrix-row-label" style="font-size:10px">P${p}<br>${labels5[pi]}</div>`;
+    [1,2,3,4,5].forEach(i=>{
+      const score=p*i;
+      const cls=riskCellClass(score);
+      const sel=(selectedMatrixP===p&&selectedMatrixI===i)?'selected':'';
+      html+=`<div class="matrix-cell ${cls} ${sel}" title="P${p}×I${i}=${score}" onclick="selectMatrix(${p},${i})">${score}</div>`;
+    });
+  });
+  document.getElementById('risk-matrix-grid').style.cssText='display:grid;grid-template-columns:80px repeat(5,1fr);gap:2px;';
+  document.getElementById('risk-matrix-grid').innerHTML=html;
+}
+
+function selectMatrix(p,i) {
+  selectedMatrixP=p; selectedMatrixI=i;
+  renderRiskMatrix();
+  // Pre-fill modal
+  document.getElementById('risk-f-ip').value=p;
+  document.getElementById('risk-f-ii').value=i;
+  calcRisk('i');
+  openModal('risk-modal');
+}
+
+function calcRisk(type) {
+  if(type==='i') {
+    const p=parseInt(document.getElementById('risk-f-ip').value)||1;
+    const i=parseInt(document.getElementById('risk-f-ii').value)||1;
+    const score=p*i;
+    const rating=riskRating(score);
+    document.getElementById('risk-inherent-display').innerHTML=`Score: <strong>${score}</strong> — Rating: ${ratingPill(rating)}`;
+  } else {
+    const p=parseInt(document.getElementById('risk-f-rp').value)||1;
+    const i=parseInt(document.getElementById('risk-f-ri').value)||1;
+    const score=p*i;
+    const rating=riskRating(score);
+    document.getElementById('risk-residual-display').innerHTML=`Score: <strong>${score}</strong> — Rating: ${ratingPill(rating)}`;
+  }
+}
+
+let riskPage2=1;
+function renderRisks(page=1) {
+  riskPage2=page;
+  renderRiskMatrix();
+  const d=getData();
+  const search=document.getElementById('risk-search').value.toLowerCase();
+  const ratingFilter=document.getElementById('risk-filter-rating').value;
+  let items=(d.risks||[]).filter(r=>{
+    const matchS=!search||[r.id,r.hazard,r.category,r.owner,r.controls].some(v=>(v||'').toLowerCase().includes(search));
+    const matchR=!ratingFilter||r.rRating===ratingFilter;
+    return matchS&&matchR;
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('risk-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${truncate(r.hazard,35)}</td>
+      <td>${r.category}</td>
+      <td>${ratingPill(r.iRating)} <span style="color:var(--muted);font-size:11px">P${r.ip}×I${r.ii}=${r.iScore}</span></td>
+      <td>${truncate(r.controls,40)}</td>
+      <td>${ratingPill(r.rRating)} <span style="color:var(--muted);font-size:11px">P${r.rp}×I${r.ri}=${r.rScore}</span></td>
+      <td>${r.owner}</td>
+      <td>${statusPill(r.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="viewRisk('${r.id}')">View</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteRisk('${r.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('risk-pagination',total,page,renderRisks);
+}
+document.getElementById('risk-search').addEventListener('input',()=>renderRisks(1));
+document.getElementById('risk-filter-rating').addEventListener('change',()=>renderRisks(1));
+
+function viewRisk(id) {
+  const d=getData(); const r=(d.risks||[]).find(x=>x.id===id); if(!r) return;
+  document.getElementById('view-modal-title').textContent=`Risk: ${r.id}`;
+  document.getElementById('view-modal-body').innerHTML=`
+    <table style="width:100%;font-size:13px"><tbody>
+      <tr><td style="color:var(--muted);width:140px">Hazard</td><td>${r.hazard}</td></tr>
+      <tr><td style="color:var(--muted)">Category</td><td>${r.category}</td></tr>
+      <tr><td style="color:var(--muted)">Consequence</td><td>${r.consequence}</td></tr>
+      <tr><td style="color:var(--muted)">Inherent Risk</td><td>${ratingPill(r.iRating)} P${r.ip}×I${r.ii}=${r.iScore}</td></tr>
+      <tr><td style="color:var(--muted)">Controls</td><td>${r.controls}</td></tr>
+      <tr><td style="color:var(--muted)">Residual Risk</td><td>${ratingPill(r.rRating)} P${r.rp}×I${r.ri}=${r.rScore}</td></tr>
+      <tr><td style="color:var(--muted)">Owner</td><td>${r.owner}</td></tr>
+      <tr><td style="color:var(--muted)">Review Date</td><td>${fmtDate(r.reviewDate)}</td></tr>
+      <tr><td style="color:var(--muted)">Status</td><td>${statusPill(r.status)}</td></tr>
+    </tbody></table>`;
+  openModal('view-modal');
+}
+function deleteRisk(id) {
+  if(!confirm('Delete risk '+id+'?')) return;
+  const d=getData(); d.risks=(d.risks||[]).filter(x=>x.id!==id); saveData(d); renderRisks(riskPage2);
+}
+function saveRisk() {
+  const d=getData(); const risks=d.risks||[];
+  const ip=parseInt(document.getElementById('risk-f-ip').value)||1;
+  const ii=parseInt(document.getElementById('risk-f-ii').value)||1;
+  const rp=parseInt(document.getElementById('risk-f-rp').value)||1;
+  const ri=parseInt(document.getElementById('risk-f-ri').value)||1;
+  const iScore=ip*ii; const rScore=rp*ri;
+  risks.push({id:genId('RSK',risks),hazard:document.getElementById('risk-f-hazard').value||'',category:document.getElementById('risk-f-category').value,consequence:document.getElementById('risk-f-consequence').value||'',ip,ii,iScore,iRating:riskRating(iScore),controls:document.getElementById('risk-f-controls').value||'',rp,ri,rScore,rRating:riskRating(rScore),owner:document.getElementById('risk-f-owner').value||'',reviewDate:document.getElementById('risk-f-review').value||'',status:document.getElementById('risk-f-status').value});
+  d.risks=risks; saveData(d); closeModal('risk-modal');
+  selectedMatrixP=null; selectedMatrixI=null;
+  ['risk-f-hazard','risk-f-consequence','risk-f-controls','risk-f-owner'].forEach(id=>document.getElementById(id).value='');
+  renderRisks(1);
+}
+
+// ============================================================
+// LEGAL REGISTER
+// ============================================================
+let legalPage=1;
+function renderLegal(page=1) {
+  legalPage=page;
+  const d=getData();
+  const search=document.getElementById('legal-search').value.toLowerCase();
+  const statusFilter=document.getElementById('legal-filter-status').value;
+  let items=(d.legalItems||[]).filter(l=>{
+    const matchS=!search||[l.id,l.law,l.requirement,l.responsible].some(v=>(v||'').toLowerCase().includes(search));
+    const matchSt=!statusFilter||l.status===statusFilter;
+    return matchS&&matchSt;
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('legal-tbody').innerHTML=rows.map(l=>`
+    <tr>
+      <td><strong>${l.id}</strong></td>
+      <td>${truncate(l.law,35)}</td>
+      <td>${truncate(l.requirement,50)}</td>
+      <td>${l.responsible}</td>
+      <td>${l.freq}</td>
+      <td>${fmtDate(l.lastComplied)}</td>
+      <td>${statusPill(l.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="viewLegal('${l.id}')">View</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteLegal('${l.id}')">Delete</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('legal-pagination',total,page,renderLegal);
+}
+document.getElementById('legal-search').addEventListener('input',()=>renderLegal(1));
+document.getElementById('legal-filter-status').addEventListener('change',()=>renderLegal(1));
+
+function viewLegal(id) {
+  const d=getData(); const l=(d.legalItems||[]).find(x=>x.id===id); if(!l) return;
+  document.getElementById('view-modal-title').textContent=`Legal Item: ${l.id}`;
+  document.getElementById('view-modal-body').innerHTML=`
+    <table style="width:100%;font-size:13px"><tbody>
+      <tr><td style="color:var(--muted);width:140px">Law / Standard</td><td>${l.law}</td></tr>
+      <tr><td style="color:var(--muted)">Requirement</td><td>${l.requirement}</td></tr>
+      <tr><td style="color:var(--muted)">Responsible</td><td>${l.responsible}</td></tr>
+      <tr><td style="color:var(--muted)">Frequency</td><td>${l.freq}</td></tr>
+      <tr><td style="color:var(--muted)">Last Complied</td><td>${fmtDate(l.lastComplied)}</td></tr>
+      <tr><td style="color:var(--muted)">Status</td><td>${statusPill(l.status)}</td></tr>
+    </tbody></table>`;
+  openModal('view-modal');
+}
+function deleteLegal(id) {
+  if(!confirm('Delete legal item '+id+'?')) return;
+  const d=getData(); d.legalItems=(d.legalItems||[]).filter(x=>x.id!==id); saveData(d); renderLegal(legalPage);
+}
+function saveLegal() {
+  const d=getData(); const items=d.legalItems||[];
+  items.push({id:genId('LEG',items),law:document.getElementById('legal-f-law').value||'',requirement:document.getElementById('legal-f-req').value||'',responsible:document.getElementById('legal-f-responsible').value||'',freq:document.getElementById('legal-f-freq').value,lastComplied:document.getElementById('legal-f-last').value||'',status:document.getElementById('legal-f-status').value});
+  d.legalItems=items; saveData(d); closeModal('legal-modal');
+  ['legal-f-law','legal-f-req','legal-f-responsible','legal-f-last'].forEach(id=>document.getElementById(id).value='');
+  renderLegal(1);
+}
+
+// ============================================================
+// SHEQ CALENDAR
+// ============================================================
+const CAL_YEARS=[2026,2027,2028,2029,2030];
+const CAL_ACTIVITIES=['Fire Drill','Safety Inspection','IMS Internal Audit','Environmental Monitoring','Management Review','Emergency Drill','Medical Surveillance','PTW Compliance Audit','Risk Assessment Review','SHEQ Legal Register Review','Contractor Safety Briefing','SHEQ Meeting'];
+const CAL_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CAL_CYCLE=['blank','planned','completed','missed'];
+let calYear=2026;
+
+function renderCalendar() {
+  // Year tabs
+  document.getElementById('cal-year-tabs').innerHTML=CAL_YEARS.map(y=>`<div class="cal-tab ${y===calYear?'active':''}" onclick="calYear=${y};renderCalendar()">${y}</div>`).join('');
+  const d=getData();
+  if(!d.calendar) { d.calendar=buildDefaultCalendar(); saveData(d); }
+  if(!d.calendar[calYear]) { d.calendar[calYear]={}; CAL_ACTIVITIES.forEach(a=>{d.calendar[calYear][a]={};CAL_MONTHS.forEach(m=>{d.calendar[calYear][a][m]='blank';});}); saveData(d); }
+  let html='<table class="cal-table"><thead><tr><th class="act-label">Activity</th>';
+  CAL_MONTHS.forEach(m=>{ html+=`<th>${m}</th>`; });
+  html+='</tr></thead><tbody>';
+  CAL_ACTIVITIES.forEach(act=>{
+    html+=`<tr><td class="act-label">${act}</td>`;
+    CAL_MONTHS.forEach(m=>{
+      const st=(d.calendar[calYear][act]&&d.calendar[calYear][act][m])||'blank';
+      const label={blank:'',planned:'PLN',completed:'DONE',missed:'MISS'}[st];
+      html+=`<td><div class="cal-cell-box ${st}" onclick="cycleCal(${calYear},'${act}','${m}')">${label}</div></td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('cal-table-wrap').innerHTML=html;
+}
+
+function cycleCal(year,act,month) {
+  const d=getData();
+  if(!d.calendar) d.calendar={};
+  if(!d.calendar[year]) d.calendar[year]={};
+  if(!d.calendar[year][act]) d.calendar[year][act]={};
+  const cur=d.calendar[year][act][month]||'blank';
+  const idx=CAL_CYCLE.indexOf(cur);
+  d.calendar[year][act][month]=CAL_CYCLE[(idx+1)%CAL_CYCLE.length];
+  saveData(d);
+  renderCalendar();
+}
+</script>
+<script>
+// ============================================================
+// MONTHLY REPORT
+// ============================================================
+const MONTH_NAMES=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function generateReport() {
+  const month=document.getElementById('report-month').value;
+  const year=document.getElementById('report-year').value;
+  const topic=document.getElementById('report-topic').value;
+  const d=getData();
+  const monthNum=parseInt(month);
+  const monthName=MONTH_NAMES[monthNum];
+  const docRef=`CTRG-SHQ-RPT-MSR-${year}${month}`;
+
+  const obs=d.observations||[];
+  const nm=d.nearMisses||[];
+  const inc=d.incidents||[];
+  const risks=d.risks||[];
+  const legal=d.legalItems||[];
+  const cal=d.calendar&&d.calendar[parseInt(year)]||{};
+  const permits=d.permits||[];
+
+  // Stats
+  const totalObs=obs.length;
+  const safeObs=obs.filter(x=>x.type==='SAFE').length;
+  const atRiskObs=obs.filter(x=>x.type==='AT-RISK').length;
+  const impObs=obs.filter(x=>x.type==='IMPROVEMENT').length;
+  const totalNM=nm.length;
+  const hipoNM=nm.filter(x=>x.hipo).length;
+  const totalInc=inc.length;
+  const openInc=inc.filter(x=>x.status!=='Closed'&&x.status!=='CLOSED').length;
+  const critInc=inc.filter(x=>x.sev===1).length;
+  const highInc=inc.filter(x=>x.sev===2).length;
+  const openCapas=inc.filter(x=>x.status!=='Closed'&&x.capaWhat).length;
+  const extremeRisks=risks.filter(x=>x.rRating==='EXTREME').length;
+  const highRisks=risks.filter(x=>x.rRating==='HIGH').length;
+  const overdueLegal=legal.filter(x=>x.status==='OVERDUE').length;
+  const compliantLegal=legal.filter(x=>x.status==='COMPLIANT').length;
+  const calActs=Object.keys(cal);
+  let calPlanned=0,calCompleted=0,calMissed=0;
+  calActs.forEach(act=>{
+    CAL_MONTHS.forEach(m=>{
+      const v=cal[act]&&cal[act][m]||'blank';
+      if(v==='planned') calPlanned++;
+      else if(v==='completed') calCompleted++;
+      else if(v==='missed') calMissed++;
+    });
+  });
+  const safetyRate=totalObs>0?Math.round((safeObs/totalObs)*100):0;
+  const legalCompliance=legal.length>0?Math.round((compliantLegal/legal.length)*100):100;
+
+  // RAG helper
+  const rag=(c)=>`<span class="rag-${c}"></span>`;
+  const trend=(v,good='up')=>{
+    if(good==='up') return v>=80?'↑':v>=60?'→':'↓';
+    return v<=2?'↑':v<=5?'→':'↓';
+  };
+
+  // Topic content
+  const topicContent = {
+    'Heat Stress Management':'<p>Heat stress management is critical at CTRG given the high ambient temperatures in Ressano Garcia, Mozambique. Key controls include: mandatory hydration stations throughout the plant (minimum 500ml/hour), buddy system for outdoor workers, acclimatisation protocol for new workers and returning staff, Wet Bulb Globe Temperature (WBGT) monitoring, and suspension of non-essential outdoor work when WBGT exceeds 28°C. All workers must complete heat stress awareness training. Supervisors are empowered to stop work when heat stress risk is unacceptable. Medical surveillance includes pre-placement and periodic heat stress fitness assessments.</p>',
+    'Permit to Work Best Practices':'<p>The Permit to Work (PTW) system is a critical administrative control at CTRG. Key principles include: no work to commence without a valid, signed PTW; isolation verification by a second authorised person; pre-job safety briefing with all workers; continuous monitoring of permit conditions; immediate suspension of PTW if conditions change; formal close-out with issuing authority. Common PTW failures include: failure to verify isolation, working outside permit scope, and failure to renew expired permits. All PTW issuers must hold current PTW Authorised Person certification.</p>',
+    'Electrical Safety':'<p>Electrical safety at CTRG involves high-voltage (132kV transmission) and low-voltage distribution systems. Key controls: LOTO procedure mandatory for all electrical work; arc flash assessment completed for all switchgear; minimum approach distances enforced; only authorised persons to work on electrical equipment; arc flash PPE (minimum Category 2) worn for all HV work; annual inspection of all portable electrical equipment; RCD protection on all portable tools. Near misses involving electrical isolation failures must be reported to SHEQ immediately and trigger a stand-down.</p>',
+    'Emergency Preparedness':'<p>CTRG maintains an Emergency Response Plan (ERP) aligned with ISO 45001:2018 Clause 8.2. Emergency scenarios covered: fire/explosion, gas release, major chemical spill, medical emergency, security incident, and grid-wide blackout. Emergency Response Team (ERT) is maintained with trained First Aiders, Fire Wardens, and an Emergency Coordinator. Quarterly fire drills and semi-annual full-scale emergency exercises are conducted. The ERT contact list is posted at all control points and updated quarterly. Mutual aid agreements with local emergency services (SDPI) are maintained and reviewed annually.</p>',
+    'Chemical Handling':'<p>CTRG uses various chemicals including cooling water treatment chemicals (biocides, scale inhibitors), fuel gas conditioners, lubricants, and laboratory reagents. All chemicals are listed in the Chemical Register with Safety Data Sheets (SDS) accessible at point of use. Key controls: chemical risk assessment for each substance; PPE specified in SDS must be available and worn; spill kits positioned within 10m of chemical storage; chemical storage areas are bunded with 110% containment; incompatible chemicals are segregated; empty chemical containers are disposed of through approved waste contractor.</p>',
+    'Working at Height':'<p>Working at height (>2m) is a significant risk at CTRG due to the plant infrastructure. Key requirements: no work at height without a valid PTW; scaffold must be erected and inspected by a competent person with a green scaffold tag displayed; full body harness and lanyard mandatory for unprotected edges; harness inspection before each use; buddy system mandatory for all work at height; exclusion zone established below work area; no work at height in high winds (>40 km/h) or during lightning storms. All personnel working at height must hold a Working at Height competency certificate.</p>'
+  };
+
+  const html=`
+    <div class="report-doc" id="report-printable">
+      <div style="text-align:center;margin-bottom:20px;border-bottom:3px solid #2979ff;padding-bottom:16px">
+        <div style="font-size:22px;font-weight:800;color:#2979ff">CENTRAL TÉRMICA DE RESSANO GARCIA</div>
+        <div style="font-size:18px;font-weight:700;margin:4px 0">MONTHLY SHEQ REPORT</div>
+        <div style="font-size:14px;color:#555">Period: ${monthName} ${year}</div>
+        <div style="font-size:12px;color:#777;margin-top:4px">Document Ref: ${docRef} | Classification: Internal | SHEQ Dept → General Manager</div>
+      </div>
+
+      <h2>A. Executive Summary</h2>
+      <p>During ${monthName} ${year}, the SHEQ Department of CTRG recorded <strong>${totalObs} job observations</strong> (${safetyRate}% safe behaviours), <strong>${totalNM} near misses</strong> (${hipoNM} High Potential), and <strong>${totalInc} incidents</strong> (${openInc} open). A total of <strong>${openCapas} CAPAs</strong> remain open across all modules. The Legal Register shows <strong>${legalCompliance}% compliance</strong> with ${overdueLegal} item(s) overdue. The Risk Register contains <strong>${extremeRisks} EXTREME</strong> and <strong>${highRisks} HIGH</strong> rated residual risks requiring management attention. SHEQ Calendar compliance stands at ${calCompleted} completed activities out of ${calPlanned+calCompleted+calMissed} scheduled this year.</p>
+
+      <h2>B. Leading Indicators</h2>
+      <table>
+        <thead><tr><th>KPI</th><th>Target</th><th>Actual</th><th>RAG</th><th>Trend</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Observation Rate (obs/month)</td><td>≥8</td><td>${totalObs}</td><td>${totalObs>=8?rag('green'):totalObs>=5?rag('amber'):rag('red')}</td><td>${totalObs>=8?'↑':totalObs>=5?'→':'↓'}</td><td>${safetyRate}% safe behaviour rate</td></tr>
+          <tr><td>Near Miss Reporting Rate</td><td>≥2/month</td><td>${totalNM}</td><td>${totalNM>=2?rag('green'):totalNM>=1?rag('amber'):rag('red')}</td><td>${totalNM>=2?'↑':'→'}</td><td>${hipoNM} HiPo reported</td></tr>
+          <tr><td>PTW Compliance</td><td>100%</td><td>${permits.length>0?Math.round((permits.filter(x=>x.status!=='PENDING').length/permits.length)*100):100}%</td><td>${permits.filter(x=>x.status==='ACTIVE').length<=permits.length?rag('green'):rag('amber')}</td><td>→</td><td>${permits.filter(x=>x.status==='ACTIVE').length} active permits</td></tr>
+          <tr><td>Toolbox Talk Completion</td><td>100%</td><td>100%</td><td>${rag('green')}</td><td>↑</td><td>All operational areas covered</td></tr>
+          <tr><td>SHEQ Training Completion</td><td>≥90%</td><td>94%</td><td>${rag('green')}</td><td>↑</td><td>2 outstanding from new starters</td></tr>
+          <tr><td>Legal Compliance Rate</td><td>≥95%</td><td>${legalCompliance}%</td><td>${legalCompliance>=95?rag('green'):legalCompliance>=80?rag('amber'):rag('red')}</td><td>${legalCompliance>=95?'↑':'↓'}</td><td>${overdueLegal} item(s) overdue</td></tr>
+          <tr><td>CAPA Closure Rate</td><td>≥80%</td><td>${openCapas<=2?rag('green'):openCapas<=5?rag('amber'):rag('red')}</td><td>→</td><td>→</td><td>${openCapas} open CAPAs</td></tr>
+        </tbody>
+      </table>
+
+      <h2>C. Lagging Indicators</h2>
+      <table>
+        <thead><tr><th>Indicator</th><th>Value</th><th>Target</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Total Recordable Incident Rate (TRIR)</td><td>${(totalInc*200000/180000).toFixed(2)}</td><td>&lt;2.0</td><td>Based on ~180,000 exposure hours YTD</td></tr>
+          <tr><td>Lost Time Injury Frequency Rate (LTIFR)</td><td>${(highInc*1000000/180000).toFixed(2)}</td><td>&lt;1.0</td><td>LTIs = ${highInc} (Severity 2 events)</td></tr>
+          <tr><td>Severity Rate</td><td>${(critInc*200000/180000).toFixed(2)}</td><td>&lt;0.5</td><td>Based on critical (Severity 1) events</td></tr>
+          <tr><td>First Aid Cases</td><td>${inc.filter(x=>x.sev===4).length}</td><td>&lt;5</td><td>Low-severity FAC events</td></tr>
+          <tr><td>Environmental Incidents</td><td>${inc.filter(x=>x.type==='Environmental').length}</td><td>0</td><td>Any environmental release/spill</td></tr>
+          <tr><td>Process Safety Events</td><td>0</td><td>0</td><td>No process safety events this period</td></tr>
+        </tbody>
+      </table>
+
+      <h2>D. Incident Summary (${monthName} ${year})</h2>
+      ${inc.length>0?`<table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Type</th><th>Severity</th><th>Location</th><th>Description</th><th>Status</th></tr></thead>
+        <tbody>${inc.map(i=>`<tr><td>${i.id}</td><td>${fmtDate(i.date)}</td><td>${i.type}</td><td>Sev ${i.sev}</td><td>${i.location}</td><td>${truncate(i.desc,60)}</td><td>${i.status}</td></tr>`).join('')}</tbody>
+      </table>`:'<p style="color:#777;font-style:italic">No incidents recorded this period.</p>'}
+
+      <h2>E. Risk Register Snapshot</h2>
+      <p><em>High and Extreme rated residual risks requiring management attention:</em></p>
+      <table>
+        <thead><tr><th>Ref</th><th>Hazard</th><th>Residual Rating</th><th>Score</th><th>Owner</th><th>Status</th></tr></thead>
+        <tbody>${risks.filter(r=>r.rRating==='EXTREME'||r.rRating==='HIGH').map(r=>`<tr><td>${r.id}</td><td>${r.hazard}</td><td style="background:${r.rRating==='EXTREME'?'#ffebee':'#fff3e0'}">${r.rRating}</td><td>${r.rScore}</td><td>${r.owner}</td><td>${r.status}</td></tr>`).join('') || '<tr><td colspan="6" style="color:#777;font-style:italic">No High/Extreme risks on register.</td></tr>'}</tbody>
+      </table>
+
+      <h2>F. Legal Register Status</h2>
+      <table>
+        <thead><tr><th>Ref</th><th>Law / Standard</th><th>Frequency</th><th>Last Complied</th><th>Status</th></tr></thead>
+        <tbody>${legal.map(l=>`<tr><td>${l.id}</td><td>${l.law}</td><td>${l.freq}</td><td>${fmtDate(l.lastComplied)}</td><td style="color:${l.status==='COMPLIANT'?'#00c853':l.status==='OVERDUE'?'#ff1744':'#ffab00'}">${l.status}</td></tr>`).join('')}</tbody>
+      </table>
+
+      <h2>G. SHEQ Calendar Status (${year})</h2>
+      <table>
+        <thead><tr><th>Status</th><th>Count</th><th>%</th></tr></thead>
+        <tbody>
+          <tr><td>Completed</td><td>${calCompleted}</td><td>${calPlanned+calCompleted+calMissed>0?Math.round(calCompleted/(calPlanned+calCompleted+calMissed)*100):0}%</td></tr>
+          <tr><td>Planned (Upcoming)</td><td>${calPlanned}</td><td>${calPlanned+calCompleted+calMissed>0?Math.round(calPlanned/(calPlanned+calCompleted+calMissed)*100):0}%</td></tr>
+          <tr><td style="color:#ff1744">Missed</td><td>${calMissed}</td><td>${calPlanned+calCompleted+calMissed>0?Math.round(calMissed/(calPlanned+calCompleted+calMissed)*100):0}%</td></tr>
+        </tbody>
+      </table>
+
+      <h2>H. Open CAPAs Tracker</h2>
+      ${openCapas>0?`<table>
+        <thead><tr><th>Source</th><th>Ref</th><th>WHAT</th><th>WHO</th><th>WHEN</th><th>Status</th></tr></thead>
+        <tbody>${inc.filter(i=>i.capaWhat&&i.status!=='Closed').map(i=>`<tr><td>Incident</td><td>${i.id}</td><td>${truncate(i.capaWhat,50)}</td><td>${i.capaWho}</td><td>${fmtDate(i.capaWhen)}</td><td>${i.status}</td></tr>`).join('')}${obs.filter(o=>o.capa==='Y').map(o=>`<tr><td>Observation</td><td>${o.id}</td><td>CAPA Ref: ${o.capaRef}</td><td>—</td><td>—</td><td>Open</td></tr>`).join('')}</tbody>
+      </table>`:'<p style="color:#777;font-style:italic">No open CAPAs at this time.</p>'}
+
+      <h2>I. Focus Topic: ${topic}</h2>
+      ${topicContent[topic]||'<p>Content for this topic will be developed by the SHEQ team.</p>'}
+
+      <div style="margin-top:30px;border-top:1px solid #ddd;padding-top:16px;font-size:11px;color:#777;text-align:center">
+        Prepared by: SHEQ Department | CTRG | ${docRef} | ${monthName} ${year}<br>
+        This report is for internal use only. Distribution: General Manager, Department Heads, SHEQ Meeting Attendees.
+      </div>
+    </div>`;
+  document.getElementById('report-output').innerHTML=html;
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+document.getElementById('settings-btn').addEventListener('click',()=>openModal('settings-modal'));
+function saveApiKey() {
+  const key=document.getElementById('api-key-input').value.trim();
+  if(!key) { alert('Please enter an API key.'); return; }
+  sessionStorage.setItem('sheqai_apikey',key);
+  closeModal('settings-modal');
+  document.getElementById('api-test-result').textContent='';
+  if(currentPage==='chat') initChat();
+}
+function clearApiKey() {
+  sessionStorage.removeItem('sheqai_apikey');
+  document.getElementById('api-key-input').value='';
+  document.getElementById('api-test-result').textContent='API key cleared.';
+  if(currentPage==='chat') initChat();
+}
+async function testApiKey() {
+  const key=document.getElementById('api-key-input').value.trim()||sessionStorage.getItem('sheqai_apikey');
+  if(!key) { document.getElementById('api-test-result').textContent='No key to test.'; return; }
+  document.getElementById('api-test-result').textContent='Testing…';
+  try {
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-6',max_tokens:10,messages:[{role:'user',content:'Hi'}]})});
+    if(resp.ok) { document.getElementById('api-test-result').style.color='var(--green)'; document.getElementById('api-test-result').textContent='Connection successful!'; }
+    else { const e=await resp.json(); document.getElementById('api-test-result').style.color='var(--red)'; document.getElementById('api-test-result').textContent='Error: '+(e.error?.message||resp.statusText); }
+  } catch(e) { document.getElementById('api-test-result').style.color='var(--red)'; document.getElementById('api-test-result').textContent='Error: '+e.message; }
+}
+
+// Load saved key into field on open
+document.getElementById('settings-btn').addEventListener('click',()=>{
+  const k=sessionStorage.getItem('sheqai_apikey');
+  if(k) document.getElementById('api-key-input').value=k;
+});
+</script>
+<script>
+// ============================================================
+// CLAUDE API STREAMING
+// ============================================================
+const SHEQ_SYSTEM_PROMPT = `You are SHEQ-AI, the dedicated AI intelligence assistant of the Safety, Health, Environment & Quality (SHEQ) Department of Central Térmica de Ressano Garcia (CTRG) — a 175 MW gas-fired power generation facility in Ressano Garcia, Mozambique. The SHEQ Department reports DIRECTLY to the General Manager (GM). You assist SHEQ personnel in recording field observations, classifying events, drafting reports, generating monthly dashboards, and preparing content for the Monthly SHEQ Meeting. You are NOT a decision-maker. All risk acceptance, incident classifications, and corrective action sign-offs remain with authorised SHEQ and management personnel. You do NOT advise on compliance programme management, ABC controls, fraud prevention, or enterprise risk management. Apply the CTRG 5×5 risk matrix: Score = P(1-5) × I(1-5). Ratings: 1-4=LOW, 5-9=MEDIUM, 10-16=HIGH, 17-25=EXTREME. Write all CAPAs in WHAT/WHO/WHEN/HOW format. Use RAG (Red/Amber/Green) for KPI reporting. Reference ISO 45001:2018, ISO 14001:2015, ISO 9001:2015, ISO 31000:2018, Decreto n.º 94/2024, Lei n.º 23/2007, Lei n.º 20/2014 as applicable. Severity: 1-Critical (fatality/major env), 2-High (LTI/HiPo), 3-Medium (MTC/minor env), 4-Low (FAC/near miss low potential). When the user says "init" or "hello" respond with the activation banner showing all modules active. Report structure follows Sections A-I.`;
+
+async function streamChat(messages, apiKey, onChunk, onDone) {
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ model: 'claude-opus-4-6', max_tokens: 4096, system: SHEQ_SYSTEM_PROMPT, messages, stream: true })
+    });
+    if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || resp.statusText); }
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      for (const line of dec.decode(value).split('\n')) {
+        if (line.startsWith('data: ')) {
+          try {
+            const d = JSON.parse(line.slice(6));
+            if (d.type === 'content_block_delta' && d.delta?.type === 'text_delta') onChunk(d.delta.text);
+          } catch {}
+        }
+      }
+    }
+    onDone();
+  } catch(e) { onDone(e.message); }
+}
+
+// ============================================================
+// SHEQ-AI CHAT
+// ============================================================
+let chatMessages = [];
+let chatIsStreaming = false;
+let chatInitialized = false;
+
+function initChat() {
+  const key = sessionStorage.getItem('sheqai_apikey');
+  const noApi = document.getElementById('chat-no-api');
+  const iface = document.getElementById('chat-interface');
+  const chatPage = document.getElementById('page-chat');
+  chatPage.style.display='flex';
+  if (!key) {
+    noApi.style.display='flex';
+    iface.style.display='none';
+  } else {
+    noApi.style.display='none';
+    iface.style.display='flex';
+    iface.style.flexDirection='column';
+    iface.style.flex='1';
+    iface.style.overflow='hidden';
+    if (!chatInitialized) {
+      chatInitialized = true;
+      if(chatMessages.length===0) {
+        sendInitMessage();
+      }
+    }
+  }
+}
+
+function sendInitMessage() {
+  chatMessages = [{role:'user',content:'init'}];
+  appendUserBubble('init',true);
+  showTyping();
+  streamChat(chatMessages, sessionStorage.getItem('sheqai_apikey'), onChatChunk, onChatDone);
+}
+
+let currentAiBubble = null;
+let currentAiText = '';
+
+function appendUserBubble(text, hidden=false) {
+  if(hidden) return;
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `<div class="msg-label">You</div><div class="msg-bubble">${escapeHtml(text)}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const existing = document.getElementById('typing-indicator');
+  if(existing) existing.remove();
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-label">SHEQ-AI</div><div class="typing-dots"><span></span><span></span><span></span></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if(el) el.remove();
+}
+
+function startAiBubble() {
+  removeTyping();
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  const label = document.createElement('div');
+  label.className = 'msg-label';
+  label.textContent = 'SHEQ-AI';
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.id = 'current-ai-bubble';
+  div.appendChild(label);
+  div.appendChild(bubble);
+  msgs.appendChild(div);
+  currentAiBubble = bubble;
+  currentAiText = '';
+}
+
+function onChatChunk(text) {
+  if(!currentAiBubble) startAiBubble();
+  currentAiText += text;
+  currentAiBubble.innerHTML = formatAiText(currentAiText);
+  const msgs = document.getElementById('chat-messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function onChatDone(errMsg) {
+  chatIsStreaming = false;
+  document.getElementById('chat-send-btn').disabled = false;
+  if(errMsg) {
+    removeTyping();
+    const msgs = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.innerHTML = `<div class="msg-label">SHEQ-AI</div><div class="msg-bubble" style="color:var(--red)">Error: ${escapeHtml(errMsg)}</div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  } else {
+    if(currentAiText) {
+      chatMessages.push({role:'assistant',content:currentAiText});
+    }
+  }
+  if(currentAiBubble) { currentAiBubble.id=''; currentAiBubble=null; }
+  document.getElementById('chat-status').textContent = chatMessages.length>0?`${chatMessages.length} messages in conversation`:'';
+}
+
+function formatAiText(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px">$1</code>')
+    .replace(/\n/g,'<br>');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function sendChatMessage() {
+  if(chatIsStreaming) return;
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if(!text) return;
+  const key = sessionStorage.getItem('sheqai_apikey');
+  if(!key) { openModal('settings-modal'); return; }
+  input.value='';
+  input.style.height='auto';
+  chatMessages.push({role:'user',content:text});
+  appendUserBubble(text);
+  showTyping();
+  chatIsStreaming = true;
+  document.getElementById('chat-send-btn').disabled = true;
+  streamChat(chatMessages, key, onChatChunk, onChatDone);
+}
+
+function clearChat() {
+  chatMessages = [];
+  chatInitialized = false;
+  document.getElementById('chat-messages').innerHTML = '';
+  document.getElementById('chat-status').textContent = '';
+  currentAiBubble = null; currentAiText = '';
+  if(sessionStorage.getItem('sheqai_apikey')) {
+    sendInitMessage();
+    chatInitialized = true;
+  }
+}
+
+// Chat input events
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if(e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+});
+document.getElementById('chat-input').addEventListener('input', function() {
+  this.style.height='auto';
+  this.style.height=Math.min(this.scrollHeight,120)+'px';
+});
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  getData(); // ensure sample data loaded
+  navigateTo('dashboard');
+});
+</script>
+</body>
+</html>
