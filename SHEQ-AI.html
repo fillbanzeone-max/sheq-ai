@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SHEQ-AI | CTRG</title>
+<title>SHEQ-AI | SHEQwise</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
-:root{--bg:#0e1117;--sidebar:#161b26;--card:#1c2230;--card2:#222a3a;--border:#2a3450;--accent:#2979ff;--text:#e0e6f0;--muted:#8896b0;--green:#00c853;--yellow:#ffab00;--red:#ff1744;--orange:#ff6d00;--teal:#00bcd4;}
+:root{--bg:#f0f2f5;--sidebar:#ffffff;--card:#ffffff;--card2:#f8fafc;--border:#e2e8f0;--accent:#2563eb;--text:#1e293b;--muted:#64748b;--green:#16a34a;--yellow:#d97706;--red:#dc2626;--orange:#ea580c;--teal:#0891b2;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:14px;}
 /* SIDEBAR */
-#sidebar{width:220px;min-width:220px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .3s;}
+#sidebar{width:220px;min-width:220px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width .3s;box-shadow:2px 0 8px rgba(0,0,0,.06);}
 #sidebar.collapsed{width:54px;min-width:54px;}
 .sidebar-logo{padding:16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden;}
 .sidebar-logo .logo-icon{font-size:22px;flex-shrink:0;}
@@ -21,33 +21,33 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .nav-list{list-style:none;padding:8px 0;flex:1;overflow-y:auto;overflow-x:hidden;}
 .nav-item{position:relative;}
 .nav-link{display:flex;align-items:center;gap:12px;padding:10px 14px;cursor:pointer;border-radius:6px;margin:1px 6px;white-space:nowrap;overflow:hidden;color:var(--muted);transition:background .15s,color .15s;}
-.nav-link:hover{background:var(--card2);color:var(--text);}
-.nav-link.active{background:rgba(41,121,255,.18);color:var(--accent);}
+.nav-link:hover{background:#eff6ff;color:var(--accent);}
+.nav-link.active{background:#dbeafe;color:var(--accent);font-weight:600;}
 .nav-icon{font-size:17px;flex-shrink:0;width:22px;text-align:center;}
 .nav-label{font-size:13px;font-weight:500;}
 #sidebar.collapsed .nav-label{display:none;}
 .sidebar-footer{border-top:1px solid var(--border);padding:8px 6px;}
 /* MAIN */
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-#topbar{height:54px;background:var(--sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;}
+#topbar{height:54px;background:var(--sidebar);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 #toggle-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
 #toggle-btn:hover{color:var(--text);}
 #topbar-title{font-size:16px;font-weight:600;flex:1;}
 #topbar-date{font-size:12px;color:var(--muted);}
 #sync-status{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;display:flex;align-items:center;gap:5px;}
-#sync-status.connected{background:rgba(0,200,83,.12);color:var(--green);}
-#sync-status.disconnected{background:rgba(255,23,68,.12);color:var(--red);}
-#sync-status.syncing{background:rgba(255,171,0,.12);color:var(--yellow);}
+#sync-status.connected{background:#dcfce7;color:#15803d;}
+#sync-status.disconnected{background:#fee2e2;color:#b91c1c;}
+#sync-status.syncing{background:#fef3c7;color:#92400e;}
 /* CONTENT */
 #content{flex:1;overflow-y:auto;padding:20px;}
 .page{display:none;}
 .page.active{display:block;}
 /* CARDS */
-.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
 .card-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;}
 /* KPI CARDS */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
-.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--kpi-color,var(--accent));}
 .kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
 .kpi-value{font-size:32px;font-weight:700;color:var(--kpi-color,var(--accent));}
@@ -57,23 +57,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .chart-wrap{position:relative;height:220px;}
 /* TABLES */
 .table-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{background:var(--card2);color:var(--muted);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.5px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);}
-tbody tr{border-bottom:1px solid var(--border);}
-tbody tr:hover{background:rgba(255,255,255,.03);}
-tbody td{padding:9px 12px;vertical-align:middle;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+thead th{background:#f1f5f9;color:#475569;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.6px;padding:11px 14px;text-align:left;border-bottom:2px solid var(--border);}
+tbody tr{border-bottom:1px solid #f1f5f9;}
+tbody tr:hover{background:#f0f7ff;}
+tbody td{padding:11px 14px;vertical-align:middle;color:var(--text);line-height:1.4;}
 /* PILLS */
 .pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px;}
-.pill-green{background:rgba(0,200,83,.15);color:var(--green);}
-.pill-red{background:rgba(255,23,68,.15);color:var(--red);}
-.pill-yellow{background:rgba(255,171,0,.15);color:var(--yellow);}
-.pill-orange{background:rgba(255,109,0,.15);color:var(--orange);}
-.pill-teal{background:rgba(0,188,212,.15);color:var(--teal);}
-.pill-blue{background:rgba(41,121,255,.15);color:var(--accent);}
-.pill-gray{background:rgba(136,150,176,.15);color:var(--muted);}
+.pill-green{background:#dcfce7;color:#15803d;}
+.pill-red{background:#fee2e2;color:#b91c1c;}
+.pill-yellow{background:#fef3c7;color:#92400e;}
+.pill-orange{background:#ffedd5;color:#c2410c;}
+.pill-teal{background:#cffafe;color:#0e7490;}
+.pill-blue{background:#dbeafe;color:#1d4ed8;}
+.pill-gray{background:#f1f5f9;color:#475569;}
 /* TOOLBAR */
 .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
-.toolbar input,.toolbar select{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:13px;outline:none;}
+.toolbar input,.toolbar select{background:#fff;border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:13px;outline:none;box-shadow:0 1px 2px rgba(0,0,0,.04);}
 .toolbar input:focus,.toolbar select:focus{border-color:var(--accent);}
 .toolbar input{min-width:200px;}
 .btn{padding:7px 16px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:opacity .15s;}
@@ -91,12 +91,12 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:88vh;overflow-y:auto;}
+.modal{background:#fff;border:1px solid var(--border);border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.12);}
 .modal-title{font-size:16px;font-weight:700;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
 .modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;}
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;}
-.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:13px;outline:none;font-family:inherit;}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:#fff;border:1px solid #cbd5e1;color:var(--text);padding:9px 12px;border-radius:6px;font-size:13.5px;outline:none;font-family:inherit;}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
 .form-group textarea{min-height:72px;resize:vertical;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -119,11 +119,11 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 .matrix-header{display:flex;align-items:center;justify-content:center;padding:6px;background:var(--card2);border-radius:4px;font-weight:600;color:var(--muted);font-size:10px;text-align:center;}
 .matrix-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;font-weight:700;font-size:13px;transition:transform .1s;border:2px solid transparent;}
 .matrix-cell:hover{transform:scale(1.08);}
-.matrix-cell.selected{border-color:#fff;}
-.matrix-cell.cell-green{background:rgba(0,200,83,.25);color:var(--green);}
-.matrix-cell.cell-yellow{background:rgba(255,171,0,.25);color:var(--yellow);}
-.matrix-cell.cell-orange{background:rgba(255,109,0,.25);color:var(--orange);}
-.matrix-cell.cell-red{background:rgba(255,23,68,.25);color:var(--red);}
+.matrix-cell.selected{border-color:#1e293b;box-shadow:0 0 0 2px #1e293b;}
+.matrix-cell.cell-green{background:#bbf7d0;color:#15803d;}
+.matrix-cell.cell-yellow{background:#fef08a;color:#854d0e;}
+.matrix-cell.cell-orange{background:#fed7aa;color:#9a3412;}
+.matrix-cell.cell-red{background:#fecaca;color:#991b1b;}
 .matrix-row-label{display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;color:var(--muted);text-align:right;}
 /* CALENDAR */
 .cal-year-tabs{display:flex;gap:6px;margin-bottom:14px;}
@@ -135,10 +135,10 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 .cal-table td{padding:4px;border:1px solid var(--border);}
 .cal-table .act-label{padding:6px 10px;font-size:12px;white-space:nowrap;background:var(--card2);}
 .cal-cell-box{width:48px;height:28px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;margin:auto;transition:background .15s;}
-.cal-cell-box.blank{background:var(--card2);border:1px dashed var(--border);}
-.cal-cell-box.planned{background:rgba(41,121,255,.25);color:var(--accent);}
-.cal-cell-box.completed{background:rgba(0,200,83,.25);color:var(--green);}
-.cal-cell-box.missed{background:rgba(255,23,68,.25);color:var(--red);}
+.cal-cell-box.blank{background:#f8fafc;border:1px dashed #cbd5e1;}
+.cal-cell-box.planned{background:#dbeafe;color:#1d4ed8;}
+.cal-cell-box.completed{background:#dcfce7;color:#15803d;}
+.cal-cell-box.missed{background:#fee2e2;color:#b91c1c;}
 .cal-legend{display:flex;gap:16px;margin-top:10px;}
 .cal-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
 .cal-legend-dot{width:12px;height:12px;border-radius:3px;}
@@ -149,7 +149,7 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 .msg.ai{align-self:flex-start;align-items:flex-start;}
 .msg-bubble{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;}
 .msg.user .msg-bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px;}
-.msg.ai .msg-bubble{background:var(--card2);border:1px solid var(--border);border-bottom-left-radius:3px;}
+.msg.ai .msg-bubble{background:#f1f5f9;border:1px solid var(--border);border-bottom-left-radius:3px;color:var(--text);}
 .msg-label{font-size:10px;color:var(--muted);margin-bottom:3px;}
 .typing-dots{display:flex;gap:4px;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:12px;border-bottom-left-radius:3px;}
 .typing-dots span{width:7px;height:7px;background:var(--muted);border-radius:50%;animation:bounce .9s infinite;}
@@ -179,14 +179,15 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
 .section-title{font-size:18px;font-weight:700;}
 /* PTW status colors */
-.pill-pending{background:rgba(255,171,0,.15);color:var(--yellow);}
-.pill-active{background:rgba(0,200,83,.15);color:var(--green);}
-.pill-suspended{background:rgba(255,109,0,.15);color:var(--orange);}
-.pill-closed{background:rgba(136,150,176,.15);color:var(--muted);}
+.pill-pending{background:#fef3c7;color:#92400e;}
+.pill-active{background:#dcfce7;color:#15803d;}
+.pill-suspended{background:#ffedd5;color:#c2410c;}
+.pill-closed{background:#f1f5f9;color:#475569;}
 /* Scrollbar */
 ::-webkit-scrollbar{width:6px;height:6px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-track{background:#f1f5f9;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
 </style>
 </head>
 <body>
@@ -225,7 +226,7 @@ tbody td{padding:9px 12px;vertical-align:middle;}
 
 <!-- PAGE 1: DASHBOARD -->
 <div id="page-dashboard" class="page active">
-  <div class="section-header"><span class="section-title">Dashboard</span><span style="font-size:12px;color:var(--muted)">CTRG SHEQ Performance Overview</span></div>
+  <div class="section-header"><span class="section-title">Dashboard</span><span style="font-size:12px;color:var(--muted)">SHEQwise SHEQ Performance Overview</span></div>
   <div class="kpi-grid">
     <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">Total Observations</div><div class="kpi-value" id="kpi-obs">0</div><div class="kpi-sub">This month</div></div>
     <div class="kpi-card" style="--kpi-color:var(--yellow)"><div class="kpi-label">Near Misses</div><div class="kpi-value" id="kpi-nm">0</div><div class="kpi-sub">YTD</div></div>
@@ -1503,7 +1504,7 @@ function generateReport() {
   const d=getData();
   const monthNum=parseInt(month);
   const monthName=MONTH_NAMES[monthNum];
-  const docRef=`CTRG-SHQ-RPT-MSR-${year}${month}`;
+  const docRef=`SHEQwise-SHQ-RPT-MSR-${year}${month}`;
 
   const obs=d.observations||[];
   const nm=d.nearMisses||[];
@@ -1551,12 +1552,12 @@ function generateReport() {
 
   // Topic content
   const topicContent = {
-    'Heat Stress Management':'<p>Heat stress management is critical at CTRG given the high ambient temperatures in Ressano Garcia, Mozambique. Key controls include: mandatory hydration stations throughout the plant (minimum 500ml/hour), buddy system for outdoor workers, acclimatisation protocol for new workers and returning staff, Wet Bulb Globe Temperature (WBGT) monitoring, and suspension of non-essential outdoor work when WBGT exceeds 28°C. All workers must complete heat stress awareness training. Supervisors are empowered to stop work when heat stress risk is unacceptable. Medical surveillance includes pre-placement and periodic heat stress fitness assessments.</p>',
-    'Permit to Work Best Practices':'<p>The Permit to Work (PTW) system is a critical administrative control at CTRG. Key principles include: no work to commence without a valid, signed PTW; isolation verification by a second authorised person; pre-job safety briefing with all workers; continuous monitoring of permit conditions; immediate suspension of PTW if conditions change; formal close-out with issuing authority. Common PTW failures include: failure to verify isolation, working outside permit scope, and failure to renew expired permits. All PTW issuers must hold current PTW Authorised Person certification.</p>',
-    'Electrical Safety':'<p>Electrical safety at CTRG involves high-voltage (132kV transmission) and low-voltage distribution systems. Key controls: LOTO procedure mandatory for all electrical work; arc flash assessment completed for all switchgear; minimum approach distances enforced; only authorised persons to work on electrical equipment; arc flash PPE (minimum Category 2) worn for all HV work; annual inspection of all portable electrical equipment; RCD protection on all portable tools. Near misses involving electrical isolation failures must be reported to SHEQ immediately and trigger a stand-down.</p>',
-    'Emergency Preparedness':'<p>CTRG maintains an Emergency Response Plan (ERP) aligned with ISO 45001:2018 Clause 8.2. Emergency scenarios covered: fire/explosion, gas release, major chemical spill, medical emergency, security incident, and grid-wide blackout. Emergency Response Team (ERT) is maintained with trained First Aiders, Fire Wardens, and an Emergency Coordinator. Quarterly fire drills and semi-annual full-scale emergency exercises are conducted. The ERT contact list is posted at all control points and updated quarterly. Mutual aid agreements with local emergency services (SDPI) are maintained and reviewed annually.</p>',
-    'Chemical Handling':'<p>CTRG uses various chemicals including cooling water treatment chemicals (biocides, scale inhibitors), fuel gas conditioners, lubricants, and laboratory reagents. All chemicals are listed in the Chemical Register with Safety Data Sheets (SDS) accessible at point of use. Key controls: chemical risk assessment for each substance; PPE specified in SDS must be available and worn; spill kits positioned within 10m of chemical storage; chemical storage areas are bunded with 110% containment; incompatible chemicals are segregated; empty chemical containers are disposed of through approved waste contractor.</p>',
-    'Working at Height':'<p>Working at height (>2m) is a significant risk at CTRG due to the plant infrastructure. Key requirements: no work at height without a valid PTW; scaffold must be erected and inspected by a competent person with a green scaffold tag displayed; full body harness and lanyard mandatory for unprotected edges; harness inspection before each use; buddy system mandatory for all work at height; exclusion zone established below work area; no work at height in high winds (>40 km/h) or during lightning storms. All personnel working at height must hold a Working at Height competency certificate.</p>'
+    'Heat Stress Management':'<p>Heat stress management is critical at SHEQwise given the high ambient temperatures in Ressano Garcia, Mozambique. Key controls include: mandatory hydration stations throughout the plant (minimum 500ml/hour), buddy system for outdoor workers, acclimatisation protocol for new workers and returning staff, Wet Bulb Globe Temperature (WBGT) monitoring, and suspension of non-essential outdoor work when WBGT exceeds 28°C. All workers must complete heat stress awareness training. Supervisors are empowered to stop work when heat stress risk is unacceptable. Medical surveillance includes pre-placement and periodic heat stress fitness assessments.</p>',
+    'Permit to Work Best Practices':'<p>The Permit to Work (PTW) system is a critical administrative control at SHEQwise. Key principles include: no work to commence without a valid, signed PTW; isolation verification by a second authorised person; pre-job safety briefing with all workers; continuous monitoring of permit conditions; immediate suspension of PTW if conditions change; formal close-out with issuing authority. Common PTW failures include: failure to verify isolation, working outside permit scope, and failure to renew expired permits. All PTW issuers must hold current PTW Authorised Person certification.</p>',
+    'Electrical Safety':'<p>Electrical safety at SHEQwise involves high-voltage (132kV transmission) and low-voltage distribution systems. Key controls: LOTO procedure mandatory for all electrical work; arc flash assessment completed for all switchgear; minimum approach distances enforced; only authorised persons to work on electrical equipment; arc flash PPE (minimum Category 2) worn for all HV work; annual inspection of all portable electrical equipment; RCD protection on all portable tools. Near misses involving electrical isolation failures must be reported to SHEQ immediately and trigger a stand-down.</p>',
+    'Emergency Preparedness':'<p>SHEQwise maintains an Emergency Response Plan (ERP) aligned with ISO 45001:2018 Clause 8.2. Emergency scenarios covered: fire/explosion, gas release, major chemical spill, medical emergency, security incident, and grid-wide blackout. Emergency Response Team (ERT) is maintained with trained First Aiders, Fire Wardens, and an Emergency Coordinator. Quarterly fire drills and semi-annual full-scale emergency exercises are conducted. The ERT contact list is posted at all control points and updated quarterly. Mutual aid agreements with local emergency services (SDPI) are maintained and reviewed annually.</p>',
+    'Chemical Handling':'<p>SHEQwise uses various chemicals including cooling water treatment chemicals (biocides, scale inhibitors), fuel gas conditioners, lubricants, and laboratory reagents. All chemicals are listed in the Chemical Register with Safety Data Sheets (SDS) accessible at point of use. Key controls: chemical risk assessment for each substance; PPE specified in SDS must be available and worn; spill kits positioned within 10m of chemical storage; chemical storage areas are bunded with 110% containment; incompatible chemicals are segregated; empty chemical containers are disposed of through approved waste contractor.</p>',
+    'Working at Height':'<p>Working at height (>2m) is a significant risk at SHEQwise due to the plant infrastructure. Key requirements: no work at height without a valid PTW; scaffold must be erected and inspected by a competent person with a green scaffold tag displayed; full body harness and lanyard mandatory for unprotected edges; harness inspection before each use; buddy system mandatory for all work at height; exclusion zone established below work area; no work at height in high winds (>40 km/h) or during lightning storms. All personnel working at height must hold a Working at Height competency certificate.</p>'
   };
 
   const html=`
@@ -1569,7 +1570,7 @@ function generateReport() {
       </div>
 
       <h2>A. Executive Summary</h2>
-      <p>During ${monthName} ${year}, the SHEQ Department of CTRG recorded <strong>${totalObs} job observations</strong> (${safetyRate}% safe behaviours), <strong>${totalNM} near misses</strong> (${hipoNM} High Potential), and <strong>${totalInc} incidents</strong> (${openInc} open). A total of <strong>${openCapas} CAPAs</strong> remain open across all modules. The Legal Register shows <strong>${legalCompliance}% compliance</strong> with ${overdueLegal} item(s) overdue. The Risk Register contains <strong>${extremeRisks} EXTREME</strong> and <strong>${highRisks} HIGH</strong> rated residual risks requiring management attention. SHEQ Calendar compliance stands at ${calCompleted} completed activities out of ${calPlanned+calCompleted+calMissed} scheduled this year.</p>
+      <p>During ${monthName} ${year}, the SHEQ Department of SHEQwise recorded <strong>${totalObs} job observations</strong> (${safetyRate}% safe behaviours), <strong>${totalNM} near misses</strong> (${hipoNM} High Potential), and <strong>${totalInc} incidents</strong> (${openInc} open). A total of <strong>${openCapas} CAPAs</strong> remain open across all modules. The Legal Register shows <strong>${legalCompliance}% compliance</strong> with ${overdueLegal} item(s) overdue. The Risk Register contains <strong>${extremeRisks} EXTREME</strong> and <strong>${highRisks} HIGH</strong> rated residual risks requiring management attention. SHEQ Calendar compliance stands at ${calCompleted} completed activities out of ${calPlanned+calCompleted+calMissed} scheduled this year.</p>
 
       <h2>B. Leading Indicators</h2>
       <table>
@@ -1637,7 +1638,7 @@ function generateReport() {
       ${topicContent[topic]||'<p>Content for this topic will be developed by the SHEQ team.</p>'}
 
       <div style="margin-top:30px;border-top:1px solid #ddd;padding-top:16px;font-size:11px;color:#777;text-align:center">
-        Prepared by: SHEQ Department | CTRG | ${docRef} | ${monthName} ${year}<br>
+        Prepared by: SHEQ Department | SHEQwise | ${docRef} | ${monthName} ${year}<br>
         This report is for internal use only. Distribution: General Manager, Department Heads, SHEQ Meeting Attendees.
       </div>
     </div>`;
@@ -1683,7 +1684,7 @@ document.getElementById('settings-btn').addEventListener('click',()=>{
 // ============================================================
 // CLAUDE API STREAMING
 // ============================================================
-const SHEQ_SYSTEM_PROMPT = `You are SHEQ-AI, the dedicated AI intelligence assistant of the Safety, Health, Environment & Quality (SHEQ) Department of Central Térmica de Ressano Garcia (CTRG) — a 175 MW gas-fired power generation facility in Ressano Garcia, Mozambique. The SHEQ Department reports DIRECTLY to the General Manager (GM). You assist SHEQ personnel in recording field observations, classifying events, drafting reports, generating monthly dashboards, and preparing content for the Monthly SHEQ Meeting. You are NOT a decision-maker. All risk acceptance, incident classifications, and corrective action sign-offs remain with authorised SHEQ and management personnel. You do NOT advise on compliance programme management, ABC controls, fraud prevention, or enterprise risk management. Apply the CTRG 5×5 risk matrix: Score = P(1-5) × I(1-5). Ratings: 1-4=LOW, 5-9=MEDIUM, 10-16=HIGH, 17-25=EXTREME. Write all CAPAs in WHAT/WHO/WHEN/HOW format. Use RAG (Red/Amber/Green) for KPI reporting. Reference ISO 45001:2018, ISO 14001:2015, ISO 9001:2015, ISO 31000:2018, Decreto n.º 94/2024, Lei n.º 23/2007, Lei n.º 20/2014 as applicable. Severity: 1-Critical (fatality/major env), 2-High (LTI/HiPo), 3-Medium (MTC/minor env), 4-Low (FAC/near miss low potential). When the user says "init" or "hello" respond with the activation banner showing all modules active. Report structure follows Sections A-I.`;
+const SHEQ_SYSTEM_PROMPT = `You are SHEQ-AI, the dedicated AI intelligence assistant of the Safety, Health, Environment & Quality (SHEQ) Department of SHEQwise — a 175 MW gas-fired power generation facility in Ressano Garcia, Mozambique. The SHEQ Department reports DIRECTLY to the General Manager (GM). You assist SHEQ personnel in recording field observations, classifying events, drafting reports, generating monthly dashboards, and preparing content for the Monthly SHEQ Meeting. You are NOT a decision-maker. All risk acceptance, incident classifications, and corrective action sign-offs remain with authorised SHEQ and management personnel. You do NOT advise on compliance programme management, ABC controls, fraud prevention, or enterprise risk management. Apply the SHEQwise 5×5 risk matrix: Score = P(1-5) × I(1-5). Ratings: 1-4=LOW, 5-9=MEDIUM, 10-16=HIGH, 17-25=EXTREME. Write all CAPAs in WHAT/WHO/WHEN/HOW format. Use RAG (Red/Amber/Green) for KPI reporting. Reference ISO 45001:2018, ISO 14001:2015, ISO 9001:2015, ISO 31000:2018, Decreto n.º 94/2024, Lei n.º 23/2007, Lei n.º 20/2014 as applicable. Severity: 1-Critical (fatality/major env), 2-High (LTI/HiPo), 3-Medium (MTC/minor env), 4-Low (FAC/near miss low potential). When the user says "init" or "hello" respond with the activation banner showing all modules active. Report structure follows Sections A-I.`;
 
 async function streamChat(messages, apiKey, onChunk, onDone) {
   try {
