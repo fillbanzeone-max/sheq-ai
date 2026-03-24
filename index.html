@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SHEQ-AI | Central Térmica de Ressano Garcia</title>
+  <title>SHEQ-AI | GRCentral</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     /* ============================================================
@@ -1959,7 +1959,7 @@
     <div class="sidebar-logo-icon">🛡️</div>
     <div class="sidebar-logo-text">
       <span class="sidebar-logo-title">SHEQ-AI</span>
-      <span class="sidebar-logo-sub">CTRG</span>
+      <span class="sidebar-logo-sub">GRCentral</span>
     </div>
   </div>
   <ul class="nav-list">
@@ -1993,7 +1993,7 @@
 <!-- ===== MAIN ===== -->
 <div id="main">
   <div id="topbar">
-    <button id="toggle-btn" title="Toggle sidebar">☰</button>
+    <button id="toggle-btn" class="sidebar-toggle-btn" title="Toggle sidebar">☰</button>
     <span id="topbar-title">Dashboard</span>
     <span style="flex:1"></span>
     <span id="topbar-date"></span>
@@ -2660,7 +2660,7 @@
 
 <!-- VIEW MODAL -->
 <div class="modal-overlay" id="view-modal">
-  <div class="modal" style="width:640px">
+  <div class="modal" style="max-width:640px;width:100%">
     <div class="modal-title" id="view-modal-title">Details <button class="modal-close" onclick="closeModal('view-modal')">✕</button></div>
     <div id="view-modal-body"></div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('view-modal')">Close</button></div>
@@ -2897,6 +2897,63 @@ function capaBadge(capaRef, d){
 }
 
 // ============================================================
+// VIEW MODAL (read-only record detail)
+// ============================================================
+function viewTable(rows){
+  return '<table style="width:100%;border-collapse:collapse">'+rows.map(([k,v])=>`<tr><td style="padding:6px 10px;font-weight:600;color:var(--muted);width:38%;border-bottom:1px solid var(--border);vertical-align:top;white-space:nowrap">${escapeHtml(String(k))}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${v}</td></tr>`).join('')+'</table>';
+}
+function openView(module,id){
+  const d=getData()||getDefaultData();
+  let title='',body='';
+  if(module==='obs'){
+    const r=(d.observations||[]).find(x=>x.id===id);if(!r)return;
+    title='Observation: '+escapeHtml(r.id);
+    body=viewTable([['ID',escapeHtml(r.id)],['Observer',escapeHtml(r.observer||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Activity',escapeHtml(r.activity||'')],['Type',typePill(r.type)],['Description',escapeHtml(r.desc||'')],['Immediate Action',escapeHtml(r.action||'')],['CAPA Required',r.capa],['Priority',priorityPill(r.priority)],['CAPA',capaBadge(r.capaRef,d)]]);
+  } else if(module==='nm'){
+    const r=(d.nearMisses||[]).find(x=>x.id===id);if(!r)return;
+    title='Near Miss: '+escapeHtml(r.id);
+    body=viewTable([['ID',escapeHtml(r.id)],['Reporter',escapeHtml(r.reporter||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Potential Outcome',escapeHtml(r.outcome||'')],['HiPo',r.hipo?'<span class="pill pill-red">Yes</span>':'<span class="pill pill-gray">No</span>'],['Severity',sevPill(r.sev)],['Status',statusPill(r.status)],['Action Taken',escapeHtml(r.action||'')],['CAPA',capaBadge(r.capaRef,d)]]);
+  } else if(module==='inc'){
+    const r=(d.incidents||[]).find(x=>x.id===id);if(!r)return;
+    title='Incident: '+escapeHtml(r.id);
+    body=viewTable([['ID',escapeHtml(r.id)],['Date',fmtDate(r.date)],['Type',escapeHtml(r.type||'')],['Severity',sevPill(r.sev)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Person Involved',escapeHtml(r.person||'')],['Root Cause',escapeHtml(r.rootCause||'')],['Status',statusPill(r.status)],['CAPA',capaBadge(r.capaRef,d)]]);
+  } else if(module==='ptw'){
+    const r=(d.permits||[]).find(x=>x.id===id);if(!r)return;
+    title='Permit: '+escapeHtml(r.id);
+    body=viewTable([['ID',escapeHtml(r.id)],['Type',ptwTypeIcon(r.type)],['Requestor',escapeHtml(r.requestor||'')],['Activity',escapeHtml(r.activity||'')],['Location',escapeHtml(r.location||'')],['Valid From',r.from?r.from.replace('T',' ').substring(0,16):'—'],['Valid To',r.to?r.to.replace('T',' ').substring(0,16):'—'],['Status',statusPill(getPTWStatus(r))],['Precautions',escapeHtml(r.precautions||'')],['Hazard',escapeHtml(r.hazard||'')],['Inherent Risk',r.iScore+' — '+ratingPill(r.iRating)],['Controls',escapeHtml(r.controls||'')],['Residual Risk',r.rScore+' — '+ratingPill(r.rRating)],['PPE Required',escapeHtml((r.ppe||[]).join(', ')||'None')],['Isolation Required',r.isolation==='Y'?'Yes':'No'],['CAPA',capaBadge(r.capaRef,d)]]);
+  } else if(module==='risk'){
+    const r=(d.risks||[]).find(x=>x.id===id);if(!r)return;
+    title='Risk: '+escapeHtml(r.id);
+    body=viewTable([['ID',escapeHtml(r.id)],['Hazard',escapeHtml(r.hazard||'')],['Category',escapeHtml(r.category||'')],['Consequence',escapeHtml(r.consequence||'')],['Inherent Risk',r.iScore+' — '+ratingPill(r.iRating)],['Controls',escapeHtml(r.controls||'')],['Residual Risk',r.rScore+' — '+ratingPill(r.rRating)],['Owner',escapeHtml(r.owner||'')],['Review Date',fmtDate(r.reviewDate)||'—'],['Status',statusPill(r.status)],['CAPA',capaBadge(r.capaRef,d)]]);
+  } else if(module==='capa'){
+    const r=(d.capas||[]).find(x=>x.id===id);if(!r)return;
+    title='CAPA: '+escapeHtml(r.id);
+    body=viewTable([['CAPA ID',escapeHtml(r.id)],['Source Module',escapeHtml(r.source_module||'')],['Source Ref',escapeHtml(r.source_ref||'')],['WHAT',escapeHtml(r.what||'')],['WHO',escapeHtml(r.who||'')],['WHEN',fmtDate(r.when)||'—'],['HOW',escapeHtml(r.how||'')],['Priority',priorityPill(r.priority)],['Status',statusPill(r.status)],['Created',fmtDate(r.created)],['Closed Date',fmtDate(r.closed_date)||'—'],['Evidence',escapeHtml(r.evidence||'')]]);
+  }
+  document.getElementById('view-modal-title').textContent=title;
+  document.getElementById('view-modal-body').innerHTML=body;
+  openModal('view-modal');
+}
+
+// ============================================================
+// FORM VALIDATION
+// ============================================================
+function validateRequired(fields){
+  for(const [id,label] of fields){
+    const el=document.getElementById(id);if(!el)continue;
+    const val=(el.value||'').trim();
+    if(!val){
+      el.focus();
+      el.style.outline='2px solid var(--red)';
+      setTimeout(()=>{el.style.outline='';},2500);
+      alert(label+' is required.');
+      return false;
+    }
+  }
+  return true;
+}
+
+// ============================================================
 // MODAL HELPERS
 // ============================================================
 function openModal(id){const el=document.getElementById(id);if(el){el.classList.add('open');el.style.display='flex';}}
@@ -3046,6 +3103,7 @@ function editObs(id){
   openModal('obs-modal');
 }
 function saveObservation(){
+  if(!validateRequired([['obs-f-observer','Observer Name'],['obs-f-date','Date'],['obs-f-desc','Description']]))return;
   let d=getData();if(!d){d=getDefaultData();}
   d.observations=d.observations||[];
   const editId=document.getElementById('obs-f-edit-id').value;
@@ -3080,7 +3138,7 @@ function saveObservation(){
   }
   saveData(d);closeModal('obs-modal');renderObservations(1);
 }
-function deleteObs(id){if(!confirm('Delete observation '+id+'?'))return;let d=getData();d.observations=(d.observations||[]).filter(x=>x.id!==id);saveData(d);renderObservations(obsPage);}
+function deleteObs(id){const d=getData()||getDefaultData();const o=(d.observations||[]).find(x=>x.id===id);if(!confirm('Delete observation '+id+(o?': '+truncate(o.desc,50):'')+'\nThis cannot be undone.'))return;d.observations=(d.observations||[]).filter(x=>x.id!==id);saveData(d);renderObservations(obsPage);}
 function renderObservations(page=1){
   obsPage=page;
   let d=getData()||getDefaultData();
@@ -3103,6 +3161,7 @@ function renderObservations(page=1){
       <td data-label="Description">${truncate(o.desc,45)}</td>
       <td data-label="CAPA">${capaBadge(o.capaRef,d)}</td>
       <td data-label="Actions">
+        <button class="btn btn-sm btn-ghost" onclick="openView('obs','${o.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editObs('${o.id}')">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="deleteObs('${o.id}')">Del</button>
       </td>
@@ -3127,6 +3186,7 @@ function openAddNM(){
   openModal('nm-modal');
 }
 function saveNearMiss(){
+  if(!validateRequired([['nm-f-reporter','Reporter Name'],['nm-f-date','Date'],['nm-f-desc','Description']]))return;
   let d=getData();if(!d)d=getDefaultData();d.nearMisses=d.nearMisses||[];
   const editId=document.getElementById('nm-f-edit-id').value;
   const capaReq=document.getElementById('nm-f-capa').value==='Y';
@@ -3152,7 +3212,7 @@ function saveNearMiss(){
   }
   saveData(d);closeModal('nm-modal');renderNearMiss(1);
 }
-function deleteNM(id){if(!confirm('Delete near miss '+id+'?'))return;let d=getData();d.nearMisses=(d.nearMisses||[]).filter(x=>x.id!==id);saveData(d);renderNearMiss(nmPage);}
+function deleteNM(id){const d=getData()||getDefaultData();const n=(d.nearMisses||[]).find(x=>x.id===id);if(!confirm('Delete near miss '+id+(n?': '+truncate(n.outcome||n.desc,50):'')+'\nThis cannot be undone.'))return;d.nearMisses=(d.nearMisses||[]).filter(x=>x.id!==id);saveData(d);renderNearMiss(nmPage);}
 function renderNearMiss(page=1){
   nmPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('nm-search').value||'').toLowerCase();
@@ -3174,6 +3234,7 @@ function renderNearMiss(page=1){
       <td data-label="Severity">${sevPill(n.sev)}</td>
       <td data-label="Status">${statusPill(n.status)}</td>
       <td data-label="Actions">
+        <button class="btn btn-sm btn-ghost" onclick="openView('nm','${n.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editNM('${n.id}')">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="deleteNM('${n.id}')">Del</button>
       </td>
@@ -3218,6 +3279,7 @@ function openAddInc(){
   openModal('inc-modal');
 }
 function saveIncident(){
+  if(!validateRequired([['inc-f-date','Date'],['inc-f-location','Location'],['inc-f-desc','Description']]))return;
   let d=getData();if(!d)d=getDefaultData();d.incidents=d.incidents||[];
   const editId=document.getElementById('inc-f-edit-id').value;
   const capaWhat=document.getElementById('inc-f-capa-what').value||'';
@@ -3245,7 +3307,7 @@ function saveIncident(){
   }
   saveData(d);closeModal('inc-modal');renderIncidents(1);
 }
-function deleteInc(id){if(!confirm('Delete incident '+id+'?'))return;let d=getData();d.incidents=(d.incidents||[]).filter(x=>x.id!==id);saveData(d);renderIncidents(incPage);}
+function deleteInc(id){const d=getData()||getDefaultData();const i=(d.incidents||[]).find(x=>x.id===id);if(!confirm('Delete incident '+id+(i?': '+truncate(i.desc,50):'')+'\nThis cannot be undone.'))return;d.incidents=(d.incidents||[]).filter(x=>x.id!==id);saveData(d);renderIncidents(incPage);}
 function editInc(id){
   const d=getData()||getDefaultData();const i=(d.incidents||[]).find(x=>x.id===id);if(!i)return;
   document.getElementById('inc-modal-title').textContent='Edit Incident';
@@ -3294,6 +3356,7 @@ function renderIncidents(page=1){
       <td data-label="Status">${statusPill(i.status)}</td>
       <td data-label="CAPA">${capaBadge(i.capaRef,d)}</td>
       <td data-label="Actions">
+        <button class="btn btn-sm btn-ghost" onclick="openView('inc','${i.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editInc('${i.id}')">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="deleteInc('${i.id}')">Del</button>
       </td>
@@ -3334,6 +3397,7 @@ function openAddPTW(){
   openModal('ptw-modal');
 }
 function savePermit(){
+  if(!validateRequired([['ptw-f-requestor','Requestor'],['ptw-f-activity','Activity'],['ptw-f-from','Valid From'],['ptw-f-to','Valid To']]))return;
   let d=getData();if(!d)d=getDefaultData();d.permits=d.permits||[];
   const editId=document.getElementById('ptw-f-edit-id').value;
   const ip=parseInt(document.getElementById('ptw-f-ip').value)||1,ii=parseInt(document.getElementById('ptw-f-ii').value)||1;
@@ -3393,7 +3457,7 @@ function editPTW(id){
   openModal('ptw-modal');
 }
 function changePTWStatus(id,status){let d=getData();const p=(d.permits||[]).find(x=>x.id===id);if(!p)return;p.status=status;saveData(d);renderPermits(ptwPage);}
-function deletePTW(id){if(!confirm('Delete permit '+id+'?'))return;let d=getData();d.permits=(d.permits||[]).filter(x=>x.id!==id);saveData(d);renderPermits(ptwPage);}
+function deletePTW(id){const d=getData()||getDefaultData();const p=(d.permits||[]).find(x=>x.id===id);if(!confirm('Delete permit '+id+(p?' — '+truncate(p.activity,50):'')+'\nThis cannot be undone.'))return;d.permits=(d.permits||[]).filter(x=>x.id!==id);saveData(d);renderPermits(ptwPage);}
 function renderPermits(page=1){
   ptwPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('ptw-search').value||'').toLowerCase();
@@ -3419,6 +3483,7 @@ function renderPermits(page=1){
       <td data-label="Status">${statusPill(es)}</td>
       <td data-label="CAPA">${capaBadge(p.capaRef,d)}</td>
       <td data-label="Actions">
+        <button class="btn btn-sm btn-ghost" onclick="openView('ptw','${p.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editPTW('${p.id}')">Edit</button>
         ${es==='PENDING'?`<button class="btn btn-sm btn-success" onclick="changePTWStatus('${p.id}','ACTIVE')">Activate</button>`:''}
         ${es==='ACTIVE'?`<button class="btn btn-sm btn-ghost" onclick="changePTWStatus('${p.id}','CLOSED')">Close</button>`:''}
@@ -3464,6 +3529,7 @@ function calcRisk(type){
   else{const p=parseInt(document.getElementById('risk-f-rp').value)||1,i=parseInt(document.getElementById('risk-f-ri').value)||1,s=p*i;document.getElementById('risk-residual-display').innerHTML=`Score: <strong>${s}</strong> — ${ratingPill(riskRating(s))}`;}
 }
 function saveRisk(){
+  if(!validateRequired([['risk-f-hazard','Hazard Description'],['risk-f-owner','Risk Owner']]))return;
   let d=getData();if(!d)d=getDefaultData();d.risks=d.risks||[];
   const editId=document.getElementById('risk-f-edit-id').value;
   const ip=parseInt(document.getElementById('risk-f-ip').value)||1,ii=parseInt(document.getElementById('risk-f-ii').value)||1;
@@ -3510,7 +3576,7 @@ function editRisk(id){
   selP=r.ip||null;selI=r.ii||null;renderRiskMatrix();
   openModal('risk-modal');
 }
-function deleteRisk(id){if(!confirm('Delete risk '+id+'?'))return;let d=getData();d.risks=(d.risks||[]).filter(x=>x.id!==id);saveData(d);renderRisks();renderRiskMatrix();}
+function deleteRisk(id){const d=getData()||getDefaultData();const r=(d.risks||[]).find(x=>x.id===id);if(!confirm('Delete risk '+id+(r?' — '+truncate(r.hazard,50):'')+'\nThis cannot be undone.'))return;d.risks=(d.risks||[]).filter(x=>x.id!==id);saveData(d);renderRisks();renderRiskMatrix();}
 function renderRisks(page=1){
   riskPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('risk-search').value||'').toLowerCase();
@@ -3535,6 +3601,7 @@ function renderRisks(page=1){
       <td>${statusPill(r.status)}</td>
       <td>${capaBadge(r.capaRef,d)}</td>
       <td>
+        <button class="btn btn-sm btn-ghost" onclick="openView('risk','${r.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editRisk('${r.id}')">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="deleteRisk('${r.id}')">Del</button>
       </td>
@@ -3550,6 +3617,7 @@ document.getElementById('risk-filter-cat').addEventListener('change',()=>renderR
 // ============================================================
 let legalPage=1;
 function saveLegal(){
+  if(!validateRequired([['legal-f-law','Law / Standard'],['legal-f-req','Requirement']]))return;
   let d=getData();if(!d)d=getDefaultData();d.legalItems=d.legalItems||[];
   const editId=document.getElementById('legal-f-edit-id').value;
   const rec={
@@ -3565,7 +3633,7 @@ function saveLegal(){
   else d.legalItems.push(rec);
   saveData(d);closeModal('legal-modal');renderLegal(1);
 }
-function deleteLegal(id){if(!confirm('Delete item '+id+'?'))return;let d=getData();d.legalItems=(d.legalItems||[]).filter(x=>x.id!==id);saveData(d);renderLegal(legalPage);}
+function deleteLegal(id){const d=getData()||getDefaultData();const l=(d.legalItems||[]).find(x=>x.id===id);if(!confirm('Delete legal item '+id+(l?' — '+truncate(l.requirement,50):'')+'\nThis cannot be undone.'))return;d.legalItems=(d.legalItems||[]).filter(x=>x.id!==id);saveData(d);renderLegal(legalPage);}
 function editLegal(id){
   const d=getData()||getDefaultData();const l=(d.legalItems||[]).find(x=>x.id===id);if(!l)return;
   document.getElementById('legal-f-edit-id').value=id;
@@ -3690,6 +3758,7 @@ function editCapa(id){
   openModal('capa-modal');
 }
 function saveCapa(){
+  if(!validateRequired([['capa-f-what','WHAT (Action Description)'],['capa-f-who','WHO (Responsible)'],['capa-f-when','WHEN (Target Date)']]))return;
   let d=getData();if(!d)d=getDefaultData();d.capas=d.capas||[];
   const editId=document.getElementById('capa-f-edit-id').value;
   const rec={
@@ -3710,7 +3779,7 @@ function saveCapa(){
   else d.capas.push(rec);
   saveData(d);closeModal('capa-modal');renderCapas(1);
 }
-function deleteCapa(id){if(!confirm('Delete CAPA '+id+'?'))return;let d=getData();d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);}
+function deleteCapa(id){const d=getData()||getDefaultData();const c=(d.capas||[]).find(x=>x.id===id);if(!confirm('Delete CAPA '+id+(c?' — '+truncate(c.what,50):'')+'\nThis cannot be undone.'))return;d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);}
 function renderCapas(page=1){
   capaPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('capa-search').value||'').toLowerCase();
@@ -3749,6 +3818,7 @@ function renderCapas(page=1){
       <td>${statusPill(c.status)}</td>
       <td class="num">${dOpen}</td>
       <td>
+        <button class="btn btn-sm btn-ghost" onclick="openView('capa','${c.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editCapa('${c.id}')">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="deleteCapa('${c.id}')">Del</button>
       </td>
@@ -3809,11 +3879,11 @@ function generateReport(){
   let calCompleted=0,calPlanned=0,calMissed=0;
   Object.values(calData).forEach(actData=>{const s=actData[calMonthKey];if(s==='completed')calCompleted++;else if(s==='planned')calPlanned++;else if(s==='missed')calMissed++;});
 
-  const docRef=`CTRG-SHQ-RPT-MSR-${month.toString().padStart(2,'0')}-${year}`;
+  const docRef=`GRC-SHQ-RPT-MSR-${month.toString().padStart(2,'0')}-${year}`;
 
   const html=`<div class="report-doc">
     <h1>🛡️ Monthly SHEQ Report</h1>
-    <p style="text-align:center;color:#666;font-size:12px">Central Térmica de Ressano Garcia | ${monthName} ${year}</p>
+    <p style="text-align:center;color:#666;font-size:12px">GRCentral | ${monthName} ${year}</p>
     <hr style="border:2px solid #2563eb;margin:12px 0">
 
     <h2>A. Executive Summary</h2>
@@ -3881,7 +3951,7 @@ function generateReport(){
 
     <div style="margin-top:30px;border-top:2px solid #2563eb;padding-top:12px;font-size:11px;color:#777;text-align:center">
       ${docRef} | ${monthName} ${year} | CONFIDENTIAL<br>
-      Prepared by SHEQ Department | Central Térmica de Ressano Garcia | Distribution: General Manager, Department Heads, SHEQ Meeting Attendees
+      Prepared by SHEQ Department | GRCentral | Distribution: General Manager, Department Heads, SHEQ Meeting Attendees
     </div>
   </div>`;
   document.getElementById('report-output').innerHTML=html;
@@ -3995,7 +4065,7 @@ function exportCSV(module){
 // ============================================================
 // CLAUDE API STREAMING CHAT
 // ============================================================
-const SHEQ_SYSTEM_PROMPT=`You are SHEQ-AI, the dedicated AI intelligence assistant of the Safety, Health, Environment & Quality (SHEQ) Department of Central Térmica de Ressano Garcia (CTRG) — a 175 MW gas-fired power generation facility in Ressano Garcia, Mozambique. The SHEQ Department reports DIRECTLY to the General Manager (GM). You assist SHEQ personnel in recording field observations, classifying events, drafting reports, generating monthly dashboards, and preparing content for the Monthly SHEQ Meeting. Apply the CTRG 5×5 risk matrix: Score = P(1–5) × I(1–5). Ratings: 1–4=LOW, 5–9=MEDIUM, 10–16=HIGH, 17–25=EXTREME. Write all CAPAs in WHAT/WHO/WHEN/HOW format. Use RAG (Red/Amber/Green) for KPI reporting. Reference ISO 45001:2018, ISO 14001:2015, ISO 9001:2015, ISO 31000:2018, Decreto n.º 94/2024, Lei n.º 23/2007, Lei n.º 20/2014 as applicable. Severity: 1-Critical (fatality/major env), 2-High (LTI/HiPo), 3-Medium (MTC/minor env), 4-Low (FAC/near miss low potential). When the user says "init" or "hello" respond with the SHEQ-AI activation banner listing all active modules.`;
+const SHEQ_SYSTEM_PROMPT=`You are SHEQ-AI, the dedicated AI intelligence assistant of the Safety, Health, Environment & Quality (SHEQ) Department of GRCentral — a 175 MW gas-fired power generation facility in Ressano Garcia, Mozambique. The SHEQ Department reports DIRECTLY to the General Manager (GM). You assist SHEQ personnel in recording field observations, classifying events, drafting reports, generating monthly dashboards, and preparing content for the Monthly SHEQ Meeting. Apply the GRCentral 5×5 risk matrix: Score = P(1–5) × I(1–5). Ratings: 1–4=LOW, 5–9=MEDIUM, 10–16=HIGH, 17–25=EXTREME. Write all CAPAs in WHAT/WHO/WHEN/HOW format. Use RAG (Red/Amber/Green) for KPI reporting. Reference ISO 45001:2018, ISO 14001:2015, ISO 9001:2015, ISO 31000:2018, Decreto n.º 94/2024, Lei n.º 23/2007, Lei n.º 20/2014 as applicable. Severity: 1-Critical (fatality/major env), 2-High (LTI/HiPo), 3-Medium (MTC/minor env), 4-Low (FAC/near miss low potential). When the user says "init" or "hello" respond with the SHEQ-AI activation banner listing all active modules.`;
 
 async function streamChat(messages,apiKey,onChunk,onDone){
   try{
