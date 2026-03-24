@@ -778,6 +778,8 @@
     tbody tr.row-amber:hover { background: #fef3c7; }
     tbody tr.row-green       { background: #f0fdf4; }
     tbody tr.row-green:hover { background: #dcfce7; }
+    tbody tr.selected        { background: #eff6ff !important; outline: 2px solid var(--accent); outline-offset: -2px; }
+    tbody tr.selected:hover  { background: #dbeafe !important; }
 
     /* ============================================================
        TOOLBAR
@@ -1519,6 +1521,16 @@
       padding: var(--sp-3);
       text-align: center;
       margin: var(--sp-3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-1);
+    }
+
+    .no-api-icon {
+      font-size: 2.5rem;
+      line-height: 1;
+      margin-bottom: var(--sp-1);
     }
 
     .no-api-card h3 {
@@ -1944,8 +1956,11 @@
 <!-- ===== SIDEBAR ===== -->
 <nav id="sidebar">
   <div class="sidebar-logo">
-    <span class="logo-icon">🛡️</span>
-    <span class="logo-text">SHEQ-AI</span>
+    <div class="sidebar-logo-icon">🛡️</div>
+    <div class="sidebar-logo-text">
+      <span class="sidebar-logo-title">SHEQ-AI</span>
+      <span class="sidebar-logo-sub">CTRG</span>
+    </div>
   </div>
   <ul class="nav-list">
     <li class="nav-item"><div class="nav-link active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></div></li>
@@ -2114,7 +2129,7 @@
     <span class="section-title">Risk Register</span>
     <div class="section-header-right">
       <button class="btn btn-ghost btn-sm" onclick="exportCSV('risk')">⬇ CSV</button>
-      <button class="btn btn-primary" onclick="openModal('risk-modal')">+ Add Risk</button>
+      <button class="btn btn-primary" onclick="openAddRisk()">+ Add Risk</button>
     </div>
   </div>
   <div class="card matrix-wrap">
@@ -2434,7 +2449,7 @@
 
 <!-- PTW MODAL -->
 <div class="modal-overlay" id="ptw-modal">
-  <div class="modal" style="width:640px">
+  <div class="modal" style="max-width:640px;width:100%">
     <div class="modal-title" id="ptw-modal-title">Add Permit to Work <button class="modal-close" onclick="closeModal('ptw-modal')">✕</button></div>
     <div class="form-row">
       <div class="form-group"><label>Type</label>
@@ -2521,7 +2536,7 @@
 <!-- RISK MODAL -->
 <div class="modal-overlay" id="risk-modal">
   <div class="modal">
-    <div class="modal-title">Add Risk <button class="modal-close" onclick="closeModal('risk-modal')">✕</button></div>
+    <div class="modal-title" id="risk-modal-title">Add Risk <button class="modal-close" onclick="closeModal('risk-modal')">✕</button></div>
     <div class="form-row">
       <div class="form-group"><label>Hazard</label><input type="text" id="risk-f-hazard" placeholder="e.g. Rotating machinery"></div>
       <div class="form-group"><label>Category</label>
@@ -2664,12 +2679,15 @@ function getData() {
 }
 
 function saveData(d) {
-  try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch(e) { console.error('Save failed',e); }
-  updateSyncStatus();
+  let saveOk=true;
+  try { localStorage.setItem(LS_KEY, JSON.stringify(d)); }
+  catch(e) { saveOk=false; console.error('Save failed',e); }
+  updateSyncStatus(saveOk);
 }
 
-function updateSyncStatus() {
+function updateSyncStatus(saveOk=true) {
   const el = document.getElementById('sync-status');
+  if(!saveOk){el.className='offline';el.textContent='⬤ Storage Full — Export & clear data';return;}
   const d = getData();
   const total = ((d.observations||[]).length + (d.nearMisses||[]).length + (d.incidents||[]).length + (d.permits||[]).length + (d.risks||[]).length + (d.capas||[]).length);
   const key = sessionStorage.getItem('sheqai_apikey');
@@ -2875,7 +2893,7 @@ function capaBadge(capaRef, d){
   const c = (d.capas||[]).find(x=>x.id===capaRef);
   if(!c) return `<span class="pill pill-gray" style="cursor:pointer" onclick="navigateTo('capa')">${capaRef}</span>`;
   const cls = c.status==='Closed'?'pill-green':c.status==='Overdue'?'pill-red':c.status==='In Progress'?'pill-blue':'pill-orange';
-  return `<span class="pill ${cls}" style="cursor:pointer" title="${c.what||''}" onclick="highlightCapa('${capaRef}')">${capaRef}</span>`;
+  return `<span class="pill ${cls}" style="cursor:pointer" title="${escapeHtml(c.what||'')}" onclick="highlightCapa('${escapeHtml(capaRef)}')">${escapeHtml(capaRef)}</span>`;
 }
 
 // ============================================================
@@ -2954,7 +2972,7 @@ function renderDashboard(){
   document.getElementById('kpi-capa').textContent=openCapa;
   document.getElementById('kpi-capa-od').textContent=overdCapa;
   // Color overdue KPI red if > 0
-  document.querySelector('[id="kpi-capa-od"]').closest('.kpi-card').style.setProperty('--kpi-color', overdCapa>0?'var(--red)':'var(--green)');
+  document.getElementById('kpi-capa-od').closest('.kpi-card').style.setProperty('--kpi-color', overdCapa>0?'var(--red)':'var(--green)');
 
   // Incident trend chart (last 6 months)
   const months=[];const incCounts=[];
@@ -2982,9 +3000,9 @@ function renderDashboard(){
 
   // Activity feed
   const feed=[];
-  (d.incidents||[]).slice(-3).reverse().forEach(i=>feed.push({color:'#ef4444',text:`Incident ${i.id}: ${truncate(i.desc,50)}`,time:fmtDate(i.date)}));
-  (d.nearMisses||[]).slice(-2).reverse().forEach(n=>feed.push({color:'#f97316',text:`Near Miss ${n.id}: ${truncate(n.outcome,50)}`,time:fmtDate(n.date)}));
-  (d.observations||[]).slice(-3).reverse().forEach(o=>feed.push({color:'#22c55e',text:`Observation ${o.id}: ${truncate(o.desc,50)}`,time:fmtDate(o.date)}));
+  (d.incidents||[]).slice(-3).reverse().forEach(i=>feed.push({color:'#ef4444',text:`Incident ${escapeHtml(i.id)}: ${escapeHtml(truncate(i.desc,50))}`,time:fmtDate(i.date)}));
+  (d.nearMisses||[]).slice(-2).reverse().forEach(n=>feed.push({color:'#f97316',text:`Near Miss ${escapeHtml(n.id)}: ${escapeHtml(truncate(n.outcome,50))}`,time:fmtDate(n.date)}));
+  (d.observations||[]).slice(-3).reverse().forEach(o=>feed.push({color:'#22c55e',text:`Observation ${escapeHtml(o.id)}: ${escapeHtml(truncate(o.desc,50))}`,time:fmtDate(o.date)}));
   document.getElementById('dash-activity').innerHTML=feed.slice(0,8).map(f=>`<div class="activity-item"><div class="activity-dot" style="background:${f.color}"></div><div><div class="activity-text">${f.text}</div><div class="activity-time">${f.time}</div></div></div>`).join('');
 }
 
@@ -3156,7 +3174,7 @@ function renderNearMiss(page=1){
       <td data-label="Severity">${sevPill(n.sev)}</td>
       <td data-label="Status">${statusPill(n.status)}</td>
       <td data-label="Actions">
-        <button class="btn btn-sm btn-ghost" onclick="openAddNM();editNM('${n.id}')">Edit</button>
+        <button class="btn btn-sm btn-ghost" onclick="editNM('${n.id}')">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="deleteNM('${n.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -3177,6 +3195,8 @@ function editNM(id){
   document.getElementById('nm-f-status').value=n.status||'Open';
   document.getElementById('nm-f-capa').value=n.capa||'N';
   document.getElementById('nm-f-priority').value=n.priority||'Medium';
+  document.getElementById('nm-capa-fields').style.display=n.capa==='Y'?'block':'none';
+  openModal('nm-modal');
 }
 document.getElementById('nm-search').addEventListener('input',()=>renderNearMiss(1));
 document.getElementById('nm-filter-sev').addEventListener('change',()=>renderNearMiss(1));
@@ -3259,7 +3279,8 @@ function renderIncidents(page=1){
     <div class="kpi-card" style="--kpi-color:var(--text)"><div class="kpi-label">Total</div><div class="kpi-value">${total2}</div></div>
     <div class="kpi-card" style="--kpi-color:var(--red)"><div class="kpi-label">Critical</div><div class="kpi-value">${crit}</div></div>
     <div class="kpi-card" style="--kpi-color:var(--orange)"><div class="kpi-label">High</div><div class="kpi-value">${high}</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--yellow)"><div class="kpi-label">Medium</div><div class="kpi-value">${med}</div></div>`;
+    <div class="kpi-card" style="--kpi-color:var(--yellow)"><div class="kpi-label">Medium</div><div class="kpi-value">${med}</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Low</div><div class="kpi-value">${low}</div></div>`;
   const {items:rows,total}=paginate(items,page);
   document.getElementById('inc-tbody').innerHTML=rows.map(i=>`
     <tr>
@@ -3345,6 +3366,32 @@ function savePermit(){
   }
   saveData(d);closeModal('ptw-modal');renderPermits(1);
 }
+function editPTW(id){
+  const d=getData()||getDefaultData();const p=(d.permits||[]).find(x=>x.id===id);if(!p)return;
+  document.getElementById('ptw-modal-title').textContent='Edit Permit to Work';
+  document.getElementById('ptw-f-edit-id').value=id;
+  document.getElementById('ptw-f-type').value=p.type||'Hot Work';
+  document.getElementById('ptw-f-requestor').value=p.requestor||'';
+  document.getElementById('ptw-f-activity').value=p.activity||'';
+  document.getElementById('ptw-f-location').value=p.location||'';
+  document.getElementById('ptw-f-from').value=p.from||'';
+  document.getElementById('ptw-f-to').value=p.to||'';
+  document.getElementById('ptw-f-precautions').value=p.precautions||'';
+  document.getElementById('ptw-f-hazard').value=p.hazard||'';
+  document.getElementById('ptw-f-ip').value=p.ip||1;
+  document.getElementById('ptw-f-ii').value=p.ii||1;
+  calcPTWRisk('i');
+  document.getElementById('ptw-f-controls').value=p.controls||'';
+  document.getElementById('ptw-f-rp').value=p.rp||1;
+  document.getElementById('ptw-f-ri').value=p.ri||1;
+  calcPTWRisk('r');
+  ['hardhat','glasses','gloves','boots','harness','fr','resp','face','other'].forEach(id=>{const el=document.getElementById('ppe-'+id);if(el)el.checked=(p.ppe||[]).includes(id);});
+  document.getElementById('ptw-f-isolation').value=p.isolation||'N';
+  document.getElementById('ptw-f-emergency').value=p.emergency||'N';
+  document.getElementById('ptw-f-capa').value=p.capa||'N';
+  document.getElementById('ptw-f-priority').value=p.priority||'Medium';
+  openModal('ptw-modal');
+}
 function changePTWStatus(id,status){let d=getData();const p=(d.permits||[]).find(x=>x.id===id);if(!p)return;p.status=status;saveData(d);renderPermits(ptwPage);}
 function deletePTW(id){if(!confirm('Delete permit '+id+'?'))return;let d=getData();d.permits=(d.permits||[]).filter(x=>x.id!==id);saveData(d);renderPermits(ptwPage);}
 function renderPermits(page=1){
@@ -3372,6 +3419,7 @@ function renderPermits(page=1){
       <td data-label="Status">${statusPill(es)}</td>
       <td data-label="CAPA">${capaBadge(p.capaRef,d)}</td>
       <td data-label="Actions">
+        <button class="btn btn-sm btn-ghost" onclick="editPTW('${p.id}')">Edit</button>
         ${es==='PENDING'?`<button class="btn btn-sm btn-success" onclick="changePTWStatus('${p.id}','ACTIVE')">Activate</button>`:''}
         ${es==='ACTIVE'?`<button class="btn btn-sm btn-ghost" onclick="changePTWStatus('${p.id}','CLOSED')">Close</button>`:''}
         <button class="btn btn-sm btn-danger" onclick="deletePTW('${p.id}')">Del</button>
@@ -3397,7 +3445,20 @@ function renderRiskMatrix(){
   });
   document.getElementById('risk-matrix-grid').innerHTML=h;
 }
-function selectMatrix(p,i){selP=p;selI=i;renderRiskMatrix();document.getElementById('risk-f-ip').value=p;document.getElementById('risk-f-ii').value=i;calcRisk('i');openModal('risk-modal');}
+function openAddRisk(){
+  document.getElementById('risk-modal-title').textContent='Add Risk';
+  document.getElementById('risk-f-edit-id').value='';
+  ['risk-f-hazard','risk-f-controls','risk-f-owner','risk-f-review'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  if(document.getElementById('risk-f-consequence'))document.getElementById('risk-f-consequence').value='';
+  document.getElementById('risk-f-category').value='Safety';
+  document.getElementById('risk-f-ip').value='1';document.getElementById('risk-f-ii').value='1';
+  document.getElementById('risk-f-rp').value='1';document.getElementById('risk-f-ri').value='1';
+  calcRisk('i');calcRisk('r');
+  document.getElementById('risk-f-status').value='Open';document.getElementById('risk-f-capa').value='N';
+  selP=null;selI=null;renderRiskMatrix();
+  openModal('risk-modal');
+}
+function selectMatrix(p,i){selP=p;selI=i;renderRiskMatrix();document.getElementById('risk-f-ip').value=p;document.getElementById('risk-f-ii').value=i;calcRisk('i');document.getElementById('risk-modal-title').textContent='Add Risk';document.getElementById('risk-f-edit-id').value='';openModal('risk-modal');}
 function calcRisk(type){
   if(type==='i'){const p=parseInt(document.getElementById('risk-f-ip').value)||1,i=parseInt(document.getElementById('risk-f-ii').value)||1,s=p*i;document.getElementById('risk-inherent-display').innerHTML=`Score: <strong>${s}</strong> — ${ratingPill(riskRating(s))}`;}
   else{const p=parseInt(document.getElementById('risk-f-rp').value)||1,i=parseInt(document.getElementById('risk-f-ri').value)||1,s=p*i;document.getElementById('risk-residual-display').innerHTML=`Score: <strong>${s}</strong> — ${ratingPill(riskRating(s))}`;}
@@ -3428,6 +3489,27 @@ function saveRisk(){
   }
   saveData(d);closeModal('risk-modal');renderRisks();renderRiskMatrix();
 }
+function editRisk(id){
+  const d=getData()||getDefaultData();const r=(d.risks||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('risk-modal-title').textContent='Edit Risk';
+  document.getElementById('risk-f-edit-id').value=id;
+  document.getElementById('risk-f-hazard').value=r.hazard||'';
+  document.getElementById('risk-f-category').value=r.category||'Safety';
+  if(document.getElementById('risk-f-consequence'))document.getElementById('risk-f-consequence').value=r.consequence||'';
+  document.getElementById('risk-f-ip').value=r.ip||1;
+  document.getElementById('risk-f-ii').value=r.ii||1;
+  calcRisk('i');
+  document.getElementById('risk-f-controls').value=r.controls||'';
+  document.getElementById('risk-f-rp').value=r.rp||1;
+  document.getElementById('risk-f-ri').value=r.ri||1;
+  calcRisk('r');
+  document.getElementById('risk-f-owner').value=r.owner||'';
+  document.getElementById('risk-f-review').value=r.reviewDate||'';
+  document.getElementById('risk-f-status').value=r.status||'Open';
+  document.getElementById('risk-f-capa').value=r.capa||'N';
+  selP=r.ip||null;selI=r.ii||null;renderRiskMatrix();
+  openModal('risk-modal');
+}
 function deleteRisk(id){if(!confirm('Delete risk '+id+'?'))return;let d=getData();d.risks=(d.risks||[]).filter(x=>x.id!==id);saveData(d);renderRisks();renderRiskMatrix();}
 function renderRisks(page=1){
   riskPage=page;let d=getData()||getDefaultData();
@@ -3452,7 +3534,10 @@ function renderRisks(page=1){
       <td>${r.owner}</td>
       <td>${statusPill(r.status)}</td>
       <td>${capaBadge(r.capaRef,d)}</td>
-      <td><button class="btn btn-sm btn-danger" onclick="deleteRisk('${r.id}')">Del</button></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editRisk('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteRisk('${r.id}')">Del</button>
+      </td>
     </tr>`).join('');
   renderPagination('risk-pagination',total,page,renderRisks);
 }
@@ -3524,7 +3609,7 @@ document.getElementById('legal-filter-status').addEventListener('change',()=>ren
 // ============================================================
 // SHEQ CALENDAR
 // ============================================================
-let calYear=2026;
+let calYear=new Date().getFullYear();
 function renderCalendar(){
   let d=getData()||getDefaultData();
   const cal=d.calendar||buildDefaultCalendar();
@@ -3628,7 +3713,6 @@ function saveCapa(){
 function deleteCapa(id){if(!confirm('Delete CAPA '+id+'?'))return;let d=getData();d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);}
 function renderCapas(page=1){
   capaPage=page;let d=getData()||getDefaultData();
-  autoMarkOverdue(d);
   const search=(document.getElementById('capa-search').value||'').toLowerCase();
   const sf=document.getElementById('capa-filter-source').value;
   const stf=document.getElementById('capa-filter-status').value;
@@ -3802,8 +3886,14 @@ function generateReport(){
   </div>`;
   document.getElementById('report-output').innerHTML=html;
 }
-// Pre-select current month
-(()=>{const n=new Date();document.getElementById('report-month').value=n.getMonth()+1;document.getElementById('report-year').value=n.getFullYear();})();
+// Pre-select current month and build year options dynamically
+(()=>{
+  const n=new Date();const y=n.getFullYear();
+  const sel=document.getElementById('report-year');
+  sel.innerHTML='';
+  for(let yr=y-2;yr<=y+3;yr++){const o=document.createElement('option');o.value=yr;o.textContent=yr;if(yr===y)o.selected=true;sel.appendChild(o);}
+  document.getElementById('report-month').value=n.getMonth()+1;
+})();
 
 // ============================================================
 // SETTINGS
@@ -3845,8 +3935,20 @@ function importJSON(){
     const file=e.target.files[0];if(!file)return;
     const reader=new FileReader();
     reader.onload=ev=>{
-      try{const data=JSON.parse(ev.target.result);saveData(data);document.getElementById('import-result').style.color='#16a34a';document.getElementById('import-result').textContent='✓ Data imported successfully! ('+Object.keys(data).length+' sections)';navigateTo(currentPage);}
-      catch(err){document.getElementById('import-result').style.color='#dc2626';document.getElementById('import-result').textContent='Error: Invalid JSON file.';}
+      try{
+        const data=JSON.parse(ev.target.result);
+        const REQUIRED_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','calendar'];
+        const missing=REQUIRED_KEYS.filter(k=>!(k in data));
+        if(missing.length&&!data.initialized){throw new Error('Not a valid SHEQ-AI backup file.');}
+        const safe={initialized:true};
+        REQUIRED_KEYS.forEach(k=>{safe[k]=Array.isArray(data[k])||typeof data[k]==='object'?data[k]:[];});
+        if(data.calendar&&typeof data.calendar==='object')safe.calendar=data.calendar;
+        saveData(safe);
+        document.getElementById('import-result').style.color='#16a34a';
+        document.getElementById('import-result').textContent='✓ Data imported successfully! ('+Object.keys(safe).length+' sections)';
+        navigateTo(currentPage);
+      }
+      catch(err){document.getElementById('import-result').style.color='#dc2626';document.getElementById('import-result').textContent='Error: '+(err.message||'Invalid JSON file.');}
     };reader.readAsText(file);
   };inp.click();
 }
