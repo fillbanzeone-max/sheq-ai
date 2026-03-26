@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <style>
     /* ============================================================
        GOOGLE FONTS
@@ -1810,6 +1811,44 @@
 
 </head>
 <body>
+
+<!-- ===== LOGIN OVERLAY ===== -->
+<div id="login-overlay" style="display:flex;position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#1e3a5f 0%,#0f2240 100%);align-items:center;justify-content:center;flex-direction:column;gap:0">
+  <div style="background:#fff;border-radius:16px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:2.4rem;margin-bottom:8px">🛡️</div>
+      <div style="font-size:1.3rem;font-weight:700;color:#1e293b">SHEQ-AI</div>
+      <div style="font-size:.85rem;color:#475569;margin-top:2px">GRCentral — Sign in to continue</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:.8rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">Email</label>
+      <input id="login-email" type="email" placeholder="you@company.com" autocomplete="username"
+        style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:.8rem;font-weight:600;color:#374151;display:block;margin-bottom:4px">Password</label>
+      <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"
+        style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:.9rem;outline:none;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')loginSubmit()">
+    </div>
+    <div id="login-error" style="display:none;background:#fee2e2;color:#b91c1c;font-size:.8rem;padding:8px 12px;border-radius:6px;margin-bottom:14px"></div>
+    <button onclick="loginSubmit()" id="login-btn"
+      style="width:100%;padding:11px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer">
+      Sign In
+    </button>
+    <p style="text-align:center;font-size:.75rem;color:#94a3b8;margin-top:18px;margin-bottom:0">
+      Contact your SHEQ Manager to request access.
+    </p>
+  </div>
+</div>
+
+<!-- ===== TOAST NOTIFICATION ===== -->
+<div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:8888;display:flex;flex-direction:column;gap:8px;pointer-events:none"></div>
+
+<!-- ===== OVERDUE BANNER ===== -->
+<div id="overdue-banner" style="display:none;background:#fef3c7;border-bottom:2px solid #f59e0b;padding:8px 20px;font-size:.82rem;color:#92400e;font-weight:500;text-align:center;position:sticky;top:0;z-index:100"></div>
+
 <!-- ===== SIDEBAR ===== -->
 <nav id="sidebar">
   <div class="sidebar-logo">
@@ -1853,7 +1892,9 @@
     <span style="flex:1"></span>
     <span id="topbar-date"></span>
     <span id="sync-status" class="loading">⬤ Loading…</span>
+    <span id="topbar-user" style="font-size:.78rem;color:var(--muted);display:none"></span>
     <button class="btn btn-ghost btn-sm" id="settings-btn-top" onclick="openModal('settings-modal')">⚙️</button>
+    <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="logOut()" title="Sign out" style="display:none">⏏ Sign Out</button>
   </div>
 
   <div id="content">
@@ -2634,6 +2675,72 @@ const _db = firebase.database();
 const FB_PATH = 'sheqai/data';
 let _fbConnected = false;
 let _fbReady = false;
+let currentUser = null;
+
+// ============================================================
+// AUTH FUNCTIONS
+// ============================================================
+function loginSubmit(){
+  const email=(document.getElementById('login-email').value||'').trim();
+  const pass=document.getElementById('login-pass').value||'';
+  const errEl=document.getElementById('login-error');
+  const btn=document.getElementById('login-btn');
+  errEl.style.display='none';
+  if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.style.display='block';return;}
+  btn.disabled=true;btn.textContent='Signing in…';
+  firebase.auth().signInWithEmailAndPassword(email,pass)
+    .catch(err=>{
+      btn.disabled=false;btn.textContent='Sign In';
+      const msgs={
+        'auth/user-not-found':'No account found with that email.',
+        'auth/wrong-password':'Incorrect password.',
+        'auth/invalid-credential':'Incorrect email or password.',
+        'auth/too-many-requests':'Too many failed attempts. Please try again later.',
+        'auth/invalid-email':'Invalid email address.'
+      };
+      errEl.textContent=msgs[err.code]||'Sign in failed: '+err.message;
+      errEl.style.display='block';
+    });
+}
+
+function logOut(){
+  if(!confirm('Sign out?'))return;
+  firebase.auth().signOut();
+}
+
+// ============================================================
+// TOAST + BANNER
+// ============================================================
+function showToast(msg,type='info',duration=4500){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  const bg=type==='error'?'#dc2626':type==='warn'?'#d97706':type==='success'?'#16a34a':'#1e293b';
+  t.style.cssText=`background:${bg};color:#fff;padding:10px 16px;border-radius:8px;font-size:.83rem;font-weight:500;
+    box-shadow:0 4px 16px rgba(0,0,0,.2);pointer-events:auto;cursor:pointer;max-width:320px;line-height:1.4`;
+  t.textContent=msg;
+  t.onclick=()=>t.remove();
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),duration);
+}
+
+function showOverdueBanner(count){
+  const b=document.getElementById('overdue-banner');
+  if(count>0){
+    b.textContent=`⚠ ${count} CAPA${count>1?'s are':' is'} overdue. Review the CAPA Tracker.`;
+    b.style.display='block';
+  } else {
+    b.style.display='none';
+  }
+}
+
+function checkBackupReminder(){
+  const lastExport=localStorage.getItem('sheqai_last_export');
+  if(!lastExport)return;
+  const days=Math.floor((Date.now()-parseInt(lastExport))/(1000*60*60*24));
+  if(days>30){
+    showToast(`Last data export was ${days} days ago. Consider backing up via Settings → Export Data.`,'warn',8000);
+  }
+}
 
 // ============================================================
 // DATA LAYER — localStorage + Firebase
@@ -3107,7 +3214,8 @@ function saveObservation(){
     rcaWho:document.getElementById('obs-f-capa-who').value||'',
     rcaWhen:document.getElementById('obs-f-capa-when').value||'',
     rcaHow:document.getElementById('obs-f-capa-how').value||'',
-    capaRef:''
+    capaRef:'',
+    createdBy:currentUser?.email||''
   };
   if(editId){
     const idx=d.observations.findIndex(x=>x.id===editId);
@@ -3193,7 +3301,8 @@ function saveNearMiss(){
     rcaWhat:document.getElementById('nm-f-capa-what').value||'',
     rcaWho:document.getElementById('nm-f-capa-who').value||'',
     rcaWhen:document.getElementById('nm-f-capa-when').value||'',
-    capaRef:''
+    capaRef:'',
+    createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.nearMisses.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.nearMisses[idx].capaRef||'';d.nearMisses[idx]=rec;}}
   else{
@@ -3292,7 +3401,8 @@ function saveIncident(){
     capaWhen:document.getElementById('inc-f-capa-when').value||'',
     capaHow:document.getElementById('inc-f-capa-how').value||'',
     priority:document.getElementById('inc-f-priority').value,
-    capaRef:''
+    capaRef:'',
+    createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.incidents.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.incidents[idx].capaRef||'';d.incidents[idx]=rec;}}
   else{
@@ -3424,7 +3534,8 @@ function savePermit(){
     rcaWhat:document.getElementById('ptw-f-capa-what').value||'',
     rcaWho:document.getElementById('ptw-f-capa-who').value||'',
     rcaWhen:document.getElementById('ptw-f-capa-when').value||'',
-    capaRef:''
+    capaRef:'',
+    createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.permits.findIndex(x=>x.id===editId);if(idx>=0){rec.status=d.permits[idx].status;rec.capaRef=d.permits[idx].capaRef||'';d.permits[idx]=rec;}}
   else{
@@ -3563,7 +3674,8 @@ function saveRisk(){
     rcaWhat:document.getElementById('risk-f-capa-what').value||'',
     rcaWho:document.getElementById('risk-f-capa-who').value||'',
     rcaWhen:document.getElementById('risk-f-capa-when').value||'',
-    capaRef:''
+    capaRef:'',
+    createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.risks.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.risks[idx].capaRef||'';d.risks[idx]=rec;}}
   else{
@@ -3795,7 +3907,8 @@ function saveCapa(){
     status:document.getElementById('capa-f-status').value,
     created:document.getElementById('capa-f-created').value||today(),
     closed_date:document.getElementById('capa-f-closed-date').value||'',
-    evidence:document.getElementById('capa-f-evidence').value||''
+    evidence:document.getElementById('capa-f-evidence').value||'',
+    createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.capas.findIndex(x=>x.id===editId);if(idx>=0)d.capas[idx]=rec;else d.capas.push(rec);}
   else d.capas.push(rec);
@@ -4019,6 +4132,8 @@ function exportJSON(){
   const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download=`sheqai-backup-${today()}.json`;a.click();URL.revokeObjectURL(url);
+  localStorage.setItem('sheqai_last_export',Date.now().toString());
+  showToast('Backup saved — sheqai-backup-'+today()+'.json','success',3500);
 }
 function importJSON(){
   const inp=document.createElement('input');inp.type='file';inp.accept='.json';
@@ -4044,8 +4159,14 @@ function importJSON(){
   };inp.click();
 }
 function resetData(){
-  if(!confirm('Reset ALL data? This cannot be undone.'))return;
+  const typed=prompt('Type DELETE to confirm resetting ALL data. This cannot be undone.');
+  if(typed!=='DELETE'){
+    if(typed!==null)alert('Reset cancelled — you must type DELETE exactly.');
+    return;
+  }
   localStorage.removeItem(LS_KEY);
+  localStorage.removeItem('sheqai_last_export');
+  if(_fbReady){_db.ref(FB_PATH).remove().catch(()=>{});}
   location.reload();
 }
 
@@ -4087,47 +4208,86 @@ function exportCSV(module){
 // INIT
 // ============================================================
 window.addEventListener('DOMContentLoaded',()=>{
+  const overlay=document.getElementById('login-overlay');
   const syncEl=document.getElementById('sync-status');
   syncEl.className='loading';syncEl.textContent='⬤ Connecting…';
 
-  // Boot immediately from localStorage for instant display
-  let d=getData();
-  if(!d||!d.initialized){ d=getDefaultData(); localStorage.setItem(LS_KEY,JSON.stringify(d)); }
-  autoMarkOverdue(d);
-  const k=sessionStorage.getItem('sheqai_apikey');
-  if(k)document.getElementById('api-key-input').value=k;
-  updateSyncStatus();
-  navigateTo('dashboard');
-  document.getElementById('mobile-nav').style.display='';
+  let _firebaseListenersStarted=false;
 
-  // Firebase connection state monitor
-  _db.ref('.info/connected').on('value', snap=>{
-    _fbConnected = snap.val()===true;
-    if(!_fbConnected) _fbReady=false;
-    updateSyncStatus();
-  });
-
-  // Firebase real-time sync listener
-  _db.ref(FB_PATH).on('value', snap=>{
-    _fbReady=true;
-    const fbData=snap.val();
-    if(!fbData||!fbData.initialized){
-      // Firebase empty — push local data up
-      _db.ref(FB_PATH).set(getData()).catch(()=>{});
+  firebase.auth().onAuthStateChanged(user=>{
+    currentUser=user;
+    if(!user){
+      // Not signed in — show login overlay, hide app
+      overlay.style.display='flex';
+      document.getElementById('sidebar').style.visibility='hidden';
+      document.getElementById('main').style.visibility='hidden';
+      document.getElementById('mobile-nav').style.display='none';
+      document.getElementById('topbar-user').style.display='none';
+      document.getElementById('logout-btn').style.display='none';
+      // Reset login form
+      const btn=document.getElementById('login-btn');
+      if(btn){btn.disabled=false;btn.textContent='Sign In';}
       return;
     }
-    const localStr=localStorage.getItem(LS_KEY);
-    const fbStr=JSON.stringify(fbData);
-    if(fbStr!==localStr){
-      // Data from another device — update local cache and re-render
-      localStorage.setItem(LS_KEY,fbStr);
-      autoMarkOverdue(fbData);
-      const cur=document.querySelector('.page.active');
-      if(cur)navigateTo(cur.id.replace('page-',''));
-      updateSyncStatus();
-    }
+
+    // Signed in — hide login overlay, show app
+    overlay.style.display='none';
+    document.getElementById('sidebar').style.visibility='';
+    document.getElementById('main').style.visibility='';
+    document.getElementById('mobile-nav').style.display='';
+    const userEl=document.getElementById('topbar-user');
+    userEl.textContent='👤 '+(user.email||'');
+    userEl.style.display='';
+    document.getElementById('logout-btn').style.display='';
+
+    // Boot from localStorage for instant display
+    let d=getData();
+    if(!d||!d.initialized){ d=getDefaultData(); localStorage.setItem(LS_KEY,JSON.stringify(d)); }
+    autoMarkOverdue(d);
+    const k=sessionStorage.getItem('sheqai_apikey');
+    if(k)document.getElementById('api-key-input').value=k;
     updateSyncStatus();
-  }, e=>{ console.warn('Firebase listener error',e); });
+    navigateTo('dashboard');
+
+    // Overdue banner
+    const overdue=(d.capas||[]).filter(c=>c.status==='Overdue').length;
+    showOverdueBanner(overdue);
+
+    // Backup reminder (once per session)
+    checkBackupReminder();
+
+    if(_firebaseListenersStarted)return;
+    _firebaseListenersStarted=true;
+
+    // Firebase connection state monitor
+    _db.ref('.info/connected').on('value', snap=>{
+      _fbConnected = snap.val()===true;
+      if(!_fbConnected) _fbReady=false;
+      updateSyncStatus();
+    });
+
+    // Firebase real-time sync listener
+    _db.ref(FB_PATH).on('value', snap=>{
+      _fbReady=true;
+      const fbData=snap.val();
+      if(!fbData||!fbData.initialized){
+        _db.ref(FB_PATH).set(getData()).catch(()=>{});
+        return;
+      }
+      const localStr=localStorage.getItem(LS_KEY);
+      const fbStr=JSON.stringify(fbData);
+      if(fbStr!==localStr){
+        localStorage.setItem(LS_KEY,fbStr);
+        autoMarkOverdue(fbData);
+        const cur=document.querySelector('.page.active');
+        if(cur)navigateTo(cur.id.replace('page-',''));
+        updateSyncStatus();
+        const od=(fbData.capas||[]).filter(c=>c.status==='Overdue').length;
+        showOverdueBanner(od);
+      }
+      updateSyncStatus();
+    }, e=>{ console.warn('Firebase listener error',e); });
+  });
 });
 </script>
 </body>
