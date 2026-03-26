@@ -2843,6 +2843,10 @@ function autoMarkOverdue(d) {
 // ============================================================
 // UTILITIES
 // ============================================================
+// Framework risk score lookup (non-linear 5×5 matrix from Risk Framework Proposal)
+// Rows = Probability P1-P5, Columns = Impact I1-I5
+const RS=[[1,3,6,10,15],[2,5,9,14,19],[4,8,13,18,22],[7,12,17,21,24],[11,16,20,23,25]];
+function getRiskScore(p,i){return RS[(p||1)-1][(i||1)-1]||1;}
 function riskRating(s){return s<=4?'LOW':s<=9?'MEDIUM':s<=16?'HIGH':'EXTREME';}
 function riskCellClass(s){return s<=4?'cell-green':s<=9?'cell-yellow':s<=16?'cell-orange':'cell-red';}
 function ratingPill(r){const m={LOW:'pill-green',MEDIUM:'pill-yellow',HIGH:'pill-orange',EXTREME:'pill-red'};return`<span class="pill ${m[r]||'pill-gray'}">${r}</span>`;}
@@ -3363,8 +3367,8 @@ document.getElementById('inc-filter-type').addEventListener('change',()=>renderI
 // ============================================================
 let ptwPage=1;
 function calcPTWRisk(type){
-  if(type==='i'){const p=parseInt(document.getElementById('ptw-f-ip').value)||1,i=parseInt(document.getElementById('ptw-f-ii').value)||1,s=p*i,r=riskRating(s);document.getElementById('ptw-inherent-display').innerHTML=`Score: <strong>${s}</strong> — Rating: ${ratingPill(r)}`;}
-  else{const p=parseInt(document.getElementById('ptw-f-rp').value)||1,i=parseInt(document.getElementById('ptw-f-ri').value)||1,s=p*i,r=riskRating(s);document.getElementById('ptw-residual-display').innerHTML=`Residual Score: <strong>${s}</strong> — Rating: ${ratingPill(r)}`;}
+  if(type==='i'){const p=parseInt(document.getElementById('ptw-f-ip').value)||1,i=parseInt(document.getElementById('ptw-f-ii').value)||1,s=getRiskScore(p,i),r=riskRating(s);document.getElementById('ptw-inherent-display').innerHTML=`Score: <strong>${s}</strong> — Rating: ${ratingPill(r)}`;}
+  else{const p=parseInt(document.getElementById('ptw-f-rp').value)||1,i=parseInt(document.getElementById('ptw-f-ri').value)||1,s=getRiskScore(p,i),r=riskRating(s);document.getElementById('ptw-residual-display').innerHTML=`Residual Score: <strong>${s}</strong> — Rating: ${ratingPill(r)}`;}
 }
 function getPpeList(){
   const ids=['hardhat','glasses','gloves','boots','harness','fr','resp','face','other'];
@@ -3408,9 +3412,9 @@ function savePermit(){
     precautions:document.getElementById('ptw-f-precautions').value||'',
     status:'PENDING',
     hazard:document.getElementById('ptw-f-hazard').value||'',
-    ip,ii,iScore:ip*ii,iRating:riskRating(ip*ii),
+    ip,ii,iScore:getRiskScore(ip,ii),iRating:riskRating(getRiskScore(ip,ii)),
     controls:document.getElementById('ptw-f-controls').value||'',
-    rp,ri,rScore:rp*ri,rRating:riskRating(rp*ri),
+    rp,ri,rScore:getRiskScore(rp,ri),rRating:riskRating(getRiskScore(rp,ri)),
     ppe:getPpeList(),
     isolation:document.getElementById('ptw-f-isolation').value,
     emergency:document.getElementById('ptw-f-emergency').value,
@@ -3510,7 +3514,7 @@ function renderRiskMatrix(){
   let h='';
   rows.forEach((p,pi)=>{
     h+=`<div class="matrix-row-label" style="font-size:10px">P${p}<br><span style="font-size:9px">${labels[pi]}</span></div>`;
-    [1,2,3,4,5].forEach(i=>{const s=p*i,cls=riskCellClass(s),sel=(selP===p&&selI===i)?'selected':'';h+=`<div class="matrix-cell ${cls} ${sel}" title="P${p}×I${i}=${s} (${riskRating(s)})" onclick="selectMatrix(${p},${i})">${s}</div>`;});
+    [1,2,3,4,5].forEach(i=>{const s=getRiskScore(p,i),cls=riskCellClass(s),sel=(selP===p&&selI===i)?'selected':'';h+=`<div class="matrix-cell ${cls} ${sel}" title="P${p}×I${i}=${s} (${riskRating(s)})" onclick="selectMatrix(${p},${i})">${s}</div>`;});
   });
   document.getElementById('risk-matrix-grid').innerHTML=h;
 }
@@ -3534,8 +3538,8 @@ function openAddRisk(){
 }
 function selectMatrix(p,i){selP=p;selI=i;renderRiskMatrix();document.getElementById('risk-f-ip').value=p;document.getElementById('risk-f-ii').value=i;calcRisk('i');document.getElementById('risk-modal-title').textContent='Add Risk';document.getElementById('risk-f-edit-id').value='';openModal('risk-modal');}
 function calcRisk(type){
-  if(type==='i'){const p=parseInt(document.getElementById('risk-f-ip').value)||1,i=parseInt(document.getElementById('risk-f-ii').value)||1,s=p*i;document.getElementById('risk-inherent-display').innerHTML=`Score: <strong>${s}</strong> — ${ratingPill(riskRating(s))}`;}
-  else{const p=parseInt(document.getElementById('risk-f-rp').value)||1,i=parseInt(document.getElementById('risk-f-ri').value)||1,s=p*i;document.getElementById('risk-residual-display').innerHTML=`Score: <strong>${s}</strong> — ${ratingPill(riskRating(s))}`;}
+  if(type==='i'){const p=parseInt(document.getElementById('risk-f-ip').value)||1,i=parseInt(document.getElementById('risk-f-ii').value)||1,s=getRiskScore(p,i);document.getElementById('risk-inherent-display').innerHTML=`Score: <strong>${s}</strong> — ${ratingPill(riskRating(s))}`;}
+  else{const p=parseInt(document.getElementById('risk-f-rp').value)||1,i=parseInt(document.getElementById('risk-f-ri').value)||1,s=getRiskScore(p,i);document.getElementById('risk-residual-display').innerHTML=`Score: <strong>${s}</strong> — ${ratingPill(riskRating(s))}`;}
 }
 function saveRisk(){
   if(!validateRequired([['risk-f-hazard','Hazard Description'],['risk-f-owner','Risk Owner']]))return;
@@ -3548,9 +3552,9 @@ function saveRisk(){
     hazard:document.getElementById('risk-f-hazard').value||'',
     category:document.getElementById('risk-f-category').value,
     consequence:document.getElementById('risk-f-consequence')?document.getElementById('risk-f-consequence').value||'':'',
-    ip,ii,iScore:ip*ii,iRating:riskRating(ip*ii),
+    ip,ii,iScore:getRiskScore(ip,ii),iRating:riskRating(getRiskScore(ip,ii)),
     controls:document.getElementById('risk-f-controls').value||'',
-    rp,ri,rScore:rp*ri,rRating:riskRating(rp*ri),
+    rp,ri,rScore:getRiskScore(rp,ri),rRating:riskRating(getRiskScore(rp,ri)),
     owner:document.getElementById('risk-f-owner').value||'',
     reviewDate:document.getElementById('risk-f-review').value||'',
     status:document.getElementById('risk-f-status').value,
