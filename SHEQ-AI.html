@@ -1403,152 +1403,6 @@
     }
 
     /* ============================================================
-       CHAT
-    ============================================================ */
-    #chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: var(--sp-2);
-      padding: var(--sp-3);
-      min-height: 0;
-    }
-
-    .msg {
-      display: flex;
-      flex-direction: column;
-      max-width: 80%;
-      gap: 4px;
-    }
-
-    .msg.user {
-      align-self: flex-end;
-      align-items: flex-end;
-    }
-
-    .msg.ai {
-      align-self: flex-start;
-      align-items: flex-start;
-    }
-
-    .msg-label {
-      font-size: var(--fs-xs);
-      font-weight: 600;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
-
-    .msg-bubble {
-      padding: 0.6rem 1rem;
-      border-radius: var(--radius-lg);
-      font-size: var(--fs-sm);
-      line-height: 1.55;
-    }
-
-    .msg.user .msg-bubble {
-      background: var(--accent);
-      color: #fff;
-      border-radius: var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg);
-    }
-
-    .msg.ai .msg-bubble {
-      background: var(--card);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
-      box-shadow: var(--shadow-sm);
-    }
-
-    /* Typing indicator */
-    .typing-dots {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 0.6rem 1rem;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm);
-      box-shadow: var(--shadow-sm);
-      width: fit-content;
-    }
-
-    .typing-dots span {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--muted);
-      animation: bounce 1.2s infinite;
-    }
-
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
-      40%            { transform: scale(1);   opacity: 1;   }
-    }
-
-    .chat-input-area {
-      display: flex;
-      align-items: flex-end;
-      gap: var(--sp-1);
-      padding: var(--sp-2) var(--sp-3);
-      border-top: 1px solid var(--border);
-      background: var(--card);
-    }
-
-    .chat-input-area textarea {
-      flex: 1;
-      resize: none;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 0.55rem 0.85rem;
-      font-size: var(--fs-sm);
-      line-height: 1.5;
-      max-height: 140px;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .chat-input-area textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-    }
-
-    .no-api-card {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: var(--radius-lg);
-      padding: var(--sp-3);
-      text-align: center;
-      margin: var(--sp-3);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: var(--sp-1);
-    }
-
-    .no-api-icon {
-      font-size: 2.5rem;
-      line-height: 1;
-      margin-bottom: var(--sp-1);
-    }
-
-    .no-api-card h3 {
-      font-size: var(--fs-base);
-      font-weight: 700;
-      color: #92400e;
-      margin-bottom: var(--sp-1);
-    }
-
-    .no-api-card p {
-      font-size: var(--fs-sm);
-      color: #b45309;
-      line-height: 1.5;
-    }
-
-    /* ============================================================
        REPORT
     ============================================================ */
     .report-doc {
@@ -1975,7 +1829,6 @@
     <li class="nav-item"><div class="nav-link" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">SHEQ Calendar</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📄</span><span class="nav-label">Monthly Report</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="chat"><span class="nav-icon">🤖</span><span class="nav-label">SHEQ-AI Chat</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -1989,7 +1842,6 @@
   <div class="mobile-nav-item" data-page="incidents"><span class="nav-icon">🚨</span>Inc</div>
   <div class="mobile-nav-item" data-page="capa"><span class="nav-icon">✅</span>CAPA</div>
   <div class="mobile-nav-item" data-page="permits"><span class="nav-icon">📋</span>PTW</div>
-  <div class="mobile-nav-item" data-page="chat"><span class="nav-icon">🤖</span>AI</div>
 </div>
 
 <!-- ===== MAIN ===== -->
@@ -2264,25 +2116,6 @@
   </div>
 </div>
 
-<!-- ======= SHEQ-AI CHAT ======= -->
-<div id="page-chat" class="page" style="display:none;flex-direction:column;height:calc(100vh - 54px);">
-  <div id="chat-no-api" class="no-api-card" style="display:none">
-    <div class="no-api-icon">🔒</div>
-    <div style="font-size:16px;font-weight:700">API Key Required</div>
-    <div style="color:var(--muted);max-width:320px">Set your Anthropic API key in Settings to activate SHEQ-AI Chat.</div>
-    <button class="btn btn-primary" onclick="openModal('settings-modal')">Open Settings</button>
-  </div>
-  <div id="chat-interface" style="display:none;flex-direction:column;flex:1;overflow:hidden">
-    <div id="chat-messages"></div>
-    <div class="chat-input-area">
-      <textarea id="chat-input" rows="1" placeholder="Ask SHEQ-AI anything… (Enter to send, Shift+Enter for newline)"></textarea>
-      <button class="btn btn-primary" id="chat-send-btn" onclick="sendChatMessage()">Send</button>
-      <button class="btn btn-ghost" onclick="clearChat()">Clear</button>
-    </div>
-    <div style="padding:4px 12px;font-size:11px;color:var(--muted)" id="chat-status"></div>
-  </div>
-</div>
-
   </div><!-- end #content -->
 </div><!-- end #main -->
 
@@ -2451,7 +2284,7 @@
 
 <!-- PTW MODAL -->
 <div class="modal-overlay" id="ptw-modal">
-  <div class="modal" style="max-width:640px;width:100%">
+  <div class="modal" style="max-width:860px;width:100%">
     <div class="modal-title" id="ptw-modal-title">Add Permit to Work <button class="modal-close" onclick="closeModal('ptw-modal')">✕</button></div>
     <div class="form-row">
       <div class="form-group"><label>Type</label>
@@ -2475,26 +2308,30 @@
       <div class="risk-section-body" id="ptw-ra-body">
         <div class="form-group"><label>Hazard Identification</label><textarea id="ptw-f-hazard" placeholder="List all identified hazards…"></textarea></div>
         <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:var(--sp-1)">Risk Rating Before Controls</div>
-        <div class="form-row">
-          <div class="form-group"><label>Probability (P)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-1)">
+          <div class="form-group" style="margin:0"><label>Probability (P)</label>
             <select id="ptw-f-ip" onchange="calcPTWRisk('i')"><option value="1">P1 – Rare</option><option value="2">P2 – Unlikely</option><option value="3">P3 – Possible</option><option value="4">P4 – Likely</option><option value="5">P5 – Almost Certain</option></select>
           </div>
-          <div class="form-group"><label>Impact (I)</label>
+          <div class="form-group" style="margin:0"><label>Impact (I)</label>
             <select id="ptw-f-ii" onchange="calcPTWRisk('i')"><option value="1">I1 – Insignificant</option><option value="2">I2 – Minor</option><option value="3">I3 – Moderate</option><option value="4">I4 – Major</option><option value="5">I5 – Catastrophic</option></select>
           </div>
+          <div class="form-group" style="margin:0"><label>Inherent Score</label>
+            <div class="risk-score-display" id="ptw-inherent-display" style="margin:0;min-height:38px;display:flex;align-items:center">Score: — Rating: —</div>
+          </div>
         </div>
-        <div class="risk-score-display" id="ptw-inherent-display">Score: — Rating: —</div>
         <div class="form-group"><label>Control Measures</label><textarea id="ptw-f-controls" placeholder="Describe control measures…"></textarea></div>
         <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:var(--sp-1)">Risk Rating After Controls</div>
-        <div class="form-row">
-          <div class="form-group"><label>Residual Probability (P)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-1)">
+          <div class="form-group" style="margin:0"><label>Residual Probability (P)</label>
             <select id="ptw-f-rp" onchange="calcPTWRisk('r')"><option value="1">P1 – Rare</option><option value="2">P2 – Unlikely</option><option value="3">P3 – Possible</option><option value="4">P4 – Likely</option><option value="5">P5 – Almost Certain</option></select>
           </div>
-          <div class="form-group"><label>Residual Impact (I)</label>
+          <div class="form-group" style="margin:0"><label>Residual Impact (I)</label>
             <select id="ptw-f-ri" onchange="calcPTWRisk('r')"><option value="1">I1 – Insignificant</option><option value="2">I2 – Minor</option><option value="3">I3 – Moderate</option><option value="4">I4 – Major</option><option value="5">I5 – Catastrophic</option></select>
           </div>
+          <div class="form-group" style="margin:0"><label>Residual Score</label>
+            <div class="risk-score-display" id="ptw-residual-display" style="margin:0;min-height:38px;display:flex;align-items:center">Score: — Rating: —</div>
+          </div>
         </div>
-        <div class="risk-score-display" id="ptw-residual-display">Residual Score: — Rating: —</div>
         <div class="form-group" style="margin-top:var(--sp-1)"><label>Additional PPE Required</label>
           <div class="ppe-checkbox-grid">
             <label><input type="checkbox" id="ppe-hardhat"> Hard hat</label>
@@ -3027,7 +2864,6 @@ function navigateTo(page){
   else if(page==='legal')renderLegal();
   else if(page==='calendar')renderCalendar();
   else if(page==='capa')renderCapas();
-  else if(page==='chat')initChat();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>navigateTo(l.dataset.page)));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -4002,7 +3838,6 @@ function saveApiKey(){
   closeModal('settings-modal');
   document.getElementById('api-test-result').textContent='';
   updateSyncStatus();
-  if(currentPage==='chat')initChat();
 }
 function clearApiKey(){
   sessionStorage.removeItem('sheqai_apikey');
@@ -4088,38 +3923,6 @@ function exportCSV(module){
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download=`sheqai-${module}-${today()}.csv`;a.click();URL.revokeObjectURL(url);
 }
-
-// ============================================================
-// CLAUDE API STREAMING CHAT
-// ============================================================
-const SHEQ_SYSTEM_PROMPT=`You are SHEQ-AI, the dedicated AI intelligence assistant of the Safety, Health, Environment & Quality (SHEQ) Department of GRCentral — a 175 MW gas-fired power generation facility in Ressano Garcia, Mozambique. The SHEQ Department reports DIRECTLY to the General Manager (GM). You assist SHEQ personnel in recording field observations, classifying events, drafting reports, generating monthly dashboards, and preparing content for the Monthly SHEQ Meeting. Apply the GRCentral 5×5 risk matrix: Score = P(1–5) × I(1–5). Ratings: 1–4=LOW, 5–9=MEDIUM, 10–16=HIGH, 17–25=EXTREME. Write all CAPAs in WHAT/WHO/WHEN/HOW format. Use RAG (Red/Amber/Green) for KPI reporting. Reference ISO 45001:2018, ISO 14001:2015, ISO 9001:2015, ISO 31000:2018, Decreto n.º 94/2024, Lei n.º 23/2007, Lei n.º 20/2014 as applicable. Severity: 1-Critical (fatality/major env), 2-High (LTI/HiPo), 3-Medium (MTC/minor env), 4-Low (FAC/near miss low potential). When the user says "init" or "hello" respond with the SHEQ-AI activation banner listing all active modules.`;
-
-async function streamChat(messages,apiKey,onChunk,onDone){
-  try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:4096,system:SHEQ_SYSTEM_PROMPT,messages,stream:true})});
-    if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||resp.statusText);}
-    const reader=resp.body.getReader();const dec=new TextDecoder();
-    while(true){const {done,value}=await reader.read();if(done)break;for(const line of dec.decode(value).split('\n')){if(line.startsWith('data: ')){try{const dd=JSON.parse(line.slice(6));if(dd.type==='content_block_delta'&&dd.delta?.type==='text_delta')onChunk(dd.delta.text);}catch{}}}}
-    onDone();
-  }catch(e){onDone(e.message);}
-}
-
-let chatMessages=[],chatStreaming=false,chatInited=false,curBubble=null,curText='';
-function initChat(){
-  const key=sessionStorage.getItem('sheqai_apikey');
-  document.getElementById('chat-no-api').style.display=key?'none':'flex';
-  document.getElementById('chat-interface').style.display=key?'flex':'none';
-  if(key&&!chatInited){chatInited=true;if(chatMessages.length===0)sendInitMsg();}
-}
-function sendInitMsg(){chatMessages=[{role:'user',content:'init'}];appendUser('init',true);showTyping();streamChat(chatMessages,sessionStorage.getItem('sheqai_apikey'),onChunk,onDone);}
-function appendUser(text,hidden=false){if(hidden)return;const msgs=document.getElementById('chat-messages');const d=document.createElement('div');d.className='msg user';d.innerHTML=`<div class="msg-label">You</div><div class="msg-bubble">${escapeHtml(text)}</div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
-function showTyping(){const msgs=document.getElementById('chat-messages');const ex=document.getElementById('typing-ind');if(ex)ex.remove();const d=document.createElement('div');d.className='msg ai';d.id='typing-ind';d.innerHTML=`<div class="msg-label">SHEQ-AI</div><div class="typing-dots"><span></span><span></span><span></span></div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
-function onChunk(text){const ex=document.getElementById('typing-ind');if(ex)ex.remove();if(!curBubble){const msgs=document.getElementById('chat-messages');const d=document.createElement('div');d.className='msg ai';d.innerHTML='<div class="msg-label">SHEQ-AI</div>';const b=document.createElement('div');b.className='msg-bubble';d.appendChild(b);msgs.appendChild(d);curBubble=b;curText='';}curText+=text;curBubble.innerHTML=curText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>').replace(/\n/g,'<br>');document.getElementById('chat-messages').scrollTop=9999;}
-function onDone(err){chatStreaming=false;document.getElementById('chat-send-btn').disabled=false;if(err){const msgs=document.getElementById('chat-messages');const d=document.createElement('div');d.className='msg ai';d.innerHTML=`<div class="msg-label">SHEQ-AI</div><div class="msg-bubble" style="color:var(--red)">Error: ${escapeHtml(err)}</div>`;msgs.appendChild(d);}else if(curText){chatMessages.push({role:'assistant',content:curText});}curBubble=null;curText='';document.getElementById('chat-status').textContent=chatMessages.length?`${chatMessages.length} messages`:''; }
-function sendChatMessage(){if(chatStreaming)return;const inp=document.getElementById('chat-input');const text=inp.value.trim();if(!text)return;const key=sessionStorage.getItem('sheqai_apikey');if(!key){openModal('settings-modal');return;}inp.value='';inp.style.height='auto';chatMessages.push({role:'user',content:text});appendUser(text);showTyping();chatStreaming=true;document.getElementById('chat-send-btn').disabled=true;streamChat(chatMessages,key,onChunk,onDone);}
-function clearChat(){chatMessages=[];chatInited=false;document.getElementById('chat-messages').innerHTML='';document.getElementById('chat-status').textContent='';curBubble=null;curText='';if(sessionStorage.getItem('sheqai_apikey')){chatInited=true;sendInitMsg();}}
-document.getElementById('chat-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMessage();}});
-document.getElementById('chat-input').addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';});
 
 // ============================================================
 // INIT
