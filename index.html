@@ -2163,7 +2163,7 @@
     <div class="form-group"><label>Description</label><textarea id="obs-f-desc" placeholder="Describe what was observed…"></textarea></div>
     <div class="form-group"><label>Immediate Action Taken</label><textarea id="obs-f-action" placeholder="Action taken on the spot…"></textarea></div>
     <div class="form-row">
-      <div class="form-group"><label>CAPA Required?</label>
+      <div class="form-group"><label>RCA Required?</label>
         <select id="obs-f-capa" onchange="document.getElementById('obs-capa-fields').style.display=this.value==='Y'?'block':'none'">
           <option value="N">No</option><option value="Y">Yes</option>
         </select>
@@ -2173,8 +2173,9 @@
       </div>
     </div>
     <div id="obs-capa-fields" style="display:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2);background:var(--card2)">
-      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:var(--sp-1)">CAPA Details</div>
-      <div class="form-group"><label>WHAT – Corrective Action</label><textarea id="obs-f-capa-what" placeholder="What must be done?"></textarea></div>
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-1)">RCA & Corrective Action</div>
+      <div class="form-group"><label>RCA Details</label><textarea id="obs-f-rca" placeholder="Root cause analysis findings…"></textarea></div>
+      <div class="form-group"><label>Corrective Actions</label><textarea id="obs-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
       <div class="form-row">
         <div class="form-group"><label>WHO – Responsible</label><input type="text" id="obs-f-capa-who" placeholder="Name / Role"></div>
         <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="obs-f-capa-when"></div>
@@ -2213,7 +2214,7 @@
       <select id="nm-f-status"><option value="Open">Open</option><option value="Under Investigation">Under Investigation</option><option value="Closed">Closed</option></select>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>CAPA Required?</label>
+      <div class="form-group"><label>RCA Required?</label>
         <select id="nm-f-capa" onchange="document.getElementById('nm-capa-fields').style.display=this.value==='Y'?'block':'none'">
           <option value="N">No</option><option value="Y">Yes</option>
         </select>
@@ -2223,8 +2224,9 @@
       </div>
     </div>
     <div id="nm-capa-fields" style="display:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2);background:var(--card2)">
-      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:var(--sp-1)">CAPA Details</div>
-      <div class="form-group"><label>WHAT – Corrective Action</label><textarea id="nm-f-capa-what" placeholder="What must be done?"></textarea></div>
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-1)">RCA & Corrective Action</div>
+      <div class="form-group"><label>RCA Details</label><textarea id="nm-f-rca" placeholder="Root cause analysis findings…"></textarea></div>
+      <div class="form-group"><label>Corrective Actions</label><textarea id="nm-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
       <div class="form-row">
         <div class="form-group"><label>WHO – Responsible</label><input type="text" id="nm-f-capa-who" placeholder="Name / Role"></div>
         <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="nm-f-capa-when"></div>
@@ -2261,9 +2263,9 @@
         <select id="inc-f-status"><option value="Open">Open</option><option value="Under Investigation">Under Investigation</option><option value="CAPA Issued">CAPA Issued</option><option value="Closed">Closed</option></select>
       </div>
     </div>
-    <div class="form-group"><label>Root Cause</label><textarea id="inc-f-rootcause" placeholder="Root cause analysis findings…"></textarea></div>
-    <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin:var(--sp-1) 0">CAPA Details (WHAT / WHO / WHEN / HOW)</div>
-    <div class="form-group"><label>WHAT – Corrective Action</label><textarea id="inc-f-capa-what" placeholder="What action must be taken?"></textarea></div>
+    <div class="form-group"><label>RCA Details</label><textarea id="inc-f-rootcause" placeholder="Root cause analysis findings…"></textarea></div>
+    <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin:var(--sp-1) 0">Corrective Actions (WHAT / WHO / WHEN / HOW)</div>
+    <div class="form-group"><label>WHAT – Corrective Actions</label><textarea id="inc-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
     <div class="form-row">
       <div class="form-group"><label>WHO – Responsible</label><input type="text" id="inc-f-capa-who" placeholder="Name / Role"></div>
       <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="inc-f-capa-when"></div>
@@ -2357,11 +2359,22 @@
     </div>
 
     <div class="form-row" style="margin-top:var(--sp-2)">
-      <div class="form-group"><label>CAPA Required?</label>
-        <select id="ptw-f-capa"><option value="N">No</option><option value="Y">Yes</option></select>
+      <div class="form-group"><label>RCA Required?</label>
+        <select id="ptw-f-capa" onchange="document.getElementById('ptw-rca-fields').style.display=this.value==='Y'?'block':'none'">
+          <option value="N">No</option><option value="Y">Yes</option>
+        </select>
       </div>
       <div class="form-group"><label>Priority</label>
         <select id="ptw-f-priority"><option value="Medium">Medium</option><option value="Low">Low</option><option value="High">High</option><option value="Critical">Critical</option></select>
+      </div>
+    </div>
+    <div id="ptw-rca-fields" style="display:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2);background:var(--card2);margin-top:var(--sp-1)">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-1)">RCA & Corrective Action</div>
+      <div class="form-group"><label>RCA Details</label><textarea id="ptw-f-rca" placeholder="Root cause analysis findings…"></textarea></div>
+      <div class="form-group"><label>Corrective Actions</label><textarea id="ptw-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>WHO – Responsible</label><input type="text" id="ptw-f-capa-who" placeholder="Name / Role"></div>
+        <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="ptw-f-capa-when"></div>
       </div>
     </div>
     <input type="hidden" id="ptw-f-edit-id">
@@ -2412,8 +2425,19 @@
       <div class="form-group"><label>Status</label>
         <select id="risk-f-status"><option value="Open">Open</option><option value="Under Review">Under Review</option><option value="Closed">Closed</option></select>
       </div>
-      <div class="form-group"><label>CAPA Required?</label>
-        <select id="risk-f-capa"><option value="N">No</option><option value="Y">Yes</option></select>
+      <div class="form-group"><label>RCA Required?</label>
+        <select id="risk-f-capa" onchange="document.getElementById('risk-rca-fields').style.display=this.value==='Y'?'block':'none'">
+          <option value="N">No</option><option value="Y">Yes</option>
+        </select>
+      </div>
+    </div>
+    <div id="risk-rca-fields" style="display:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2);background:var(--card2);margin-top:var(--sp-1)">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-1)">RCA & Corrective Action</div>
+      <div class="form-group"><label>RCA Details</label><textarea id="risk-f-rca" placeholder="Root cause analysis findings…"></textarea></div>
+      <div class="form-group"><label>Corrective Actions</label><textarea id="risk-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>WHO – Responsible</label><input type="text" id="risk-f-capa-who" placeholder="Name / Role"></div>
+        <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="risk-f-capa-when"></div>
       </div>
     </div>
     <input type="hidden" id="risk-f-edit-id">
@@ -2943,6 +2967,7 @@ function openAddObs(){
   document.getElementById('obs-f-capa').value='N';
   document.getElementById('obs-f-priority').value='Low';
   document.getElementById('obs-capa-fields').style.display='none';
+  document.getElementById('obs-f-rca').value='';
   document.getElementById('obs-f-capa-what').value='';
   document.getElementById('obs-f-capa-who').value='';
   document.getElementById('obs-f-capa-when').value='';
@@ -2963,6 +2988,11 @@ function editObs(id){
   document.getElementById('obs-f-capa').value=o.capa||'N';
   document.getElementById('obs-f-priority').value=o.priority||'Low';
   document.getElementById('obs-capa-fields').style.display=o.capa==='Y'?'block':'none';
+  document.getElementById('obs-f-rca').value=o.rcaDetails||'';
+  document.getElementById('obs-f-capa-what').value=o.rcaWhat||'';
+  document.getElementById('obs-f-capa-who').value=o.rcaWho||'';
+  document.getElementById('obs-f-capa-when').value=o.rcaWhen||'';
+  document.getElementById('obs-f-capa-how').value=o.rcaHow||'';
   openModal('obs-modal');
 }
 function saveObservation(){
@@ -2982,6 +3012,11 @@ function saveObservation(){
     action:document.getElementById('obs-f-action').value||'',
     capa:document.getElementById('obs-f-capa').value,
     priority:document.getElementById('obs-f-priority').value,
+    rcaDetails:document.getElementById('obs-f-rca').value||'',
+    rcaWhat:document.getElementById('obs-f-capa-what').value||'',
+    rcaWho:document.getElementById('obs-f-capa-who').value||'',
+    rcaWhen:document.getElementById('obs-f-capa-when').value||'',
+    rcaHow:document.getElementById('obs-f-capa-how').value||'',
     capaRef:''
   };
   if(editId){
@@ -2990,11 +3025,7 @@ function saveObservation(){
   } else {
     if(capaReq){
       rec.capaRef=autoCreateCapa(d,'JO',rec.id,
-        document.getElementById('obs-f-capa-what').value,
-        document.getElementById('obs-f-capa-who').value,
-        document.getElementById('obs-f-capa-when').value,
-        document.getElementById('obs-f-capa-how').value,
-        document.getElementById('obs-f-priority').value
+        rec.rcaWhat,rec.rcaWho,rec.rcaWhen,rec.rcaHow,rec.priority
       );
     }
     d.observations.push(rec);
@@ -3046,6 +3077,8 @@ function openAddNM(){
   document.getElementById('nm-f-hipo').value='0';document.getElementById('nm-f-sev').value='3';
   document.getElementById('nm-f-status').value='Open';document.getElementById('nm-f-capa').value='N';
   document.getElementById('nm-f-priority').value='Medium';document.getElementById('nm-capa-fields').style.display='none';
+  document.getElementById('nm-f-rca').value='';document.getElementById('nm-f-capa-what').value='';
+  document.getElementById('nm-f-capa-who').value='';document.getElementById('nm-f-capa-when').value='';
   openModal('nm-modal');
 }
 function saveNearMiss(){
@@ -3066,11 +3099,15 @@ function saveNearMiss(){
     status:document.getElementById('nm-f-status').value,
     capa:document.getElementById('nm-f-capa').value,
     priority:document.getElementById('nm-f-priority').value,
+    rcaDetails:document.getElementById('nm-f-rca').value||'',
+    rcaWhat:document.getElementById('nm-f-capa-what').value||'',
+    rcaWho:document.getElementById('nm-f-capa-who').value||'',
+    rcaWhen:document.getElementById('nm-f-capa-when').value||'',
     capaRef:''
   };
   if(editId){const idx=d.nearMisses.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.nearMisses[idx].capaRef||'';d.nearMisses[idx]=rec;}}
   else{
-    if(capaReq){rec.capaRef=autoCreateCapa(d,'NM',rec.id,document.getElementById('nm-f-capa-what').value,document.getElementById('nm-f-capa-who').value,document.getElementById('nm-f-capa-when').value,'',rec.priority);}
+    if(capaReq){rec.capaRef=autoCreateCapa(d,'NM',rec.id,rec.rcaWhat,rec.rcaWho,rec.rcaWhen,'',rec.priority);}
     d.nearMisses.push(rec);
   }
   saveData(d);closeModal('nm-modal');renderNearMiss(1);
@@ -3120,6 +3157,10 @@ function editNM(id){
   document.getElementById('nm-f-capa').value=n.capa||'N';
   document.getElementById('nm-f-priority').value=n.priority||'Medium';
   document.getElementById('nm-capa-fields').style.display=n.capa==='Y'?'block':'none';
+  document.getElementById('nm-f-rca').value=n.rcaDetails||'';
+  document.getElementById('nm-f-capa-what').value=n.rcaWhat||'';
+  document.getElementById('nm-f-capa-who').value=n.rcaWho||'';
+  document.getElementById('nm-f-capa-when').value=n.rcaWhen||'';
   openModal('nm-modal');
 }
 document.getElementById('nm-search').addEventListener('input',()=>renderNearMiss(1));
@@ -3257,6 +3298,11 @@ function openAddPTW(){
   document.getElementById('ptw-f-emergency').value='N';
   document.getElementById('ptw-f-capa').value='N';
   document.getElementById('ptw-f-priority').value='Medium';
+  document.getElementById('ptw-rca-fields').style.display='none';
+  document.getElementById('ptw-f-rca').value='';
+  document.getElementById('ptw-f-capa-what').value='';
+  document.getElementById('ptw-f-capa-who').value='';
+  document.getElementById('ptw-f-capa-when').value='';
   openModal('ptw-modal');
 }
 function savePermit(){
@@ -3284,11 +3330,15 @@ function savePermit(){
     emergency:document.getElementById('ptw-f-emergency').value,
     capa:document.getElementById('ptw-f-capa').value,
     priority:document.getElementById('ptw-f-priority').value,
+    rcaDetails:document.getElementById('ptw-f-rca').value||'',
+    rcaWhat:document.getElementById('ptw-f-capa-what').value||'',
+    rcaWho:document.getElementById('ptw-f-capa-who').value||'',
+    rcaWhen:document.getElementById('ptw-f-capa-when').value||'',
     capaRef:''
   };
   if(editId){const idx=d.permits.findIndex(x=>x.id===editId);if(idx>=0){rec.status=d.permits[idx].status;rec.capaRef=d.permits[idx].capaRef||'';d.permits[idx]=rec;}}
   else{
-    if(rec.capa==='Y'){rec.capaRef=autoCreateCapa(d,'PTW',rec.id,'Review PTW controls and implement corrective actions.','SHEQ Officer','','PTW audit and sign-off.',rec.priority);}
+    if(rec.capa==='Y'){rec.capaRef=autoCreateCapa(d,'PTW',rec.id,rec.rcaWhat||'Review PTW controls and implement corrective actions.',rec.rcaWho||'SHEQ Officer',rec.rcaWhen||'','PTW audit and sign-off.',rec.priority);}
     d.permits.push(rec);
   }
   saveData(d);closeModal('ptw-modal');renderPermits(1);
@@ -3317,6 +3367,11 @@ function editPTW(id){
   document.getElementById('ptw-f-emergency').value=p.emergency||'N';
   document.getElementById('ptw-f-capa').value=p.capa||'N';
   document.getElementById('ptw-f-priority').value=p.priority||'Medium';
+  document.getElementById('ptw-rca-fields').style.display=p.capa==='Y'?'block':'none';
+  document.getElementById('ptw-f-rca').value=p.rcaDetails||'';
+  document.getElementById('ptw-f-capa-what').value=p.rcaWhat||'';
+  document.getElementById('ptw-f-capa-who').value=p.rcaWho||'';
+  document.getElementById('ptw-f-capa-when').value=p.rcaWhen||'';
   openModal('ptw-modal');
 }
 function changePTWStatus(id,status){let d=getData();const p=(d.permits||[]).find(x=>x.id===id);if(!p)return;p.status=status;saveData(d);renderPermits(ptwPage);}
@@ -3383,6 +3438,11 @@ function openAddRisk(){
   document.getElementById('risk-f-rp').value='1';document.getElementById('risk-f-ri').value='1';
   calcRisk('i');calcRisk('r');
   document.getElementById('risk-f-status').value='Open';document.getElementById('risk-f-capa').value='N';
+  document.getElementById('risk-rca-fields').style.display='none';
+  document.getElementById('risk-f-rca').value='';
+  document.getElementById('risk-f-capa-what').value='';
+  document.getElementById('risk-f-capa-who').value='';
+  document.getElementById('risk-f-capa-when').value='';
   selP=null;selI=null;renderRiskMatrix();
   openModal('risk-modal');
 }
@@ -3409,11 +3469,15 @@ function saveRisk(){
     reviewDate:document.getElementById('risk-f-review').value||'',
     status:document.getElementById('risk-f-status').value,
     capa:document.getElementById('risk-f-capa').value,
+    rcaDetails:document.getElementById('risk-f-rca').value||'',
+    rcaWhat:document.getElementById('risk-f-capa-what').value||'',
+    rcaWho:document.getElementById('risk-f-capa-who').value||'',
+    rcaWhen:document.getElementById('risk-f-capa-when').value||'',
     capaRef:''
   };
   if(editId){const idx=d.risks.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.risks[idx].capaRef||'';d.risks[idx]=rec;}}
   else{
-    if(rec.capa==='Y'){rec.capaRef=autoCreateCapa(d,'RISK',rec.id,'Implement additional controls to reduce residual risk.',rec.owner,rec.reviewDate,'Risk review and sign-off by SHEQ Manager.','Medium');}
+    if(rec.capa==='Y'){rec.capaRef=autoCreateCapa(d,'RISK',rec.id,rec.rcaWhat||'Implement additional controls to reduce residual risk.',rec.rcaWho||rec.owner,rec.rcaWhen||rec.reviewDate,'Risk review and sign-off by SHEQ Manager.','Medium');}
     d.risks.push(rec);
   }
   saveData(d);closeModal('risk-modal');renderRisks();renderRiskMatrix();
@@ -3436,6 +3500,11 @@ function editRisk(id){
   document.getElementById('risk-f-review').value=r.reviewDate||'';
   document.getElementById('risk-f-status').value=r.status||'Open';
   document.getElementById('risk-f-capa').value=r.capa||'N';
+  document.getElementById('risk-rca-fields').style.display=r.capa==='Y'?'block':'none';
+  document.getElementById('risk-f-rca').value=r.rcaDetails||'';
+  document.getElementById('risk-f-capa-what').value=r.rcaWhat||'';
+  document.getElementById('risk-f-capa-who').value=r.rcaWho||'';
+  document.getElementById('risk-f-capa-when').value=r.rcaWhen||'';
   selP=r.ip||null;selI=r.ii||null;renderRiskMatrix();
   openModal('risk-modal');
 }
