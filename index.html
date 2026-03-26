@@ -1987,24 +1987,109 @@
       <button class="btn btn-primary" onclick="openAddRisk()">+ Add Risk</button>
     </div>
   </div>
-  <div class="card matrix-wrap">
-    <div class="card-title">5×5 Risk Matrix — Click a cell to add a risk at that rating</div>
-    <div style="margin-bottom:6px;display:flex;gap:16px;flex-wrap:wrap;font-size:var(--fs-xs);color:var(--muted)">
-      <span>Impact →</span>
-      <span style="color:#15803d">● LOW (1–4)</span>
-      <span style="color:#854d0e">● MEDIUM (5–9)</span>
-      <span style="color:#9a3412">● HIGH (10–16)</span>
-      <span style="color:#991b1b">● EXTREME (17–25)</span>
+  <div style="display:flex;gap:var(--sp-2);align-items:flex-start;flex-wrap:wrap">
+
+    <!-- RISK MATRIX -->
+    <div class="card matrix-wrap" style="flex-shrink:0">
+      <div class="card-title">5×5 Risk Matrix — Click a cell to add a risk at that rating</div>
+      <div style="margin-bottom:6px;display:flex;gap:12px;flex-wrap:wrap;font-size:var(--fs-xs);color:var(--muted)">
+        <span>Impact →</span>
+        <span style="color:#15803d">● LOW (1–4)</span>
+        <span style="color:#854d0e">● MEDIUM (5–9)</span>
+        <span style="color:#9a3412">● HIGH (10–16)</span>
+        <span style="color:#991b1b">● EXTREME (17–25)</span>
+      </div>
+      <div style="display:grid;grid-template-columns:58px repeat(5,1fr);gap:3px;margin-bottom:6px">
+        <div></div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);font-weight:700;padding:3px">I1<br>Insig.</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);font-weight:700;padding:3px">I2<br>Minor</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);font-weight:700;padding:3px">I3<br>Mod.</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);font-weight:700;padding:3px">I4<br>Major</div>
+        <div style="text-align:center;font-size:10px;color:var(--muted);font-weight:700;padding:3px">I5<br>Catas.</div>
+      </div>
+      <div id="risk-matrix-grid" class="matrix-grid"></div>
     </div>
-    <div style="display:grid;grid-template-columns:80px repeat(5,1fr);gap:3px;margin-bottom:6px">
-      <div></div>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--muted);font-weight:700;padding:4px">I1<br>Insig.</div>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--muted);font-weight:700;padding:4px">I2<br>Minor</div>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--muted);font-weight:700;padding:4px">I3<br>Mod.</div>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--muted);font-weight:700;padding:4px">I4<br>Major</div>
-      <div style="text-align:center;font-size:var(--fs-xs);color:var(--muted);font-weight:700;padding:4px">I5<br>Catas.</div>
+
+    <!-- CONSEQUENCE THRESHOLDS -->
+    <div class="card" style="flex:1;min-width:320px;overflow-x:auto">
+      <div class="card-title">Risk Consequence Thresholds</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;line-height:1.35">
+        <thead>
+          <tr style="background:var(--card2)">
+            <th style="padding:5px 6px;text-align:left;border-bottom:2px solid var(--border);white-space:nowrap;font-size:10px;color:var(--muted);text-transform:uppercase">Level</th>
+            <th style="padding:5px 6px;text-align:left;border-bottom:2px solid var(--border);font-size:10px;color:var(--muted);text-transform:uppercase">Health &amp; Safety</th>
+            <th style="padding:5px 6px;text-align:left;border-bottom:2px solid var(--border);font-size:10px;color:var(--muted);text-transform:uppercase">Environmental</th>
+            <th style="padding:5px 6px;text-align:left;border-bottom:2px solid var(--border);font-size:10px;color:var(--muted);text-transform:uppercase">Legal / Compliance</th>
+            <th style="padding:5px 6px;text-align:left;border-bottom:2px solid var(--border);font-size:10px;color:var(--muted);text-transform:uppercase">Quality</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;white-space:nowrap">
+              <span style="display:inline-flex;align-items:center;gap:4px;font-weight:700;color:#15803d;font-size:10px">
+                <span style="background:#dcfce7;border-radius:3px;padding:1px 5px">I1 – Insignificant</span>
+              </span>
+            </td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Report &amp; assessment only. No injury.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">No impact. Contained within operations area. Prompt cleanup within shift.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Single admin exceedance (e.g. late data submission). No regulatory response.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Out-of-spec production &lt;1 hr. Minor re-processing.</td>
+          </tr>
+          <tr style="background:#fafafa">
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;white-space:nowrap">
+              <span style="font-weight:700;color:#92400e;font-size:10px">
+                <span style="background:#fef3c7;border-radius:3px;padding:1px 5px">I2 – Minor</span>
+              </span>
+            </td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">First Aid Injury (FAC).</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Minor impact contained on site. Cleanup within 1 week.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Repeat low-impact exceedance. Low-level admin regulatory response. Report within 1 month.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Out-of-spec &lt;8 hrs. Return of shipment or sales credit.</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;white-space:nowrap">
+              <span style="font-weight:700;color:#9a3412;font-size:10px">
+                <span style="background:#ffedd5;border-radius:3px;padding:1px 5px">I3 – Moderate</span>
+              </span>
+            </td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Medical Treatment Injury (MTC) or Restricted Work Injury (RWI).</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Moderate impact within lease boundary. Medium-term cleanup (&lt;1 month).</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Multiple repeat exceedances. Prosecution possible. Notify regulator within 48 hrs.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Out-of-spec for 1 week. Loss of minor customer / order cancellation.</td>
+          </tr>
+          <tr style="background:#fafafa">
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;white-space:nowrap">
+              <span style="font-weight:700;color:#991b1b;font-size:10px">
+                <span style="background:#fee2e2;border-radius:3px;padding:1px 5px">I4 – Significant</span>
+              </span>
+            </td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Single Lost Time Injury (LTI) or Permanent Disability. OEL exceedance without PPE.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Significant impact extending beyond lease boundary. Significant external cleanup.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Recurring exceedances. Prosecution &amp; penalties likely. Threat to license to operate.</td>
+            <td style="padding:5px 6px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-secondary)">Out-of-spec 1 month. Loss of major customer. Significant reprocessing.</td>
+          </tr>
+          <tr>
+            <td style="padding:5px 6px;vertical-align:top;white-space:nowrap">
+              <span style="font-weight:700;color:#7f1d1d;font-size:10px">
+                <span style="background:#fecaca;border-radius:3px;padding:1px 5px">I5 – Critical</span>
+              </span>
+            </td>
+            <td style="padding:5px 6px;vertical-align:top;color:var(--text-secondary)">Multiple LTIs, Fatality(ies), or serious chronic long-term health effects. PEL/STEL exceedance.</td>
+            <td style="padding:5px 6px;vertical-align:top;color:var(--text-secondary)">Permanent &amp; widespread severe impact to land, water or air. Government suspension of licence.</td>
+            <td style="padding:5px 6px;vertical-align:top;color:var(--text-secondary)">Criminal investigation, jail terms. Licences revoked. Major sustained sanctions.</td>
+            <td style="padding:5px 6px;vertical-align:top;color:var(--text-secondary)">Out-of-spec &gt;1 month. Critical utilisation loss. Loss of market confidence.</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-2);flex-wrap:wrap">
+        <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;width:100%">Risk Tolerability</div>
+        <span style="background:#fee2e2;color:#991b1b;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">EXTREME (17–25) — Unacceptable · CEO/Board escalation · Urgent action required</span>
+        <span style="background:#ffedd5;color:#9a3412;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">HIGH (10–16) — Task not performed without Functional Manager approval</span>
+        <span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">MEDIUM (5–9) — ALARP · Monitored · Action plan required</span>
+        <span style="background:#dcfce7;color:#15803d;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">LOW (1–4) — Acceptable · Routine monitoring</span>
+      </div>
     </div>
-    <div id="risk-matrix-grid" class="matrix-grid"></div>
+
   </div>
   <div class="toolbar" style="margin-top:var(--sp-2)">
     <input type="text" id="risk-search" placeholder="Search risks…">
