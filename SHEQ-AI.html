@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SHEQ-AI | GRCentral</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
     /* ============================================================
        GOOGLE FONTS
@@ -2669,7 +2671,25 @@
 
 <script>
 // ============================================================
-// DATA LAYER — localStorage
+// FIREBASE CONFIG & REAL-TIME SYNC
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAVoruGdEk7wGPOdKtdrD4MzEZs6zIvAzI",
+  authDomain: "ctrg-sheq-ai.firebaseapp.com",
+  databaseURL: "https://ctrg-sheq-ai-default-rtdb.firebaseio.com",
+  projectId: "ctrg-sheq-ai",
+  storageBucket: "ctrg-sheq-ai.firebasestorage.app",
+  messagingSenderId: "476450226116",
+  appId: "1:476450226116:web:bd42e059f78cad8e60ae91"
+};
+firebase.initializeApp(firebaseConfig);
+const _db = firebase.database();
+const FB_PATH = 'sheqai/data';
+let _fbConnected = false;
+let _fbReady = false;
+
+// ============================================================
+// DATA LAYER — localStorage + Firebase
 // ============================================================
 const LS_KEY = 'sheqai_v2';
 
@@ -2679,22 +2699,29 @@ function getData() {
 }
 
 function saveData(d) {
-  let saveOk=true;
+  let saveOk = true;
   try { localStorage.setItem(LS_KEY, JSON.stringify(d)); }
-  catch(e) { saveOk=false; console.error('Save failed',e); }
+  catch(e) { saveOk = false; console.error('Save failed', e); }
   updateSyncStatus(saveOk);
+  // Push to Firebase (non-blocking)
+  if (_fbReady) {
+    _db.ref(FB_PATH).set(d).catch(e => console.warn('Firebase write failed', e));
+  }
 }
 
 function updateSyncStatus(saveOk=true) {
   const el = document.getElementById('sync-status');
   if(!saveOk){el.className='offline';el.textContent='⬤ Storage Full — Export & clear data';return;}
   const d = getData();
-  const total = ((d.observations||[]).length + (d.nearMisses||[]).length + (d.incidents||[]).length + (d.permits||[]).length + (d.risks||[]).length + (d.capas||[]).length);
+  const total = ((d?.observations||[]).length + (d?.nearMisses||[]).length + (d?.incidents||[]).length + (d?.permits||[]).length + (d?.risks||[]).length + (d?.capas||[]).length);
   const key = sessionStorage.getItem('sheqai_apikey');
+  const syncTxt = _fbConnected ? '☁ Synced' : '⬤ Local only';
   if (key) {
-    el.className = 'ai-ready'; el.textContent = '⬤ AI Ready • ' + total + ' records';
+    el.className = _fbConnected ? 'ai-ready' : 'ready';
+    el.textContent = syncTxt + ' • AI Ready • ' + total + ' records';
   } else {
-    el.className = 'ready'; el.textContent = '⬤ Ready • ' + total + ' records';
+    el.className = _fbConnected ? 'ready' : 'ready';
+    el.textContent = syncTxt + ' • ' + total + ' records';
   }
 }
 
@@ -4099,25 +4126,46 @@ document.getElementById('chat-input').addEventListener('input',function(){this.s
 // ============================================================
 window.addEventListener('DOMContentLoaded',()=>{
   const syncEl=document.getElementById('sync-status');
-  syncEl.className='loading';syncEl.textContent='⬤ Loading…';
+  syncEl.className='loading';syncEl.textContent='⬤ Connecting…';
 
-  // Load data
+  // Boot immediately from localStorage for instant display
   let d=getData();
-  if(!d||!d.initialized){
-    d=getDefaultData();
-    saveData(d);
-  }
+  if(!d||!d.initialized){ d=getDefaultData(); localStorage.setItem(LS_KEY,JSON.stringify(d)); }
   autoMarkOverdue(d);
-
-  // Restore API key field if present
   const k=sessionStorage.getItem('sheqai_apikey');
   if(k)document.getElementById('api-key-input').value=k;
-
   updateSyncStatus();
   navigateTo('dashboard');
-
-  // Mobile nav
   document.getElementById('mobile-nav').style.display='';
+
+  // Firebase connection state monitor
+  _db.ref('.info/connected').on('value', snap=>{
+    _fbConnected = snap.val()===true;
+    if(!_fbConnected) _fbReady=false;
+    updateSyncStatus();
+  });
+
+  // Firebase real-time sync listener
+  _db.ref(FB_PATH).on('value', snap=>{
+    _fbReady=true;
+    const fbData=snap.val();
+    if(!fbData||!fbData.initialized){
+      // Firebase empty — push local data up
+      _db.ref(FB_PATH).set(getData()).catch(()=>{});
+      return;
+    }
+    const localStr=localStorage.getItem(LS_KEY);
+    const fbStr=JSON.stringify(fbData);
+    if(fbStr!==localStr){
+      // Data from another device — update local cache and re-render
+      localStorage.setItem(LS_KEY,fbStr);
+      autoMarkOverdue(fbData);
+      const cur=document.querySelector('.page.active');
+      if(cur)navigateTo(cur.id.replace('page-',''));
+      updateSyncStatus();
+    }
+    updateSyncStatus();
+  }, e=>{ console.warn('Firebase listener error',e); });
 });
 </script>
 </body>
