@@ -1,0 +1,2591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IAMS – Internal Audit Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ["Inter","sans-serif"] },
+      colors: {
+        navy: {50:"#f0f4ff",100:"#e0e9ff",200:"#c7d5f8",300:"#a5b8f0",400:"#7d96e8",500:"#5a74de",600:"#4255d0",700:"#3344bd",800:"#2d3a9e",900:"#1e2d4a",950:"#131d33"},
+        audit: {primary:"#1e2d4a",accent:"#3b82f6",success:"#10b981",warning:"#f59e0b",danger:"#ef4444",info:"#6366f1"}
+      }
+    }
+  }
+}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Inter",sans-serif;background:#f8fafc;color:#1e293b}
+.sidebar{background:linear-gradient(180deg,#1e2d4a 0%,#162038 100%);min-height:100vh;width:256px;flex-shrink:0;transition:width 0.3s}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:8px;cursor:pointer;color:#94a3b8;font-size:14px;font-weight:500;transition:all 0.2s;margin:2px 8px}
+.nav-item:hover{background:rgba(59,130,246,0.15);color:#93c5fd}
+.nav-item.active{background:rgba(59,130,246,0.25);color:#60a5fa;border-left:3px solid #3b82f6}
+.nav-group-label{color:#475569;font-size:11px;font-weight:600;letter-spacing:0.08em;padding:16px 24px 6px;text-transform:uppercase}
+.card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.kpi-card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.btn-primary{background:#3b82f6;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary:hover{background:#2563eb}
+.btn-secondary{background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.btn-secondary:hover{background:#e2e8f0}
+.btn-danger{background:#ef4444;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
+.btn-danger:hover{background:#dc2626}
+.btn-success{background:#10b981;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
+.btn-success:hover{background:#059669}
+.input-field{width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:14px;outline:none;transition:border-color 0.2s;font-family:"Inter",sans-serif;background:#fff}
+.input-field:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+.select-field{width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;font-size:14px;outline:none;background:#fff;cursor:pointer;font-family:"Inter",sans-serif}
+.select-field:focus{border-color:#3b82f6}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.table-header{background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:#64748b}
+.table-row{border-bottom:1px solid #f1f5f9;transition:background 0.15s}
+.table-row:hover{background:#f8fafc}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.fade-in{animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.heatmap-cell{display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:11px;font-weight:600;transition:all 0.2s;cursor:pointer;position:relative}
+.heatmap-cell:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+.tab-btn{padding:10px 18px;font-size:14px;font-weight:500;border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;color:#64748b;transition:all 0.2s}
+.tab-btn.active{color:#3b82f6;border-bottom-color:#3b82f6}
+.tab-btn:hover{color:#3b82f6}
+.severity-critical{background:#fee2e2;color:#991b1b}
+.severity-high{background:#ffedd5;color:#9a3412}
+.severity-medium{background:#fef9c3;color:#713f12}
+.severity-low{background:#dcfce7;color:#166534}
+.severity-info{background:#dbeafe;color:#1e40af}
+.status-planned{background:#e0e7ff;color:#3730a3}
+.status-inprogress{background:#dbeafe;color:#1d4ed8}
+.status-completed{background:#d1fae5;color:#065f46}
+.status-overdue{background:#fee2e2;color:#991b1b}
+.status-draft{background:#f1f5f9;color:#475569}
+.status-approved{background:#d1fae5;color:#065f46}
+.status-open{background:#ffedd5;color:#9a3412}
+.status-closed{background:#d1fae5;color:#065f46}
+.status-inreview{background:#fef9c3;color:#713f12}
+.login-bg{background:linear-gradient(135deg,#1e2d4a 0%,#2d4a7a 50%,#1e3a5f 100%);min-height:100vh}
+.scrollbar-thin::-webkit-scrollbar{width:4px}
+.scrollbar-thin::-webkit-scrollbar-track{background:#f1f5f9}
+.scrollbar-thin::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useContext,createContext,useCallback} = React;
+
+const SEED_USERS = [
+  {id:"u1",name:"Alexandra Chen",email:"a.chen@company.com",password:"cae123",role:"CAE",department:"Internal Audit",active:true,avatar:"AC"},
+  {id:"u2",name:"Marcus Williams",email:"m.williams@company.com",password:"mgr123",role:"Audit Manager",department:"Internal Audit",active:true,avatar:"MW"},
+  {id:"u3",name:"Sarah Johnson",email:"s.johnson@company.com",password:"sr123",role:"Senior Auditor",department:"Internal Audit",active:true,avatar:"SJ"},
+  {id:"u4",name:"David Park",email:"d.park@company.com",password:"staff123",role:"Staff Auditor",department:"Internal Audit",active:true,avatar:"DP"},
+  {id:"u5",name:"Rachel Torres",email:"r.torres@company.com",password:"auditee123",role:"Auditee",department:"Finance",active:true,avatar:"RT"},
+  {id:"u6",name:"James Mitchell",email:"j.mitchell@company.com",password:"auditee456",role:"Auditee",department:"Operations",active:true,avatar:"JM"}
+];
+
+const SEED_UNIVERSE = [
+  {id:"au1",name:"Financial Reporting",category:"Finance",owner:"Rachel Torres",likelihood:4,impact:5,residualRisk:20,lastAudit:"2023-03-15",frequency:"Annual",notes:"Critical SOX process"},
+  {id:"au2",name:"Accounts Payable",category:"Finance",owner:"Rachel Torres",likelihood:3,impact:4,residualRisk:12,lastAudit:"2023-08-10",frequency:"Annual",notes:""},
+  {id:"au3",name:"IT General Controls",category:"IT",owner:"James Mitchell",likelihood:4,impact:4,residualRisk:16,lastAudit:"2023-01-20",frequency:"Annual",notes:"Includes access management"},
+  {id:"au4",name:"Payroll Processing",category:"HR",owner:"Rachel Torres",likelihood:2,impact:5,residualRisk:10,lastAudit:"2022-11-05",frequency:"Biennial",notes:""},
+  {id:"au5",name:"Procurement and Contracts",category:"Operations",owner:"James Mitchell",likelihood:3,impact:3,residualRisk:9,lastAudit:"2023-05-22",frequency:"Annual",notes:""},
+  {id:"au6",name:"Cybersecurity Controls",category:"IT",owner:"James Mitchell",likelihood:5,impact:5,residualRisk:25,lastAudit:"2023-02-14",frequency:"Annual",notes:"High priority"},
+  {id:"au7",name:"Revenue Recognition",category:"Finance",owner:"Rachel Torres",likelihood:3,impact:5,residualRisk:15,lastAudit:"2023-06-30",frequency:"Annual",notes:""},
+  {id:"au8",name:"Inventory Management",category:"Operations",owner:"James Mitchell",likelihood:2,impact:3,residualRisk:6,lastAudit:"2022-09-01",frequency:"Biennial",notes:""},
+  {id:"au9",name:"HR Compliance",category:"HR",owner:"Rachel Torres",likelihood:2,impact:2,residualRisk:4,lastAudit:"2023-07-15",frequency:"Biennial",notes:""},
+  {id:"au10",name:"Business Continuity",category:"Operations",owner:"James Mitchell",likelihood:3,impact:4,residualRisk:12,lastAudit:"2022-12-01",frequency:"Annual",notes:""},
+  {id:"au11",name:"Third-Party Risk",category:"Compliance",owner:"James Mitchell",likelihood:4,impact:3,residualRisk:12,lastAudit:"2023-04-10",frequency:"Annual",notes:""},
+  {id:"au12",name:"Regulatory Compliance",category:"Compliance",owner:"Rachel Torres",likelihood:3,impact:4,residualRisk:12,lastAudit:"2023-09-01",frequency:"Annual",notes:""}
+];
+
+const SEED_PLAN = [
+  {id:"p1",auditableUnit:"Financial Reporting",quarter:"Q1",status:"Completed",budget:120,actual:115,team:["u2","u3"],type:"Assurance",year:2024},
+  {id:"p2",auditableUnit:"IT General Controls",quarter:"Q1",status:"Completed",budget:80,actual:88,team:["u3","u4"],type:"Assurance",year:2024},
+  {id:"p3",auditableUnit:"Cybersecurity Controls",quarter:"Q2",status:"In Progress",budget:100,actual:45,team:["u2","u4"],type:"Assurance",year:2024},
+  {id:"p4",auditableUnit:"Revenue Recognition",quarter:"Q2",status:"In Progress",budget:90,actual:30,team:["u3"],type:"Assurance",year:2024},
+  {id:"p5",auditableUnit:"Procurement and Contracts",quarter:"Q3",status:"Planned",budget:70,actual:0,team:["u4"],type:"Advisory",year:2024},
+  {id:"p6",auditableUnit:"Third-Party Risk",quarter:"Q3",status:"Planned",budget:60,actual:0,team:["u3","u4"],type:"Assurance",year:2024},
+  {id:"p7",auditableUnit:"Payroll Processing",quarter:"Q4",status:"Planned",budget:80,actual:0,team:["u2","u3"],type:"Assurance",year:2024},
+  {id:"p8",auditableUnit:"Business Continuity",quarter:"Q4",status:"Planned",budget:65,actual:0,team:["u4"],type:"Advisory",year:2024}
+];
+
+const SEED_ENGAGEMENTS = [
+  {
+    id:"e1",title:"Financial Reporting Audit 2024",type:"Assurance",status:"Completed",
+    auditableUnit:"Financial Reporting",quarter:"Q1",
+    objectives:"Assess the effectiveness of controls over financial reporting processes including month-end close, journal entries, and account reconciliations.",
+    scope:"FY2023 financial statements, general ledger, journal entry processes, account reconciliations for all material accounts.",
+    criteria:"COSO Internal Control Framework, SOX Section 302/404, Company Accounting Policies",
+    team:["u2","u3","u4"],auditee:"u5",
+    plannedStart:"2024-01-08",plannedEnd:"2024-02-16",actualStart:"2024-01-08",actualEnd:"2024-02-20",
+    rcm:[
+      {id:"r1",process:"Journal Entry",risk:"Unauthorized journal entries could misstate financials",control:"JE approval workflow requires 2nd approver for entries over $10k",controlType:"Preventive",effectiveness:"Effective",testResult:"Pass"},
+      {id:"r2",process:"Reconciliation",risk:"Unreconciled items may indicate errors or fraud",control:"Monthly reconciliation completed within 5 business days",controlType:"Detective",effectiveness:"Partially Effective",testResult:"Fail"},
+      {id:"r3",process:"Period Close",risk:"Incorrect cut-off could misstate period results",control:"Close checklist reviewed by Controller before certification",controlType:"Preventive",effectiveness:"Effective",testResult:"Pass"}
+    ],
+    program:[
+      {id:"pr1",step:"1.1",procedure:"Review and document the journal entry approval process",assignee:"u3",status:"Completed",dueDate:"2024-01-15",notes:"Completed - workflow documented"},
+      {id:"pr2",step:"1.2",procedure:"Test a sample of 50 journal entries for proper approval",assignee:"u4",status:"Completed",dueDate:"2024-01-22",notes:"All 50 samples passed"},
+      {id:"pr3",step:"2.1",procedure:"Obtain account reconciliations for 15 material accounts",assignee:"u3",status:"Completed",dueDate:"2024-01-29",notes:"3 accounts with late recons"},
+      {id:"pr4",step:"2.2",procedure:"Assess timeliness and completeness of reconciliations",assignee:"u4",status:"Completed",dueDate:"2024-02-05",notes:"Finding raised"},
+      {id:"pr5",step:"3.1",procedure:"Review period close checklist for Q4 2023",assignee:"u3",status:"Completed",dueDate:"2024-02-09",notes:"Checklist complete"}
+    ],
+    findings:[
+      {id:"f1",title:"Account Reconciliations Not Completed on Time",condition:"3 of 15 material account reconciliations were completed more than 10 business days after month-end.",criteria:"Company policy requires reconciliations within 5 business days of month-end.",cause:"Insufficient staffing during peak periods and lack of automated reminders.",consequence:"Late reconciliations increase the risk of undetected errors remaining in the financial statements.",recommendation:"Implement automated reminders, cross-train staff, and escalate overdue reconciliations to the Controller.",managementResponse:"Finance team agrees and will implement automated reminders by Q2 2024.",severity:"Medium",status:"In Progress",owner:"u5",dueDate:"2024-06-30",engagementId:"e1"},
+      {id:"f2",title:"Journal Entry System Access Not Removed for Terminated Employee",condition:"One terminated employee still had active journal entry posting access 45 days after termination.",criteria:"IT security policy requires access removal within 2 business days of termination.",cause:"Breakdown in offboarding communication between HR and IT.",consequence:"Unauthorized access could allow fraudulent journal entries.",recommendation:"Implement automated access revocation triggered by HR system termination record.",managementResponse:"IT and HR will implement automated deprovisioning workflow by end of Q1.",severity:"High",status:"Closed",owner:"u5",dueDate:"2024-03-31",engagementId:"e1"}
+    ],
+    evidence:["GL_Extract_Q4_2023.xlsx","JE_Sample_Testing_Workpaper.xlsx","Recon_Summary.pdf"],
+    reportDraft:"The Internal Audit function has completed its review of Financial Reporting controls for FY2023. Overall, the control environment is satisfactory with two findings identified."
+  },
+  {
+    id:"e2",title:"IT General Controls Review 2024",type:"Assurance",status:"In Progress",
+    auditableUnit:"IT General Controls",quarter:"Q1",
+    objectives:"Evaluate the design and operating effectiveness of IT general controls covering access management, change management, and operations.",
+    scope:"Core financial systems (ERP, GL), access management processes, change management procedures, backup and recovery.",
+    criteria:"COBIT 2019, ISO 27001, Company IT Security Policy",
+    team:["u3","u4"],auditee:"u6",
+    plannedStart:"2024-02-01",plannedEnd:"2024-03-15",actualStart:"2024-02-05",actualEnd:null,
+    rcm:[
+      {id:"r4",process:"Access Management",risk:"Excessive or inappropriate access increases fraud risk",control:"Quarterly user access reviews performed by system owners",controlType:"Detective",effectiveness:"Partially Effective",testResult:"Fail"},
+      {id:"r5",process:"Change Management",risk:"Unauthorized changes could disrupt operations",control:"All production changes require CAB approval and back-out plan",controlType:"Preventive",effectiveness:"Effective",testResult:"Pass"}
+    ],
+    program:[
+      {id:"pr6",step:"1.1",procedure:"Obtain and review user access listing for all financial systems",assignee:"u3",status:"Completed",dueDate:"2024-02-12",notes:"Access list obtained"},
+      {id:"pr7",step:"1.2",procedure:"Test quarterly access review completion and documentation",assignee:"u4",status:"In Progress",dueDate:"2024-02-19",notes:""},
+      {id:"pr8",step:"2.1",procedure:"Review change management log for last 6 months",assignee:"u3",status:"Not Started",dueDate:"2024-02-26",notes:""}
+    ],
+    findings:[
+      {id:"f3",title:"Quarterly Access Reviews Not Consistently Performed",condition:"Access reviews were not completed for 2 of 4 quarters reviewed for the ERP system.",criteria:"IT Security Policy requires quarterly access reviews for all critical systems.",cause:"Process relies on manual calendar reminders with no automated workflow.",consequence:"Inappropriate access may persist undetected, increasing fraud and error risk.",recommendation:"Implement automated access review workflow with escalation notifications.",managementResponse:"IT team will deploy IAM tool by Q3 2024 to automate access reviews.",severity:"High",status:"Open",owner:"u6",dueDate:"2024-09-30",engagementId:"e2"}
+    ],
+    evidence:["Access_Listing_Feb2024.xlsx","Change_Log_H2_2023.pdf"],
+    reportDraft:"IT General Controls review is currently in progress. Preliminary findings have been communicated to IT management."
+  }
+];
+
+const SEED_FOLLOWUPS = [
+  {id:"fu1",findingId:"f1",findingTitle:"Account Reconciliations Not Completed on Time",engagementTitle:"Financial Reporting Audit 2024",owner:"u5",dueDate:"2024-06-30",status:"In Progress",severity:"Medium",updates:[{date:"2024-03-01",note:"Automated reminders implemented. Cross-training scheduled.",by:"Rachel Torres"}]},
+  {id:"fu2",findingId:"f2",findingTitle:"Journal Entry System Access Not Removed for Terminated Employee",engagementTitle:"Financial Reporting Audit 2024",owner:"u5",dueDate:"2024-03-31",status:"Closed",severity:"High",updates:[{date:"2024-03-15",note:"Automated deprovisioning workflow deployed and tested.",by:"Rachel Torres"}]},
+  {id:"fu3",findingId:"f3",findingTitle:"Quarterly Access Reviews Not Consistently Performed",engagementTitle:"IT General Controls Review 2024",owner:"u6",dueDate:"2024-09-30",status:"Open",severity:"High",updates:[]}
+];
+
+const SEED_QAIP = [
+  {id:"q1",type:"Internal",assessor:"Alexandra Chen",date:"2024-01-15",period:"2023",overall:"Generally Conforms",findings:"No significant gaps identified. Minor improvement in documentation quality recommended.",standards:[{std:"1000",name:"Purpose, Authority, Responsibility",rating:"Conforms"},{std:"1100",name:"Independence and Objectivity",rating:"Conforms"},{std:"1200",name:"Proficiency and Due Professional Care",rating:"Conforms"},{std:"1300",name:"Quality Assurance Program",rating:"Partially Conforms"},{std:"2000",name:"Managing the Internal Audit Activity",rating:"Conforms"},{std:"2100",name:"Nature of Work",rating:"Conforms"},{std:"2200",name:"Engagement Planning",rating:"Conforms"},{std:"2300",name:"Performing the Engagement",rating:"Conforms"},{std:"2400",name:"Communicating Results",rating:"Conforms"},{std:"2500",name:"Monitoring Progress",rating:"Partially Conforms"},{std:"2600",name:"Communicating the Acceptance of Risks",rating:"Conforms"}]},
+  {id:"q2",type:"External",assessor:"Big Four LLP",date:"2022-06-30",period:"2021-2022",overall:"Generally Conforms",findings:"Audit function conforms to IIA Standards. Recommended enhancements to risk assessment methodology.",standards:[{std:"1000",name:"Purpose, Authority, Responsibility",rating:"Conforms"},{std:"1100",name:"Independence and Objectivity",rating:"Conforms"},{std:"1200",name:"Proficiency and Due Professional Care",rating:"Partially Conforms"},{std:"1300",name:"Quality Assurance Program",rating:"Conforms"},{std:"2000",name:"Managing the Internal Audit Activity",rating:"Conforms"},{std:"2100",name:"Nature of Work",rating:"Conforms"},{std:"2200",name:"Engagement Planning",rating:"Conforms"},{std:"2300",name:"Performing the Engagement",rating:"Conforms"},{std:"2400",name:"Communicating Results",rating:"Conforms"},{std:"2500",name:"Monitoring Progress",rating:"Conforms"},{std:"2600",name:"Communicating the Acceptance of Risks",rating:"Conforms"}]},
+  {id:"q3",type:"Internal",assessor:"Marcus Williams",date:"2023-07-20",period:"H1 2023",overall:"Partially Conforms",findings:"Follow-up tracking process needs improvement. Some engagement files incomplete.",standards:[{std:"1000",name:"Purpose, Authority, Responsibility",rating:"Conforms"},{std:"1100",name:"Independence and Objectivity",rating:"Conforms"},{std:"1200",name:"Proficiency and Due Professional Care",rating:"Conforms"},{std:"1300",name:"Quality Assurance Program",rating:"Partially Conforms"},{std:"2000",name:"Managing the Internal Audit Activity",rating:"Conforms"},{std:"2100",name:"Nature of Work",rating:"Conforms"},{std:"2200",name:"Engagement Planning",rating:"Partially Conforms"},{std:"2300",name:"Performing the Engagement",rating:"Conforms"},{std:"2400",name:"Communicating Results",rating:"Conforms"},{std:"2500",name:"Monitoring Progress",rating:"Does Not Conform"},{std:"2600",name:"Communicating the Acceptance of Risks",rating:"Conforms"}]}
+];
+
+const SEED_DOCS = [
+  {id:"d1",name:"Internal Audit Charter",category:"Governance",version:"v3.2",uploadedBy:"u1",uploadedDate:"2024-01-10",size:"245 KB",description:"Official Internal Audit Charter approved by the Audit Committee"},
+  {id:"d2",name:"Audit Methodology Manual",category:"Methodology",version:"v2.1",uploadedBy:"u2",uploadedDate:"2024-01-15",size:"1.2 MB",description:"Comprehensive guide to IA methodology, tools, and templates"},
+  {id:"d3",name:"Risk Assessment Framework",category:"Methodology",version:"v1.5",uploadedBy:"u1",uploadedDate:"2023-11-20",size:"380 KB",description:"Risk-based audit universe and annual planning framework"},
+  {id:"d4",name:"Financial Reporting Audit - Final Report",category:"Reports",version:"v1.0",uploadedBy:"u2",uploadedDate:"2024-02-28",size:"890 KB",description:"Final audit report for Financial Reporting Audit 2024"},
+  {id:"d5",name:"IT ITGC Review - Working Papers",category:"Working Papers",version:"v0.8",uploadedBy:"u3",uploadedDate:"2024-03-01",size:"2.1 MB",description:"Working paper file for IT General Controls engagement"},
+  {id:"d6",name:"Audit Committee Presentation Q1 2024",category:"Governance",version:"v1.0",uploadedBy:"u1",uploadedDate:"2024-03-15",size:"1.8 MB",description:"Quarterly Audit Committee status presentation"}
+];
+
+const SEED_AUDIT_LOG = [
+  {id:"al1",action:"Engagement Completed",detail:"Financial Reporting Audit 2024 marked as Completed",user:"Alexandra Chen",timestamp:"2024-02-20T14:32:00Z"},
+  {id:"al2",action:"Finding Created",detail:"New High finding: Journal Entry System Access Not Removed",user:"Sarah Johnson",timestamp:"2024-02-15T10:15:00Z"},
+  {id:"al3",action:"Finding Closed",detail:"Finding F2 closed after management remediation confirmed",user:"Alexandra Chen",timestamp:"2024-03-16T09:00:00Z"},
+  {id:"al4",action:"Plan Approved",detail:"2024 Annual Audit Plan approved by CAE",user:"Alexandra Chen",timestamp:"2024-01-05T11:00:00Z"},
+  {id:"al5",action:"Engagement Started",detail:"IT General Controls Review 2024 kickoff completed",user:"Sarah Johnson",timestamp:"2024-02-05T09:30:00Z"}
+];
+
+function SeverityBadge({severity}){
+  const map={Critical:"severity-critical",High:"severity-high",Medium:"severity-medium",Low:"severity-low",Informational:"severity-info"};
+  return <span className={"badge "+(map[severity]||"bg-gray-100 text-gray-700")}>{severity}</span>;
+}
+function StatusBadge({status}){
+  const map={Planned:"status-planned","In Progress":"status-inprogress",Completed:"status-completed",Overdue:"status-overdue",Draft:"status-draft",Approved:"status-approved",Open:"status-open",Closed:"status-closed","In Review":"status-inreview",Active:"status-completed",Inactive:"status-overdue","Not Started":"status-draft"};
+  return <span className={"badge "+(map[status]||"bg-gray-100 text-gray-700")}>{status}</span>;
+}
+function Avatar({initials,size="sm",color="bg-blue-500"}){
+  const s=size==="sm"?"w-8 h-8 text-xs":size==="lg"?"w-12 h-12 text-base":"w-10 h-10 text-sm";
+  return <div className={"rounded-full "+color+" text-white flex items-center justify-center font-semibold flex-shrink-0 "+s}>{initials}</div>;
+}
+function Card({children,className="",padding="p-5"}){
+  return <div className={"card "+padding+" "+className}>{children}</div>;
+}
+function Inp({label,value,onChange,type="text",placeholder="",required=false}){
+  return (
+    <div className="mb-4">
+      {label&&<label className="block text-sm font-medium text-gray-700 mb-1">{label}{required&&<span className="text-red-500 ml-1">*</span>}</label>}
+      <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className="input-field" required={required}/>
+    </div>
+  );
+}
+function Sel({label,value,onChange,options,required=false}){
+  return (
+    <div className="mb-4">
+      {label&&<label className="block text-sm font-medium text-gray-700 mb-1">{label}{required&&<span className="text-red-500 ml-1">*</span>}</label>}
+      <select value={value} onChange={e=>onChange(e.target.value)} className="select-field">
+        {options.map(o=><option key={o.value||o} value={o.value||o}>{o.label||o}</option>)}
+      </select>
+    </div>
+  );
+}
+function Txta({label,value,onChange,rows=3,placeholder=""}){
+  return (
+    <div className="mb-4">
+      {label&&<label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+      <textarea value={value} onChange={e=>onChange(e.target.value)} rows={rows} placeholder={placeholder} className="input-field" style={{resize:"vertical"}}/>
+    </div>
+  );
+}
+function Btn({children,onClick,variant="primary",size="md",type="button",disabled=false,className=""}){
+  const variants={primary:"btn-primary",secondary:"btn-secondary",danger:"btn-danger",success:"btn-success"};
+  const sizes={sm:"!px-3 !py-1.5 !text-xs",md:"",lg:"!px-6 !py-3 !text-base"};
+  return <button type={type} onClick={onClick} disabled={disabled} className={(variants[variant]||"btn-primary")+" "+(sizes[size]||"")+" "+className+" disabled:opacity-50 disabled:cursor-not-allowed"}>{children}</button>;
+}
+function Modal({open,onClose,title,children,width="max-w-xl"}){
+  if(!open)return null;
+  return (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
+      <div className={"modal-box "+width} onClick={e=>e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-light leading-none">&#10005;</button>
+        </div>
+        <div className="p-5">{children}</div>
+      </div>
+    </div>
+  );
+}
+function ConfirmDialog({open,onConfirm,onCancel,title,message}){
+  if(!open)return null;
+  return (
+    <div className="modal-overlay">
+      <div className="modal-box max-w-sm">
+        <div className="p-6 text-center">
+          <div className="text-4xl mb-3">&#9888;&#65039;</div>
+          <h3 className="text-lg font-semibold mb-2">{title}</h3>
+          <p className="text-gray-600 text-sm mb-6">{message}</p>
+          <div className="flex gap-3 justify-center">
+            <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>
+            <Btn variant="danger" onClick={onConfirm}>Confirm</Btn>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function ProgressRing({percent,size=60,stroke=5,color="#3b82f6"}){
+  const r=(size-stroke*2)/2;
+  const circ=2*Math.PI*r;
+  const offset=circ-((percent/100)*circ);
+  return (
+    <svg width={size} height={size}>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e2e8f0" strokeWidth={stroke}/>
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+        strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+        style={{transform:"rotate(-90deg)",transformOrigin:"50% 50%",transition:"stroke-dashoffset 0.5s"}}/>
+      <text x={size/2} y={size/2+5} textAnchor="middle" fontSize="13" fontWeight="600" fill="#1e293b">{percent}%</text>
+    </svg>
+  );
+}
+
+// ============================================================
+// APP CONTEXT
+// ============================================================
+const AppContext = createContext(null);
+
+function useApp(){ return useContext(AppContext); }
+
+function genId(prefix="id"){ return prefix+"_"+Date.now()+"_"+Math.random().toString(36).slice(2,7); }
+
+function AppProvider({children}){
+  const [currentUser,setCurrentUser] = useState(null);
+  const [page,setPage] = useState("dashboard");
+  const [selectedEngagement,setSelectedEngagement] = useState(null);
+  const [sidebarOpen,setSidebarOpen] = useState(true);
+  const [notifications,setNotifications] = useState([
+    {id:"n1",text:"Finding F3 is overdue",type:"warning",read:false},
+    {id:"n2",text:"IT General Controls engagement in progress",type:"info",read:false},
+    {id:"n3",text:"Q2 plan review due this month",type:"info",read:true}
+  ]);
+
+  function loadData(key,seed){
+    try{
+      const s=localStorage.getItem("iams_"+key);
+      return s?JSON.parse(s):seed;
+    }catch(e){ return seed; }
+  }
+  function saveData(key,val){
+    try{ localStorage.setItem("iams_"+key,JSON.stringify(val)); }catch(e){}
+  }
+
+  const [users,setUsers] = useState(()=>loadData("users",SEED_USERS));
+  const [universe,setUniverse] = useState(()=>loadData("universe",SEED_UNIVERSE));
+  const [plan,setPlan] = useState(()=>loadData("plan",SEED_PLAN));
+  const [planApproved,setPlanApproved] = useState(()=>loadData("planApproved",false));
+  const [engagements,setEngagements] = useState(()=>loadData("engagements",SEED_ENGAGEMENTS));
+  const [followups,setFollowups] = useState(()=>loadData("followups",SEED_FOLLOWUPS));
+  const [qaip,setQaip] = useState(()=>loadData("qaip",SEED_QAIP));
+  const [docs,setDocs] = useState(()=>loadData("docs",SEED_DOCS));
+  const [auditLog,setAuditLog] = useState(()=>loadData("auditLog",SEED_AUDIT_LOG));
+
+  useEffect(()=>saveData("users",users),[users]);
+  useEffect(()=>saveData("universe",universe),[universe]);
+  useEffect(()=>saveData("plan",plan),[plan]);
+  useEffect(()=>saveData("planApproved",planApproved),[planApproved]);
+  useEffect(()=>saveData("engagements",engagements),[engagements]);
+  useEffect(()=>saveData("followups",followups),[followups]);
+  useEffect(()=>saveData("qaip",qaip),[qaip]);
+  useEffect(()=>saveData("docs",docs),[docs]);
+  useEffect(()=>saveData("auditLog",auditLog),[auditLog]);
+
+  function logAction(action,detail){
+    const entry={id:genId("al"),action,detail,user:currentUser?currentUser.name:"System",timestamp:new Date().toISOString()};
+    setAuditLog(prev=>[entry,...prev].slice(0,100));
+  }
+
+  function login(email,password){
+    const u=users.find(x=>x.email===email&&x.password===password&&x.active);
+    if(u){ setCurrentUser(u); return true; }
+    return false;
+  }
+  function logout(){ setCurrentUser(null); setPage("dashboard"); }
+
+  function canAccess(roles){ if(!currentUser)return false; return roles.includes(currentUser.role)||roles.includes("*"); }
+
+  const value={
+    currentUser,login,logout,canAccess,
+    page,setPage,selectedEngagement,setSelectedEngagement,
+    sidebarOpen,setSidebarOpen,notifications,setNotifications,
+    users,setUsers,
+    universe,setUniverse,
+    plan,setPlan,planApproved,setPlanApproved,
+    engagements,setEngagements,
+    followups,setFollowups,
+    qaip,setQaip,
+    docs,setDocs,
+    auditLog,logAction,
+    genId
+  };
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+}
+
+// ============================================================
+// LOGIN PAGE
+// ============================================================
+function LoginPage(){
+  const {login} = useApp();
+  const [email,setEmail] = useState("");
+  const [password,setPassword] = useState("");
+  const [error,setError] = useState("");
+  const [loading,setLoading] = useState(false);
+
+  const demos=[
+    {label:"CAE",email:"a.chen@company.com",password:"cae123",color:"bg-indigo-600"},
+    {label:"Audit Manager",email:"m.williams@company.com",password:"mgr123",color:"bg-blue-600"},
+    {label:"Senior Auditor",email:"s.johnson@company.com",password:"sr123",color:"bg-cyan-600"},
+    {label:"Staff Auditor",email:"d.park@company.com",password:"staff123",color:"bg-teal-600"},
+    {label:"Auditee (Finance)",email:"r.torres@company.com",password:"auditee123",color:"bg-orange-500"},
+    {label:"Auditee (Ops)",email:"j.mitchell@company.com",password:"auditee456",color:"bg-amber-500"}
+  ];
+
+  function handleLogin(e){
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setTimeout(()=>{
+      const ok=login(email,password);
+      if(!ok){ setError("Invalid credentials. Please try again."); }
+      setLoading(false);
+    },400);
+  }
+
+  function demoLogin(d){
+    setEmail(d.email);
+    setPassword(d.password);
+    setTimeout(()=>login(d.email,d.password),100);
+  }
+
+  return (
+    <div className="login-bg flex items-center justify-center min-h-screen p-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500 rounded-2xl mb-4 shadow-lg">
+            <span className="text-white text-2xl font-bold">IA</span>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-1">IAMS</h1>
+          <p className="text-blue-200 text-sm">Internal Audit Management System</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Sign In</h2>
+          {error&&<div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg mb-4 border border-red-200">{error}</div>}
+          <form onSubmit={handleLogin}>
+            <Inp label="Email Address" value={email} onChange={setEmail} type="email" placeholder="your@email.com" required/>
+            <Inp label="Password" value={password} onChange={setPassword} type="password" placeholder="Enter password" required/>
+            <Btn type="submit" variant="primary" disabled={loading} className="w-full justify-center py-2.5 mt-2">
+              {loading?"Signing in...":"Sign In"}
+            </Btn>
+          </form>
+          <div className="mt-6">
+            <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">Quick Demo Access</p>
+            <div className="grid grid-cols-2 gap-2">
+              {demos.map(d=>(
+                <button key={d.label} onClick={()=>demoLogin(d)}
+                  className={"text-white text-xs py-2 px-3 rounded-lg font-medium transition-opacity hover:opacity-90 "+d.color}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <p className="text-center text-blue-300 text-xs mt-6">&#169; 2024 Internal Audit Management System</p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// LAYOUT
+// ============================================================
+const NAV_ITEMS = [
+  {group:"Overview",items:[
+    {id:"dashboard",icon:"&#9632;",label:"Dashboard"},
+  ]},
+  {group:"Planning",items:[
+    {id:"universe",icon:"&#9675;",label:"Audit Universe"},
+    {id:"plan",icon:"&#128197;",label:"Annual Plan"},
+  ]},
+  {group:"Execution",items:[
+    {id:"engagements",icon:"&#128196;",label:"Engagements"},
+    {id:"followup",icon:"&#128204;",label:"Follow-Up Tracking"},
+  ]},
+  {group:"Quality",items:[
+    {id:"qaip",icon:"&#9733;",label:"QAIP"},
+  ]},
+  {group:"Administration",items:[
+    {id:"users",icon:"&#128100;",label:"User Management"},
+    {id:"docs",icon:"&#128193;",label:"Documents"},
+  ]}
+];
+
+const PAGE_TITLES={
+  dashboard:"Dashboard",universe:"Audit Universe",plan:"Annual Audit Plan",
+  engagements:"Engagements",followup:"Follow-Up Tracking",qaip:"QAIP",
+  users:"User Management",docs:"Document Management",engagement_detail:"Engagement Detail"
+};
+
+function Layout({children}){
+  const {currentUser,logout,page,setPage,sidebarOpen,setSidebarOpen,notifications,setNotifications,selectedEngagement} = useApp();
+  const [showNotif,setShowNotif] = useState(false);
+  const [showUserMenu,setShowUserMenu] = useState(false);
+  const unread=notifications.filter(n=>!n.read).length;
+
+  const avatarColors=["bg-blue-500","bg-indigo-500","bg-purple-500","bg-pink-500","bg-teal-500","bg-orange-500"];
+  const colorIdx=currentUser?currentUser.id.charCodeAt(1)%avatarColors.length:0;
+
+  function markAllRead(){ setNotifications(prev=>prev.map(n=>({...n,read:true}))); }
+
+  const breadcrumb = page==="engagement_detail" && selectedEngagement
+    ? ["Engagements", selectedEngagement.title]
+    : [PAGE_TITLES[page]||page];
+
+  return (
+    <div className="flex" style={{minHeight:"100vh"}}>
+      {/* Sidebar */}
+      <div className={"sidebar flex flex-col "+(sidebarOpen?"":"sidebar-collapsed")} style={{minHeight:"100vh",position:"sticky",top:0}}>
+        {/* Logo */}
+        <div className="flex items-center gap-3 p-5 border-b border-white/10">
+          <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-sm font-bold">IA</span>
+          </div>
+          {sidebarOpen&&<div><div className="text-white font-bold text-sm leading-tight">IAMS</div><div className="text-blue-300 text-xs">Audit System</div></div>}
+        </div>
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-2 scrollbar-thin">
+          {NAV_ITEMS.map(group=>(
+            <div key={group.group}>
+              {sidebarOpen&&<div className="nav-group-label">{group.group}</div>}
+              {group.items.map(item=>(
+                <div key={item.id}
+                  className={"nav-item "+(page===item.id||page==="engagement_detail"&&item.id==="engagements"?"active":"")}
+                  onClick={()=>setPage(item.id)}
+                  title={!sidebarOpen?item.label:""}>
+                  <span dangerouslySetInnerHTML={{__html:item.icon}} style={{fontSize:"16px",flexShrink:0}}/>
+                  {sidebarOpen&&<span className="truncate">{item.label}</span>}
+                </div>
+              ))}
+            </div>
+          ))}
+        </nav>
+        {/* User at bottom */}
+        {sidebarOpen&&currentUser&&(
+          <div className="p-4 border-t border-white/10">
+            <div className="flex items-center gap-3">
+              <Avatar initials={currentUser.avatar} size="sm" color={avatarColors[colorIdx]}/>
+              <div className="flex-1 min-w-0">
+                <div className="text-white text-sm font-medium truncate">{currentUser.name}</div>
+                <div className="text-blue-300 text-xs truncate">{currentUser.role}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+          <div className="flex items-center gap-4">
+            <button onClick={()=>setSidebarOpen(!sidebarOpen)} className="text-gray-400 hover:text-gray-600 p-1">
+              <span style={{fontSize:"18px"}}>&#9776;</span>
+            </button>
+            <nav className="flex items-center gap-2 text-sm">
+              <span className="text-gray-400">IAMS</span>
+              {breadcrumb.map((b,i)=>(
+                <React.Fragment key={i}>
+                  <span className="text-gray-300">/</span>
+                  <span className={i===breadcrumb.length-1?"text-gray-900 font-medium":"text-gray-500"}>{b}</span>
+                </React.Fragment>
+              ))}
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Notification bell */}
+            <div className="relative">
+              <button onClick={()=>setShowNotif(!showNotif)} className="relative p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50">
+                <span style={{fontSize:"18px"}}>&#128276;</span>
+                {unread>0&&<span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{unread}</span>}
+              </button>
+              {showNotif&&(
+                <div className="absolute right-0 top-10 w-72 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
+                  <div className="flex items-center justify-between p-3 border-b">
+                    <span className="font-semibold text-sm">Notifications</span>
+                    <button onClick={markAllRead} className="text-xs text-blue-500 hover:underline">Mark all read</button>
+                  </div>
+                  {notifications.map(n=>(
+                    <div key={n.id} className={"p-3 border-b last:border-0 text-sm "+(n.read?"text-gray-400":"text-gray-700 bg-blue-50/30")}>
+                      <span className="mr-2">{n.type==="warning"?"&#9888;&#65039;":"&#8505;&#65039;"}</span>{n.text}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* User menu */}
+            <div className="relative">
+              <button onClick={()=>setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 hover:bg-gray-50 p-1.5 rounded-lg">
+                <Avatar initials={currentUser?currentUser.avatar:"?"} size="sm" color={avatarColors[colorIdx]}/>
+                {currentUser&&<span className="text-sm font-medium text-gray-700 hidden md:block">{currentUser.name}</span>}
+              </button>
+              {showUserMenu&&(
+                <div className="absolute right-0 top-11 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
+                  <div className="p-3 border-b">
+                    <div className="font-semibold text-sm">{currentUser?.name}</div>
+                    <div className="text-xs text-gray-500">{currentUser?.role}</div>
+                  </div>
+                  <button onClick={()=>{setShowUserMenu(false);logout();}} className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50">Sign Out</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 p-6 overflow-auto">
+          <div className="fade-in">{children}</div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// DASHBOARD PAGE
+// ============================================================
+function Dashboard(){
+  const {engagements,followups,plan,auditLog,universe,currentUser} = useApp();
+  const barRef=useRef(null);
+  const doughnutRef=useRef(null);
+  const barChart=useRef(null);
+  const doughnutChart=useRef(null);
+
+  // Compute stats
+  const allFindings=engagements.flatMap(e=>e.findings||[]);
+  const openFindings=allFindings.filter(f=>f.status!=="Closed"&&f.status!=="Resolved").length;
+  const today=new Date();
+  const overdueActions=followups.filter(f=>f.status!=="Closed"&&new Date(f.dueDate)<today).length;
+  const completedPlan=plan.filter(p=>p.status==="Completed").length;
+  const planPct=plan.length?Math.round((completedPlan/plan.length)*100):0;
+  const totalEngagements=engagements.length;
+
+  // Findings by severity
+  const sevCounts={Critical:0,High:0,Medium:0,Low:0,Informational:0};
+  allFindings.forEach(f=>{ if(sevCounts[f.severity]!==undefined)sevCounts[f.severity]++; });
+
+  // Plan status
+  const planStatus={Completed:0,"In Progress":0,Planned:0};
+  plan.forEach(p=>{ if(planStatus[p.status]!==undefined)planStatus[p.status]++; });
+
+  // Recent activity
+  const recent=auditLog.slice(0,8);
+
+  // Upcoming engagements
+  const upcoming=engagements.filter(e=>e.status==="In Progress"||e.status==="Planned").slice(0,4);
+
+  // Overdue followups
+  const overdueList=followups.filter(f=>f.status!=="Closed"&&new Date(f.dueDate)<today).slice(0,5);
+
+  // Heatmap
+  const heatmapData=Array(5).fill(null).map(()=>Array(5).fill(0));
+  universe.forEach(u=>{ const r=Math.min(u.likelihood-1,4); const c=Math.min(u.impact-1,4); heatmapData[r][c]++; });
+
+  function heatColor(l,i){
+    const score=(l+1)*(i+1);
+    if(score>=16)return "#ef4444";
+    if(score>=9)return "#f97316";
+    if(score>=4)return "#eab308";
+    return "#22c55e";
+  }
+
+  useEffect(()=>{
+    if(barRef.current){
+      if(barChart.current)barChart.current.destroy();
+      barChart.current=new Chart(barRef.current,{
+        type:"bar",
+        data:{
+          labels:["Critical","High","Medium","Low","Informational"],
+          datasets:[{
+            label:"Findings",
+            data:[sevCounts.Critical,sevCounts.High,sevCounts.Medium,sevCounts.Low,sevCounts.Informational],
+            backgroundColor:["#ef4444","#f97316","#eab308","#22c55e","#3b82f6"],
+            borderRadius:6
+          }]
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:"#f1f5f9"}},x:{grid:{display:false}}}}
+      });
+    }
+    if(doughnutRef.current){
+      if(doughnutChart.current)doughnutChart.current.destroy();
+      doughnutChart.current=new Chart(doughnutRef.current,{
+        type:"doughnut",
+        data:{
+          labels:["Completed","In Progress","Planned"],
+          datasets:[{data:[planStatus.Completed,planStatus["In Progress"],planStatus.Planned],backgroundColor:["#10b981","#3b82f6","#94a3b8"],borderWidth:0}]
+        },
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{size:12}}}},cutout:"65%"}
+      });
+    }
+    return ()=>{ if(barChart.current)barChart.current.destroy(); if(doughnutChart.current)doughnutChart.current.destroy(); };
+  },[]);
+
+  const kpis=[
+    {label:"Total Engagements",value:totalEngagements,icon:"&#128196;",color:"bg-blue-50",iconColor:"text-blue-500",trend:"+2 this year"},
+    {label:"Open Findings",value:openFindings,icon:"&#9888;",color:"bg-orange-50",iconColor:"text-orange-500",trend:"Requires attention"},
+    {label:"Overdue Actions",value:overdueActions,icon:"&#128336;",color:"bg-red-50",iconColor:"text-red-500",trend:overdueActions>0?"Action required":"All on track"},
+    {label:"Plan Completion",value:planPct+"%",icon:"&#9989;",color:"bg-green-50",iconColor:"text-green-500",trend:`${completedPlan}/${plan.length} engagements`}
+  ];
+
+  function fmt(ts){ try{ return new Date(ts).toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ts; } }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1">Welcome back, {currentUser?.name} &bull; {new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {kpis.map((k,i)=>(
+          <div key={i} className="kpi-card">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">{k.label}</p>
+                <p className="text-3xl font-bold text-gray-900">{k.value}</p>
+                <p className="text-xs text-gray-400 mt-1">{k.trend}</p>
+              </div>
+              <div className={"w-11 h-11 rounded-xl "+k.color+" flex items-center justify-center"}>
+                <span className={k.iconColor} dangerouslySetInnerHTML={{__html:k.icon}} style={{fontSize:"20px"}}/>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Findings by Severity</h3>
+            <span className="text-xs text-gray-400">{allFindings.length} total</span>
+          </div>
+          <div style={{height:"200px"}}>
+            <canvas ref={barRef}/>
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Audit Plan Status</h3>
+            <span className="text-xs text-gray-400">2024 Plan</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div style={{height:"200px",flex:1}}>
+              <canvas ref={doughnutRef}/>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="text-center">
+                <ProgressRing percent={planPct} size={80} stroke={7} color="#3b82f6"/>
+                <p className="text-xs text-gray-500 mt-1">Complete</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Risk Heatmap + Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <Card>
+          <h3 className="font-semibold text-gray-900 mb-3">Risk Heatmap</h3>
+          <p className="text-xs text-gray-500 mb-3">Auditable units plotted by Likelihood x Impact</p>
+          <div className="flex gap-2">
+            {/* Y axis label */}
+            <div className="flex flex-col justify-between text-xs text-gray-400 pr-1" style={{width:"60px"}}>
+              {[5,4,3,2,1].map(l=><div key={l} className="flex items-center justify-end" style={{height:"44px"}}>L{l}</div>)}
+            </div>
+            <div className="flex-1">
+              <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"4px"}}>
+                {[5,4,3,2,1].map(l=>
+                  [1,2,3,4,5].map(i=>{
+                    const count=heatmapData[l-1][i-1];
+                    return (
+                      <div key={l+"-"+i} className="heatmap-cell" style={{height:"44px",background:heatColor(l-1,i-1),opacity:count>0?1:0.35}}>
+                        {count>0&&<span className="text-white font-bold">{count}</span>}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                {[1,2,3,4,5].map(i=><div key={i} className="text-center flex-1">I{i}</div>)}
+              </div>
+              <div className="flex gap-3 mt-3 flex-wrap">
+                {[["#22c55e","Low"],["#eab308","Medium"],["#f97316","High"],["#ef4444","Critical"]].map(([c,l])=>(
+                  <div key={l} className="flex items-center gap-1"><div style={{width:10,height:10,borderRadius:2,background:c}}/><span className="text-xs text-gray-500">{l}</span></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card>
+          <h3 className="font-semibold text-gray-900 mb-3">Recent Activity</h3>
+          <div className="space-y-2">
+            {recent.map(item=>(
+              <div key={item.id} className="flex gap-3 items-start p-2 rounded-lg hover:bg-gray-50">
+                <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-blue-500 text-xs">&#9679;</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800">{item.action}</p>
+                  <p className="text-xs text-gray-500 truncate">{item.detail}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{item.user} &bull; {fmt(item.timestamp)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {/* Upcoming + Overdue */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <h3 className="font-semibold text-gray-900 mb-3">Active Engagements</h3>
+          {upcoming.length===0&&<p className="text-sm text-gray-400">No active engagements.</p>}
+          <div className="space-y-2">
+            {upcoming.map(e=>(
+              <div key={e.id} className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
+                  <p className="text-xs text-gray-500">{e.auditableUnit} &bull; {e.quarter}</p>
+                </div>
+                <StatusBadge status={e.status}/>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card>
+          <h3 className="font-semibold text-gray-900 mb-3">Overdue Follow-Ups</h3>
+          {overdueList.length===0&&<div className="text-sm text-green-600 flex items-center gap-2"><span>&#10004;</span> All follow-ups are on track!</div>}
+          <div className="space-y-2">
+            {overdueList.map(f=>(
+              <div key={f.id} className="flex items-center gap-3 p-3 rounded-lg border border-red-100 bg-red-50/30">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">{f.findingTitle}</p>
+                  <p className="text-xs text-red-500">Due: {f.dueDate} &bull; {f.engagementTitle}</p>
+                </div>
+                <SeverityBadge severity={f.severity}/>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// AUDIT UNIVERSE PAGE
+// ============================================================
+function AuditUniverse(){
+  const {universe,setUniverse,canAccess,logAction,genId} = useApp();
+  const [search,setSearch] = useState("");
+  const [filterCat,setFilterCat] = useState("All");
+  const [showModal,setShowModal] = useState(false);
+  const [editing,setEditing] = useState(null);
+  const [sortBy,setSortBy] = useState("residualRisk");
+  const [showRank,setShowRank] = useState(false);
+
+  const cats=["All",...[...new Set(universe.map(u=>u.category))]];
+
+  const [form,setForm] = useState({name:"",category:"Finance",owner:"",likelihood:3,impact:3,frequency:"Annual",notes:""});
+
+  const filtered=universe
+    .filter(u=>(filterCat==="All"||u.category===filterCat)&&(u.name.toLowerCase().includes(search.toLowerCase())||u.owner.toLowerCase().includes(search.toLowerCase())))
+    .sort((a,b)=>sortBy==="residualRisk"?b.residualRisk-a.residualRisk:a.name.localeCompare(b.name));
+
+  function openNew(){ setForm({name:"",category:"Finance",owner:"",likelihood:3,impact:3,frequency:"Annual",notes:""}); setEditing(null); setShowModal(true); }
+  function openEdit(u){ setForm({name:u.name,category:u.category,owner:u.owner,likelihood:u.likelihood,impact:u.impact,frequency:u.frequency,notes:u.notes}); setEditing(u); setShowModal(true); }
+  function save(){
+    if(!form.name.trim())return;
+    const risk=form.likelihood*form.impact;
+    if(editing){
+      setUniverse(prev=>prev.map(u=>u.id===editing.id?{...u,...form,residualRisk:risk}:u));
+      logAction("Universe Updated","Updated auditable unit: "+form.name);
+    }else{
+      const n={id:genId("au"),...form,residualRisk:risk,lastAudit:"N/A"};
+      setUniverse(prev=>[...prev,n]);
+      logAction("Universe Added","Added auditable unit: "+form.name);
+    }
+    setShowModal(false);
+  }
+  function remove(u){
+    setUniverse(prev=>prev.filter(x=>x.id!==u.id));
+    logAction("Universe Removed","Removed: "+u.name);
+  }
+  function runRiskAssessment(){
+    setUniverse(prev=>[...prev].sort((a,b)=>b.residualRisk-a.residualRisk));
+    setSortBy("residualRisk");
+    setShowRank(true);
+    logAction("Risk Assessment Run","Annual risk assessment completed - universe re-ranked by residual risk");
+    setTimeout(()=>setShowRank(false),3000);
+  }
+
+  function riskColor(r){ if(r>=16)return "text-red-600 font-bold"; if(r>=9)return "text-orange-500 font-semibold"; if(r>=4)return "text-yellow-600"; return "text-green-600"; }
+  function riskLabel(r){ if(r>=16)return "Critical"; if(r>=9)return "High"; if(r>=4)return "Medium"; return "Low"; }
+  function riskBg(r){ if(r>=16)return "#ef4444"; if(r>=9)return "#f97316"; if(r>=4)return "#eab308"; return "#22c55e"; }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Audit Universe</h1>
+          <p className="text-gray-500 text-sm mt-1">{universe.length} auditable units &bull; Risk-based prioritization</p>
+        </div>
+        <div className="flex gap-2">
+          {canAccess(["CAE","Audit Manager"])&&<Btn variant="secondary" onClick={runRiskAssessment}>&#9654; Run Risk Assessment</Btn>}
+          {canAccess(["CAE","Audit Manager"])&&<Btn onClick={openNew}>+ Add Unit</Btn>}
+        </div>
+      </div>
+
+      {showRank&&<div className="bg-green-50 border border-green-200 text-green-700 text-sm p-3 rounded-lg mb-4">&#10004; Risk assessment complete! Units re-ranked by residual risk score.</div>}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main table */}
+        <div className="lg:col-span-2">
+          <Card padding="p-0">
+            <div className="flex gap-3 p-4 border-b border-gray-100">
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search units..." className="input-field" style={{maxWidth:240}}/>
+              <select value={filterCat} onChange={e=>setFilterCat(e.target.value)} className="select-field" style={{maxWidth:140}}>
+                {cats.map(c=><option key={c}>{c}</option>)}
+              </select>
+              <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="select-field" style={{maxWidth:160}}>
+                <option value="residualRisk">Sort: Risk Score</option>
+                <option value="name">Sort: Name</option>
+              </select>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead><tr className="table-header">
+                  <th className="px-4 py-3 text-left">Auditable Unit</th>
+                  <th className="px-4 py-3 text-left">Category</th>
+                  <th className="px-4 py-3 text-center">L</th>
+                  <th className="px-4 py-3 text-center">I</th>
+                  <th className="px-4 py-3 text-center">Risk Score</th>
+                  <th className="px-4 py-3 text-left">Last Audit</th>
+                  <th className="px-4 py-3 text-left">Freq</th>
+                  {canAccess(["CAE","Audit Manager"])&&<th className="px-4 py-3 text-center">Actions</th>}
+                </tr></thead>
+                <tbody>
+                  {filtered.map(u=>(
+                    <tr key={u.id} className="table-row">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-gray-800 text-sm">{u.name}</div>
+                        <div className="text-xs text-gray-400">{u.owner}</div>
+                      </td>
+                      <td className="px-4 py-3"><span className="badge bg-blue-50 text-blue-700">{u.category}</span></td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold mx-auto">{u.likelihood}</div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold mx-auto">{u.impact}</div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={"badge font-semibold "+(u.residualRisk>=16?"severity-critical":u.residualRisk>=9?"severity-high":u.residualRisk>=4?"severity-medium":"severity-low")}>
+                          {u.residualRisk} - {riskLabel(u.residualRisk)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{u.lastAudit}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{u.frequency}</td>
+                      {canAccess(["CAE","Audit Manager"])&&<td className="px-4 py-3 text-center">
+                        <div className="flex gap-2 justify-center">
+                          <button onClick={()=>openEdit(u)} className="text-blue-500 hover:text-blue-700 text-xs font-medium">Edit</button>
+                          <button onClick={()=>remove(u)} className="text-red-400 hover:text-red-600 text-xs font-medium">Del</button>
+                        </div>
+                      </td>}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+
+        {/* Risk Matrix */}
+        <div className="space-y-4">
+          <Card>
+            <h3 className="font-semibold text-gray-900 mb-3 text-sm">Risk Scoring Matrix</h3>
+            <p className="text-xs text-gray-500 mb-3">Residual Risk = Likelihood &#215; Impact</p>
+            <div style={{display:"grid",gridTemplateColumns:"auto repeat(5,1fr)",gap:"3px"}}>
+              <div className="text-xs text-gray-400 flex items-end justify-center pb-1">L\I</div>
+              {[1,2,3,4,5].map(i=><div key={i} className="text-center text-xs text-gray-500 font-medium pb-1">{i}</div>)}
+              {[5,4,3,2,1].map(l=>(
+                <React.Fragment key={l}>
+                  <div className="text-xs text-gray-500 font-medium flex items-center justify-center pr-1">{l}</div>
+                  {[1,2,3,4,5].map(i=>{
+                    const score=l*i;
+                    return (
+                      <div key={i} style={{background:riskBg(score),height:"28px",borderRadius:"4px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <span className="text-white text-xs font-bold">{score}</span>
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </div>
+            <div className="flex gap-3 mt-3 flex-wrap">
+              {[["#22c55e","Low (1-3)"],["#eab308","Med (4-8)"],["#f97316","High (9-15)"],["#ef4444","Crit (16+)"]].map(([c,l])=>(
+                <div key={l} className="flex items-center gap-1"><div style={{width:10,height:10,borderRadius:2,background:c}}/><span className="text-xs text-gray-500">{l}</span></div>
+              ))}
+            </div>
+          </Card>
+          <Card>
+            <h3 className="font-semibold text-gray-900 mb-3 text-sm">Risk Distribution</h3>
+            {[["Critical",">=16","severity-critical"],["High","9-15","severity-high"],["Medium","4-8","severity-medium"],["Low","1-3","severity-low"]].map(([label,range,cls])=>{
+              const cnt=universe.filter(u=>label==="Critical"?u.residualRisk>=16:label==="High"?u.residualRisk>=9&&u.residualRisk<16:label==="Medium"?u.residualRisk>=4&&u.residualRisk<9:u.residualRisk<4).length;
+              return (
+                <div key={label} className="flex items-center justify-between py-2 border-b last:border-0">
+                  <span className={"badge "+cls}>{label}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="bg-gray-100 rounded-full h-2" style={{width:"80px"}}>
+                      <div className="h-2 rounded-full bg-blue-500" style={{width:(cnt/universe.length*100)+"%"}}/>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">{cnt}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </Card>
+        </div>
+      </div>
+
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title={editing?"Edit Auditable Unit":"Add Auditable Unit"}>
+        <Inp label="Unit Name" value={form.name} onChange={v=>setForm(p=>({...p,name:v}))} required/>
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Category" value={form.category} onChange={v=>setForm(p=>({...p,category:v}))} options={["Finance","IT","HR","Operations","Compliance","Legal"]}/>
+          <Sel label="Frequency" value={form.frequency} onChange={v=>setForm(p=>({...p,frequency:v}))} options={["Annual","Biennial","Triennial","As Needed"]}/>
+        </div>
+        <Inp label="Process Owner" value={form.owner} onChange={v=>setForm(p=>({...p,owner:v}))}/>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Likelihood (1-5)</label>
+            <input type="range" min="1" max="5" value={form.likelihood} onChange={e=>setForm(p=>({...p,likelihood:parseInt(e.target.value)}))} className="w-full"/>
+            <div className="flex justify-between text-xs text-gray-400 mt-1"><span>Rare(1)</span><span className="font-semibold text-blue-600">{form.likelihood}</span><span>Almost Certain(5)</span></div>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Impact (1-5)</label>
+            <input type="range" min="1" max="5" value={form.impact} onChange={e=>setForm(p=>({...p,impact:parseInt(e.target.value)}))} className="w-full"/>
+            <div className="flex justify-between text-xs text-gray-400 mt-1"><span>Minimal(1)</span><span className="font-semibold text-blue-600">{form.impact}</span><span>Catastrophic(5)</span></div>
+          </div>
+        </div>
+        <div className="p-3 bg-gray-50 rounded-lg mb-4">
+          <span className="text-sm font-medium text-gray-700">Residual Risk Score: </span>
+          <span className={"text-lg font-bold "+(form.likelihood*form.impact>=16?"text-red-600":form.likelihood*form.impact>=9?"text-orange-500":form.likelihood*form.impact>=4?"text-yellow-600":"text-green-600")}>{form.likelihood*form.impact} - {riskLabel(form.likelihood*form.impact)}</span>
+        </div>
+        <Txta label="Notes" value={form.notes} onChange={v=>setForm(p=>({...p,notes:v}))} rows={2}/>
+        <div className="flex justify-end gap-3 mt-2">
+          <Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn>
+          <Btn onClick={save}>Save</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ============================================================
+// ANNUAL AUDIT PLAN PAGE
+// ============================================================
+function AnnualPlan(){
+  const {plan,setPlan,planApproved,setPlanApproved,users,canAccess,logAction,genId,universe} = useApp();
+  const [showModal,setShowModal] = useState(false);
+  const [editing,setEditing] = useState(null);
+  const [form,setForm] = useState({auditableUnit:"",quarter:"Q1",status:"Planned",budget:80,actual:0,team:[],type:"Assurance",year:2024});
+  const [teamInput,setTeamInput] = useState("");
+
+  const quarters=["Q1","Q2","Q3","Q4"];
+  const auditStaff=users.filter(u=>["CAE","Audit Manager","Senior Auditor","Staff Auditor"].includes(u.role));
+
+  function totalBudget(q){ return plan.filter(p=>p.quarter===q).reduce((s,p)=>s+Number(p.budget),0); }
+  function totalActual(q){ return plan.filter(p=>p.quarter===q).reduce((s,p)=>s+Number(p.actual),0); }
+
+  const overallBudget=plan.reduce((s,p)=>s+Number(p.budget),0);
+  const overallActual=plan.reduce((s,p)=>s+Number(p.actual),0);
+  const completedCount=plan.filter(p=>p.status==="Completed").length;
+  const planPct=plan.length?Math.round((completedCount/plan.length)*100):0;
+
+  function openNew(){ setForm({auditableUnit:"",quarter:"Q1",status:"Planned",budget:80,actual:0,team:[],type:"Assurance",year:2024}); setEditing(null); setShowModal(true); }
+  function openEdit(p){ setForm({...p}); setEditing(p); setShowModal(true); }
+  function save(){
+    if(!form.auditableUnit)return;
+    if(editing){
+      setPlan(prev=>prev.map(p=>p.id===editing.id?{...p,...form}:p));
+      logAction("Plan Updated","Updated plan item: "+form.auditableUnit);
+    }else{
+      setPlan(prev=>[...prev,{id:genId("p"),...form}]);
+      logAction("Plan Item Added","Added to plan: "+form.auditableUnit);
+    }
+    setShowModal(false);
+  }
+  function remove(p){
+    setPlan(prev=>prev.filter(x=>x.id!==p.id));
+    logAction("Plan Item Removed","Removed from plan: "+p.auditableUnit);
+  }
+  function approvePlan(){
+    setPlanApproved(true);
+    logAction("Plan Approved","2024 Annual Audit Plan approved by CAE");
+  }
+  function toggleTeam(uid){
+    setForm(p=>({...p,team:p.team.includes(uid)?p.team.filter(x=>x!==uid):[...p.team,uid]}));
+  }
+
+  function getUserName(id){ return users.find(u=>u.id===id)?.name||id; }
+  function getUserInitials(id){ return users.find(u=>u.id===id)?.avatar||"?"; }
+
+  const avatarColors=["bg-blue-500","bg-indigo-500","bg-purple-500","bg-teal-500","bg-orange-500","bg-pink-500"];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Annual Audit Plan 2024</h1>
+          <p className="text-gray-500 text-sm mt-1">{plan.length} engagements &bull; Total Budget: {overallBudget} days</p>
+        </div>
+        <div className="flex gap-2">
+          {canAccess(["CAE"])&&!planApproved&&<Btn variant="success" onClick={approvePlan}>&#10003; Approve Plan</Btn>}
+          {canAccess(["CAE","Audit Manager"])&&<Btn onClick={openNew}>+ Add Engagement</Btn>}
+        </div>
+      </div>
+
+      {/* Approval Banner */}
+      <div className={"p-4 rounded-xl mb-5 flex items-center gap-3 "+(planApproved?"bg-green-50 border border-green-200":"bg-amber-50 border border-amber-200")}>
+        <span className="text-xl">{planApproved?"✅":"⏳"}</span>
+        <div>
+          <p className={"font-semibold text-sm "+(planApproved?"text-green-800":"text-amber-800")}>
+            {planApproved?"Plan Approved — 2024 Annual Audit Plan has been approved by the CAE":"Pending Approval — 2024 Annual Audit Plan awaiting CAE approval"}
+          </p>
+          <p className={"text-xs "+(planApproved?"text-green-600":"text-amber-600")}>
+            {planApproved?`${completedCount} of ${plan.length} engagements completed (${planPct}%)`:"Plan must be reviewed and approved before execution begins"}
+          </p>
+        </div>
+        <div className="ml-auto">
+          <ProgressRing percent={planPct} size={60} stroke={5} color={planApproved?"#10b981":"#f59e0b"}/>
+        </div>
+      </div>
+
+      {/* Budget summary */}
+      <div className="grid grid-cols-4 gap-3 mb-5">
+        {quarters.map(q=>{
+          const b=totalBudget(q); const a=totalActual(q); const pct=b>0?Math.min(100,Math.round((a/b)*100)):0;
+          return (
+            <Card key={q} padding="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-semibold text-gray-700">{q}</span>
+                <span className="text-xs text-gray-400">{plan.filter(p=>p.quarter===q).length} audits</span>
+              </div>
+              <div className="text-2xl font-bold text-gray-900 mb-1">{b}d</div>
+              <div className="text-xs text-gray-500 mb-2">Budget &bull; {a}d actual</div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                <div className="h-1.5 rounded-full bg-blue-500" style={{width:pct+"%"}}/>
+              </div>
+              <div className="text-right text-xs text-gray-400 mt-1">{pct}% used</div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Plan by quarter */}
+      {quarters.map(q=>(
+        <div key={q} className="mb-6">
+          <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+            <span className="w-7 h-7 bg-blue-100 text-blue-700 rounded-full text-xs font-bold flex items-center justify-center">{q}</span>
+            Quarter {q.slice(1)} &bull; <span className="text-gray-400 font-normal">{totalBudget(q)} days budgeted</span>
+          </h3>
+          <Card padding="p-0">
+            <table className="w-full">
+              <thead><tr className="table-header">
+                <th className="px-4 py-3 text-left">Engagement</th>
+                <th className="px-4 py-3 text-left">Type</th>
+                <th className="px-4 py-3 text-left">Status</th>
+                <th className="px-4 py-3 text-right">Budget (days)</th>
+                <th className="px-4 py-3 text-right">Actual</th>
+                <th className="px-4 py-3 text-left">Team</th>
+                {canAccess(["CAE","Audit Manager"])&&<th className="px-4 py-3 text-center">Actions</th>}
+              </tr></thead>
+              <tbody>
+                {plan.filter(p=>p.quarter===q).map(p=>(
+                  <tr key={p.id} className="table-row">
+                    <td className="px-4 py-3 font-medium text-gray-800 text-sm">{p.auditableUnit}</td>
+                    <td className="px-4 py-3"><span className="badge bg-indigo-50 text-indigo-700">{p.type}</span></td>
+                    <td className="px-4 py-3"><StatusBadge status={p.status}/></td>
+                    <td className="px-4 py-3 text-right text-sm text-gray-700">{p.budget}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={"text-sm font-medium "+(p.actual>p.budget?"text-red-500":"text-gray-700")}>{p.actual}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex -space-x-1">
+                        {(p.team||[]).slice(0,3).map((uid,i)=>(
+                          <div key={uid} title={getUserName(uid)}>
+                            <Avatar initials={getUserInitials(uid)} size="sm" color={avatarColors[i%avatarColors.length]}/>
+                          </div>
+                        ))}
+                        {(p.team||[]).length>3&&<div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 font-medium">+{p.team.length-3}</div>}
+                      </div>
+                    </td>
+                    {canAccess(["CAE","Audit Manager"])&&<td className="px-4 py-3 text-center">
+                      <div className="flex gap-2 justify-center">
+                        <button onClick={()=>openEdit(p)} className="text-blue-500 hover:text-blue-700 text-xs font-medium">Edit</button>
+                        <button onClick={()=>remove(p)} className="text-red-400 hover:text-red-600 text-xs font-medium">Del</button>
+                      </div>
+                    </td>}
+                  </tr>
+                ))}
+                {plan.filter(p=>p.quarter===q).length===0&&(
+                  <tr><td colSpan="7" className="text-center text-gray-400 py-6 text-sm">No engagements planned for {q}</td></tr>
+                )}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      ))}
+
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title={editing?"Edit Plan Item":"Add Plan Item"}>
+        <Sel label="Auditable Unit" value={form.auditableUnit} onChange={v=>setForm(p=>({...p,auditableUnit:v}))} options={["", ...universe.map(u=>u.name)]} required/>
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Quarter" value={form.quarter} onChange={v=>setForm(p=>({...p,quarter:v}))} options={["Q1","Q2","Q3","Q4"]}/>
+          <Sel label="Status" value={form.status} onChange={v=>setForm(p=>({...p,status:v}))} options={["Planned","In Progress","Completed"]}/>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Type" value={form.type} onChange={v=>setForm(p=>({...p,type:v}))} options={["Assurance","Advisory","Investigation","Compliance"]}/>
+          <Inp label="Budget (days)" value={String(form.budget)} onChange={v=>setForm(p=>({...p,budget:parseInt(v)||0}))} type="number"/>
+        </div>
+        <Inp label="Actual (days)" value={String(form.actual)} onChange={v=>setForm(p=>({...p,actual:parseInt(v)||0}))} type="number"/>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
+          <div className="space-y-1">
+            {auditStaff.map(u=>(
+              <label key={u.id} className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-gray-50">
+                <input type="checkbox" checked={form.team.includes(u.id)} onChange={()=>toggleTeam(u.id)} className="rounded"/>
+                <Avatar initials={u.avatar} size="sm" color="bg-blue-500"/>
+                <span className="text-sm">{u.name}</span>
+                <span className="text-xs text-gray-400">({u.role})</span>
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end gap-3">
+          <Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn>
+          <Btn onClick={save}>Save</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ============================================================
+// ENGAGEMENTS LIST PAGE
+// ============================================================
+function EngagementsList(){
+  const {engagements,setPage,setSelectedEngagement,canAccess,currentUser} = useApp();
+  const [filterStatus,setFilterStatus] = useState("All");
+  const [filterType,setFilterType] = useState("All");
+  const [search,setSearch] = useState("");
+
+  const statuses=["All","Planned","In Progress","Completed"];
+  const types=["All","Assurance","Advisory","Investigation","Compliance"];
+
+  let list=engagements;
+  if(currentUser?.role==="Auditee") list=list.filter(e=>e.auditee===currentUser.id||e.team?.includes(currentUser.id));
+  list=list
+    .filter(e=>filterStatus==="All"||e.status===filterStatus)
+    .filter(e=>filterType==="All"||e.type===filterType)
+    .filter(e=>e.title.toLowerCase().includes(search.toLowerCase())||e.auditableUnit.toLowerCase().includes(search.toLowerCase()));
+
+  function open(e){ setSelectedEngagement(e); setPage("engagement_detail"); }
+
+  const statusColors={Planned:"bg-indigo-50 border-indigo-200","In Progress":"bg-blue-50 border-blue-200",Completed:"bg-green-50 border-green-200",Overdue:"bg-red-50 border-red-200"};
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Engagements</h1>
+          <p className="text-gray-500 text-sm mt-1">{list.length} engagements</p>
+        </div>
+      </div>
+      <div className="flex gap-3 mb-5">
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search engagements..." className="input-field" style={{maxWidth:260}}/>
+        <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="select-field" style={{maxWidth:160}}>
+          {statuses.map(s=><option key={s}>{s}</option>)}
+        </select>
+        <select value={filterType} onChange={e=>setFilterType(e.target.value)} className="select-field" style={{maxWidth:160}}>
+          {types.map(t=><option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {list.map(e=>(
+          <div key={e.id} onClick={()=>open(e)} className={"card p-5 cursor-pointer hover:shadow-md transition-shadow border "+(statusColors[e.status]||"bg-white border-gray-200")}>
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1">{e.title}</h3>
+                <p className="text-xs text-gray-500">{e.auditableUnit}</p>
+              </div>
+              <StatusBadge status={e.status}/>
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="badge bg-indigo-50 text-indigo-700">{e.type}</span>
+              <span className="badge bg-gray-100 text-gray-600">{e.quarter}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 mb-3">
+              <div><span className="font-medium">Start:</span> {e.plannedStart}</div>
+              <div><span className="font-medium">End:</span> {e.plannedEnd}</div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400 mr-1">Findings:</span>
+                <span className="badge severity-high">{(e.findings||[]).filter(f=>f.severity==="High"||f.severity==="Critical").length} High</span>
+                <span className="badge severity-medium">{(e.findings||[]).filter(f=>f.severity==="Medium").length} Med</span>
+              </div>
+              <span className="text-xs text-blue-500 font-medium">View Details &rarr;</span>
+            </div>
+          </div>
+        ))}
+        {list.length===0&&(
+          <div className="col-span-3 text-center py-16 text-gray-400">
+            <div className="text-4xl mb-3">&#128196;</div>
+            <p className="font-medium">No engagements found</p>
+            <p className="text-sm mt-1">Adjust your filters or add a new engagement</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// ENGAGEMENT DETAIL PAGE
+// ============================================================
+function EngagementDetail(){
+  const {selectedEngagement,setSelectedEngagement,engagements,setEngagements,users,currentUser,canAccess,logAction,genId,setPage} = useApp();
+  const [tab,setTab] = useState("planning");
+  const [eng,setEng] = useState(null);
+
+  useEffect(()=>{
+    if(selectedEngagement){
+      const fresh=engagements.find(e=>e.id===selectedEngagement.id)||selectedEngagement;
+      setEng({...fresh});
+    }
+  },[selectedEngagement,engagements]);
+
+  function saveEng(updated){
+    setEngagements(prev=>prev.map(e=>e.id===updated.id?updated:e));
+    setSelectedEngagement(updated);
+    setEng(updated);
+  }
+
+  if(!eng) return <div className="text-gray-500 p-8">Loading engagement...</div>;
+
+  const tabs=[
+    {id:"planning",label:"Planning"},
+    {id:"rcm",label:"RCM"},
+    {id:"program",label:"Audit Program"},
+    {id:"fieldwork",label:"Fieldwork"},
+    {id:"findings",label:"Findings ("+(eng.findings||[]).length+")"},
+    {id:"report",label:"Report"}
+  ];
+
+  // Only auditors/CAE and the assigned auditee can view
+  const canEdit=canAccess(["CAE","Audit Manager","Senior Auditor","Staff Auditor"]);
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <button onClick={()=>{setPage("engagements");setSelectedEngagement(null);}} className="btn-secondary text-sm">&#8592; Back</button>
+        <div className="flex-1">
+          <h1 className="text-xl font-bold text-gray-900">{eng.title}</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <StatusBadge status={eng.status}/>
+            <span className="badge bg-indigo-50 text-indigo-700">{eng.type}</span>
+            <span className="text-gray-400 text-sm">{eng.quarter}</span>
+          </div>
+        </div>
+        {canEdit&&(
+          <select value={eng.status} onChange={e=>{const u={...eng,status:e.target.value};saveEng(u);logAction("Engagement Status Changed",eng.title+" status changed to "+e.target.value);}} className="select-field" style={{maxWidth:160}}>
+            {["Planned","In Progress","Completed","On Hold"].map(s=><option key={s}>{s}</option>)}
+          </select>
+        )}
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mb-5">
+        <div className="flex gap-0 overflow-x-auto">
+          {tabs.map(t=><button key={t.id} className={"tab-btn "+(tab===t.id?"active":"")} onClick={()=>setTab(t.id)}>{t.label}</button>)}
+        </div>
+      </div>
+
+      {tab==="planning"&&<PlanningTab eng={eng} saveEng={saveEng} users={users} canEdit={canEdit} logAction={logAction}/>}
+      {tab==="rcm"&&<RCMTab eng={eng} saveEng={saveEng} canEdit={canEdit} genId={genId} logAction={logAction}/>}
+      {tab==="program"&&<ProgramTab eng={eng} saveEng={saveEng} users={users} canEdit={canEdit} genId={genId} logAction={logAction}/>}
+      {tab==="fieldwork"&&<FieldworkTab eng={eng} saveEng={saveEng} canEdit={canEdit} logAction={logAction}/>}
+      {tab==="findings"&&<FindingsTab eng={eng} saveEng={saveEng} users={users} canEdit={canEdit} currentUser={currentUser} genId={genId} logAction={logAction}/>}
+      {tab==="report"&&<ReportTab eng={eng} users={users}/>}
+    </div>
+  );
+}
+
+function PlanningTab({eng,saveEng,users,canEdit,logAction}){
+  const [form,setForm] = useState({objectives:eng.objectives||"",scope:eng.scope||"",criteria:eng.criteria||"",auditee:eng.auditee||"",plannedStart:eng.plannedStart||"",plannedEnd:eng.plannedEnd||"",actualStart:eng.actualStart||"",actualEnd:eng.actualEnd||""});
+  const [teamIds,setTeamIds] = useState(eng.team||[]);
+  const auditStaff=users.filter(u=>["CAE","Audit Manager","Senior Auditor","Staff Auditor"].includes(u.role));
+  const auditees=users.filter(u=>u.role==="Auditee");
+  const avatarColors=["bg-blue-500","bg-indigo-500","bg-purple-500","bg-teal-500","bg-orange-500"];
+
+  function save(){
+    const updated={...eng,...form,team:teamIds};
+    saveEng(updated);
+    logAction("Planning Updated","Updated planning details for: "+eng.title);
+  }
+  function toggleTeam(uid){ setTeamIds(prev=>prev.includes(uid)?prev.filter(x=>x!==uid):[...prev,uid]); }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <Card>
+        <h3 className="font-semibold text-gray-900 mb-4">Engagement Details</h3>
+        <Txta label="Objectives" value={form.objectives} onChange={v=>setForm(p=>({...p,objectives:v}))} rows={3}/>
+        <Txta label="Scope" value={form.scope} onChange={v=>setForm(p=>({...p,scope:v}))} rows={3}/>
+        <Txta label="Criteria" value={form.criteria} onChange={v=>setForm(p=>({...p,criteria:v}))} rows={2}/>
+        {canEdit&&<Btn onClick={save}>Save Changes</Btn>}
+      </Card>
+      <div className="space-y-4">
+        <Card>
+          <h3 className="font-semibold text-gray-900 mb-4">Schedule</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <Inp label="Planned Start" value={form.plannedStart} onChange={v=>setForm(p=>({...p,plannedStart:v}))} type="date"/>
+            <Inp label="Planned End" value={form.plannedEnd} onChange={v=>setForm(p=>({...p,plannedEnd:v}))} type="date"/>
+            <Inp label="Actual Start" value={form.actualStart} onChange={v=>setForm(p=>({...p,actualStart:v}))} type="date"/>
+            <Inp label="Actual End" value={form.actualEnd} onChange={v=>setForm(p=>({...p,actualEnd:v}))} type="date"/>
+          </div>
+        </Card>
+        <Card>
+          <h3 className="font-semibold text-gray-900 mb-3">Audit Team</h3>
+          <div className="space-y-1 mb-3">
+            {auditStaff.map((u,i)=>(
+              <label key={u.id} className="flex items-center gap-2 cursor-pointer p-1.5 rounded hover:bg-gray-50">
+                <input type="checkbox" checked={teamIds.includes(u.id)} onChange={()=>canEdit&&toggleTeam(u.id)} disabled={!canEdit}/>
+                <Avatar initials={u.avatar} size="sm" color={avatarColors[i%avatarColors.length]}/>
+                <span className="text-sm">{u.name}</span>
+                <span className="text-xs text-gray-400">({u.role})</span>
+              </label>
+            ))}
+          </div>
+          <h3 className="font-semibold text-gray-900 mb-2 text-sm">Auditee</h3>
+          <Sel label="" value={form.auditee} onChange={v=>setForm(p=>({...p,auditee:v}))} options={[{value:"",label:"Select auditee..."},...auditees.map(u=>({value:u.id,label:u.name+" ("+u.department+")"}))]}/>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function RCMTab({eng,saveEng,canEdit,genId,logAction}){
+  const [showModal,setShowModal] = useState(false);
+  const [editing,setEditing] = useState(null);
+  const [form,setForm] = useState({process:"",risk:"",control:"",controlType:"Preventive",effectiveness:"Effective",testResult:"Not Tested"});
+
+  function openNew(){ setForm({process:"",risk:"",control:"",controlType:"Preventive",effectiveness:"Effective",testResult:"Not Tested"}); setEditing(null); setShowModal(true); }
+  function openEdit(r){ setForm({process:r.process,risk:r.risk,control:r.control,controlType:r.controlType,effectiveness:r.effectiveness,testResult:r.testResult}); setEditing(r); setShowModal(true); }
+  function save(){
+    if(!form.process||!form.risk)return;
+    let rcm=[...(eng.rcm||[])];
+    if(editing){ rcm=rcm.map(r=>r.id===editing.id?{...r,...form}:r); }
+    else{ rcm.push({id:genId("r"),...form}); }
+    saveEng({...eng,rcm});
+    logAction("RCM Updated","Updated RCM for: "+eng.title);
+    setShowModal(false);
+  }
+  function remove(id){ saveEng({...eng,rcm:(eng.rcm||[]).filter(r=>r.id!==id)}); }
+
+  const effectColors={Effective:"status-completed","Partially Effective":"status-inreview","Not Effective":"status-overdue","Not Tested":"status-draft"};
+  const testColors={Pass:"status-completed",Fail:"status-overdue","Not Tested":"status-draft"};
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold text-gray-900">Risk and Control Matrix</h3>
+        {canEdit&&<Btn size="sm" onClick={openNew}>+ Add Row</Btn>}
+      </div>
+      <Card padding="p-0">
+        <table className="w-full">
+          <thead><tr className="table-header">
+            <th className="px-4 py-3 text-left">Process</th>
+            <th className="px-4 py-3 text-left">Risk</th>
+            <th className="px-4 py-3 text-left">Control</th>
+            <th className="px-4 py-3 text-left">Type</th>
+            <th className="px-4 py-3 text-left">Effectiveness</th>
+            <th className="px-4 py-3 text-left">Test Result</th>
+            {canEdit&&<th className="px-4 py-3"/>}
+          </tr></thead>
+          <tbody>
+            {(eng.rcm||[]).map(r=>(
+              <tr key={r.id} className="table-row">
+                <td className="px-4 py-3 font-medium text-sm text-gray-800">{r.process}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 max-w-xs">{r.risk}</td>
+                <td className="px-4 py-3 text-sm text-gray-600 max-w-xs">{r.control}</td>
+                <td className="px-4 py-3"><span className="badge bg-blue-50 text-blue-700">{r.controlType}</span></td>
+                <td className="px-4 py-3"><span className={"badge "+(effectColors[r.effectiveness]||"bg-gray-100 text-gray-600")}>{r.effectiveness}</span></td>
+                <td className="px-4 py-3"><span className={"badge "+(testColors[r.testResult]||"bg-gray-100 text-gray-600")}>{r.testResult}</span></td>
+                {canEdit&&<td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    <button onClick={()=>openEdit(r)} className="text-blue-500 text-xs font-medium">Edit</button>
+                    <button onClick={()=>remove(r.id)} className="text-red-400 text-xs font-medium">Del</button>
+                  </div>
+                </td>}
+              </tr>
+            ))}
+            {!(eng.rcm||[]).length&&<tr><td colSpan="7" className="text-center text-gray-400 py-8 text-sm">No RCM rows. Add risks and controls.</td></tr>}
+          </tbody>
+        </table>
+      </Card>
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title="Risk and Control Entry">
+        <Inp label="Process" value={form.process} onChange={v=>setForm(p=>({...p,process:v}))} required/>
+        <Txta label="Risk" value={form.risk} onChange={v=>setForm(p=>({...p,risk:v}))} rows={2}/>
+        <Txta label="Control Activity" value={form.control} onChange={v=>setForm(p=>({...p,control:v}))} rows={2}/>
+        <div className="grid grid-cols-3 gap-3">
+          <Sel label="Control Type" value={form.controlType} onChange={v=>setForm(p=>({...p,controlType:v}))} options={["Preventive","Detective","Corrective"]}/>
+          <Sel label="Effectiveness" value={form.effectiveness} onChange={v=>setForm(p=>({...p,effectiveness:v}))} options={["Effective","Partially Effective","Not Effective","Not Tested"]}/>
+          <Sel label="Test Result" value={form.testResult} onChange={v=>setForm(p=>({...p,testResult:v}))} options={["Pass","Fail","Not Tested"]}/>
+        </div>
+        <div className="flex justify-end gap-3"><Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn><Btn onClick={save}>Save</Btn></div>
+      </Modal>
+    </div>
+  );
+}
+
+function ProgramTab({eng,saveEng,users,canEdit,genId,logAction}){
+  const [showModal,setShowModal] = useState(false);
+  const [editing,setEditing] = useState(null);
+  const [form,setForm] = useState({step:"",procedure:"",assignee:"",status:"Not Started",dueDate:"",notes:""});
+  const auditStaff=users.filter(u=>["CAE","Audit Manager","Senior Auditor","Staff Auditor"].includes(u.role));
+
+  function openNew(){ setForm({step:"",procedure:"",assignee:"",status:"Not Started",dueDate:"",notes:""}); setEditing(null); setShowModal(true); }
+  function openEdit(p){ setForm({step:p.step,procedure:p.procedure,assignee:p.assignee,status:p.status,dueDate:p.dueDate,notes:p.notes}); setEditing(p); setShowModal(true); }
+  function save(){
+    if(!form.procedure)return;
+    let prog=[...(eng.program||[])];
+    if(editing){ prog=prog.map(p=>p.id===editing.id?{...p,...form}:p); }
+    else{ prog.push({id:genId("pr"),...form}); }
+    saveEng({...eng,program:prog});
+    logAction("Program Updated","Updated audit program for: "+eng.title);
+    setShowModal(false);
+  }
+  function remove(id){ saveEng({...eng,program:(eng.program||[]).filter(p=>p.id!==id)}); }
+
+  const completed=(eng.program||[]).filter(p=>p.status==="Completed").length;
+  const total=(eng.program||[]).length;
+  const pct=total?Math.round((completed/total)*100):0;
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-4">
+          <h3 className="font-semibold text-gray-900">Audit Program</h3>
+          <div className="flex items-center gap-2">
+            <div className="w-32 bg-gray-100 rounded-full h-2">
+              <div className="h-2 rounded-full bg-green-500 transition-all" style={{width:pct+"%"}}/>
+            </div>
+            <span className="text-sm text-gray-600">{completed}/{total} complete ({pct}%)</span>
+          </div>
+        </div>
+        {canEdit&&<Btn size="sm" onClick={openNew}>+ Add Step</Btn>}
+      </div>
+      <Card padding="p-0">
+        <table className="w-full">
+          <thead><tr className="table-header">
+            <th className="px-4 py-3 text-left w-16">Step</th>
+            <th className="px-4 py-3 text-left">Procedure</th>
+            <th className="px-4 py-3 text-left">Assignee</th>
+            <th className="px-4 py-3 text-left">Status</th>
+            <th className="px-4 py-3 text-left">Due Date</th>
+            <th className="px-4 py-3 text-left">Notes</th>
+            {canEdit&&<th className="px-4 py-3"/>}
+          </tr></thead>
+          <tbody>
+            {(eng.program||[]).map(p=>(
+              <tr key={p.id} className="table-row">
+                <td className="px-4 py-3 text-sm font-mono text-gray-500">{p.step}</td>
+                <td className="px-4 py-3 text-sm text-gray-800">{p.procedure}</td>
+                <td className="px-4 py-3 text-sm text-gray-600">{users.find(u=>u.id===p.assignee)?.name||p.assignee||"-"}</td>
+                <td className="px-4 py-3"><StatusBadge status={p.status}/></td>
+                <td className="px-4 py-3 text-sm text-gray-600">{p.dueDate}</td>
+                <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{p.notes||"-"}</td>
+                {canEdit&&<td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    <button onClick={()=>openEdit(p)} className="text-blue-500 text-xs font-medium">Edit</button>
+                    <button onClick={()=>remove(p.id)} className="text-red-400 text-xs font-medium">Del</button>
+                  </div>
+                </td>}
+              </tr>
+            ))}
+            {!(eng.program||[]).length&&<tr><td colSpan="7" className="text-center text-gray-400 py-8 text-sm">No audit program steps. Add procedures.</td></tr>}
+          </tbody>
+        </table>
+      </Card>
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title="Audit Program Step">
+        <div className="grid grid-cols-2 gap-3">
+          <Inp label="Step Number" value={form.step} onChange={v=>setForm(p=>({...p,step:v}))} placeholder="e.g. 1.1"/>
+          <Sel label="Status" value={form.status} onChange={v=>setForm(p=>({...p,status:v}))} options={["Not Started","In Progress","Completed","On Hold"]}/>
+        </div>
+        <Txta label="Procedure" value={form.procedure} onChange={v=>setForm(p=>({...p,procedure:v}))} rows={2} placeholder="Describe the audit procedure..."/>
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Assignee" value={form.assignee} onChange={v=>setForm(p=>({...p,assignee:v}))} options={[{value:"",label:"Unassigned"},...auditStaff.map(u=>({value:u.id,label:u.name}))]}/>
+          <Inp label="Due Date" value={form.dueDate} onChange={v=>setForm(p=>({...p,dueDate:v}))} type="date"/>
+        </div>
+        <Inp label="Notes" value={form.notes} onChange={v=>setForm(p=>({...p,notes:v}))} placeholder="Working paper reference, comments..."/>
+        <div className="flex justify-end gap-3"><Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn><Btn onClick={save}>Save</Btn></div>
+      </Modal>
+    </div>
+  );
+}
+
+function FieldworkTab({eng,saveEng,canEdit,logAction}){
+  const [fileInput,setFileInput] = useState("");
+  const [signoffs,setSignoffs] = useState(eng.signoffs||{});
+  const evidence=eng.evidence||[];
+
+  function addEvidence(){
+    if(!fileInput.trim())return;
+    saveEng({...eng,evidence:[...evidence,fileInput.trim()]});
+    logAction("Evidence Added","Added evidence file to: "+eng.title);
+    setFileInput("");
+  }
+  function removeEvidence(f){ saveEng({...eng,evidence:evidence.filter(e=>e!==f)}); }
+  function signOff(area){
+    const s={...signoffs,[area]:{by:"Auditor",date:new Date().toLocaleDateString()}};
+    setSignoffs(s);
+    saveEng({...eng,signoffs:s});
+    logAction("Signoff Recorded","Fieldwork sign-off for "+area+" in: "+eng.title);
+  }
+
+  const areas=["Planning Completed","RCM Reviewed","Testing Completed","Findings Drafted","Working Papers Filed"];
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <Card>
+        <h3 className="font-semibold text-gray-900 mb-4">Evidence Repository</h3>
+        {canEdit&&(
+          <div className="flex gap-2 mb-4">
+            <input value={fileInput} onChange={e=>setFileInput(e.target.value)} placeholder="Enter file name (e.g. GL_Extract.xlsx)" className="input-field flex-1"/>
+            <Btn onClick={addEvidence}>Upload</Btn>
+          </div>
+        )}
+        <div className="space-y-2">
+          {evidence.map((f,i)=>(
+            <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <span className="text-2xl">&#128196;</span>
+              <span className="flex-1 text-sm text-gray-700">{f}</span>
+              {canEdit&&<button onClick={()=>removeEvidence(f)} className="text-red-400 hover:text-red-600 text-xs">Remove</button>}
+            </div>
+          ))}
+          {evidence.length===0&&<p className="text-gray-400 text-sm text-center py-4">No evidence files uploaded yet.</p>}
+        </div>
+      </Card>
+      <Card>
+        <h3 className="font-semibold text-gray-900 mb-4">Working Paper Sign-Off</h3>
+        <div className="space-y-3">
+          {areas.map(area=>(
+            <div key={area} className={"flex items-center justify-between p-3 rounded-lg "+(signoffs[area]?"bg-green-50":"bg-gray-50")}>
+              <div>
+                <p className="text-sm font-medium text-gray-800">{area}</p>
+                {signoffs[area]&&<p className="text-xs text-green-600 mt-0.5">Signed off by {signoffs[area].by} on {signoffs[area].date}</p>}
+              </div>
+              {signoffs[area]
+                ? <span className="badge status-completed">&#10003; Signed</span>
+                : canEdit&&<Btn size="sm" variant="secondary" onClick={()=>signOff(area)}>Sign Off</Btn>
+              }
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function FindingsTab({eng,saveEng,users,canEdit,currentUser,genId,logAction}){
+  const [showModal,setShowModal] = useState(false);
+  const [editing,setEditing] = useState(null);
+  const [form,setForm] = useState({title:"",condition:"",criteria:"",cause:"",consequence:"",recommendation:"",managementResponse:"",severity:"Medium",status:"Open",owner:"",dueDate:""});
+
+  const auditees=users.filter(u=>u.role==="Auditee");
+  let findings=eng.findings||[];
+  if(currentUser?.role==="Auditee") findings=findings.filter(f=>f.owner===currentUser.id);
+
+  function openNew(){ setForm({title:"",condition:"",criteria:"",cause:"",consequence:"",recommendation:"",managementResponse:"",severity:"Medium",status:"Open",owner:"",dueDate:""}); setEditing(null); setShowModal(true); }
+  function openEdit(f){ setForm({title:f.title,condition:f.condition,criteria:f.criteria,cause:f.cause,consequence:f.consequence,recommendation:f.recommendation,managementResponse:f.managementResponse||"",severity:f.severity,status:f.status,owner:f.owner,dueDate:f.dueDate}); setEditing(f); setShowModal(true); }
+  function save(){
+    if(!form.title.trim())return;
+    let list=[...(eng.findings||[])];
+    if(editing){
+      list=list.map(f=>f.id===editing.id?{...f,...form}:f);
+      logAction("Finding Updated","Updated finding: "+form.title);
+    }else{
+      list.push({id:genId("f"),...form,engagementId:eng.id});
+      logAction("Finding Created","New "+form.severity+" finding: "+form.title+" in "+eng.title);
+    }
+    saveEng({...eng,findings:list});
+    setShowModal(false);
+  }
+  function remove(id){ saveEng({...eng,findings:(eng.findings||[]).filter(f=>f.id!==id)}); }
+
+  const getUserName=id=>users.find(u=>u.id===id)?.name||id;
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold text-gray-900">Findings ({findings.length})</h3>
+        {canEdit&&<Btn size="sm" onClick={openNew}>+ Add Finding</Btn>}
+      </div>
+      <div className="space-y-4">
+        {findings.map(f=>(
+          <Card key={f.id} className="border-l-4" style={{borderLeftColor:f.severity==="Critical"?"#ef4444":f.severity==="High"?"#f97316":f.severity==="Medium"?"#eab308":"#22c55e"}}>
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <SeverityBadge severity={f.severity}/>
+                  <StatusBadge status={f.status}/>
+                </div>
+                <h4 className="font-semibold text-gray-900">{f.title}</h4>
+              </div>
+              {canEdit&&<div className="flex gap-2 ml-3">
+                <button onClick={()=>openEdit(f)} className="text-blue-500 text-xs font-medium">Edit</button>
+                <button onClick={()=>remove(f.id)} className="text-red-400 text-xs font-medium">Del</button>
+              </div>}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <div><p className="font-medium text-gray-700 mb-1">Condition</p><p className="text-gray-600">{f.condition}</p></div>
+              <div><p className="font-medium text-gray-700 mb-1">Criteria</p><p className="text-gray-600">{f.criteria}</p></div>
+              <div><p className="font-medium text-gray-700 mb-1">Cause</p><p className="text-gray-600">{f.cause}</p></div>
+              <div><p className="font-medium text-gray-700 mb-1">Consequence</p><p className="text-gray-600">{f.consequence}</p></div>
+              <div><p className="font-medium text-gray-700 mb-1">Recommendation</p><p className="text-gray-600">{f.recommendation}</p></div>
+              <div><p className="font-medium text-gray-700 mb-1">Management Response</p><p className="text-gray-600">{f.managementResponse||"Pending"}</p></div>
+            </div>
+            <div className="flex gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
+              <span>Owner: <strong>{getUserName(f.owner)}</strong></span>
+              <span>Due: <strong>{f.dueDate}</strong></span>
+            </div>
+          </Card>
+        ))}
+        {findings.length===0&&<div className="text-center py-12 text-gray-400"><div className="text-4xl mb-2">&#10004;</div><p>No findings. Great work!</p></div>}
+      </div>
+
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title={editing?"Edit Finding":"New Finding"} width="max-w-3xl">
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Severity" value={form.severity} onChange={v=>setForm(p=>({...p,severity:v}))} options={["Critical","High","Medium","Low","Informational"]}/>
+          <Sel label="Status" value={form.status} onChange={v=>setForm(p=>({...p,status:v}))} options={["Open","In Progress","In Review","Closed"]}/>
+        </div>
+        <Inp label="Finding Title" value={form.title} onChange={v=>setForm(p=>({...p,title:v}))} required/>
+        <Txta label="Condition (What is)" value={form.condition} onChange={v=>setForm(p=>({...p,condition:v}))} rows={2}/>
+        <Txta label="Criteria (What should be)" value={form.criteria} onChange={v=>setForm(p=>({...p,criteria:v}))} rows={2}/>
+        <Txta label="Cause (Why it happened)" value={form.cause} onChange={v=>setForm(p=>({...p,cause:v}))} rows={2}/>
+        <Txta label="Consequence (So what)" value={form.consequence} onChange={v=>setForm(p=>({...p,consequence:v}))} rows={2}/>
+        <Txta label="Recommendation" value={form.recommendation} onChange={v=>setForm(p=>({...p,recommendation:v}))} rows={2}/>
+        <Txta label="Management Response" value={form.managementResponse} onChange={v=>setForm(p=>({...p,managementResponse:v}))} rows={2} placeholder="Awaiting management response..."/>
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Assign To" value={form.owner} onChange={v=>setForm(p=>({...p,owner:v}))} options={[{value:"",label:"Select owner..."},...auditees.map(u=>({value:u.id,label:u.name}))]}/>
+          <Inp label="Due Date" value={form.dueDate} onChange={v=>setForm(p=>({...p,dueDate:v}))} type="date"/>
+        </div>
+        <div className="flex justify-end gap-3"><Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn><Btn onClick={save}>Save Finding</Btn></div>
+      </Modal>
+    </div>
+  );
+}
+
+function ReportTab({eng,users}){
+  const findings=eng.findings||[];
+  const critical=findings.filter(f=>f.severity==="Critical"||f.severity==="High");
+  const medium=findings.filter(f=>f.severity==="Medium");
+  const low=findings.filter(f=>f.severity==="Low"||f.severity==="Informational");
+  const getUser=id=>users.find(u=>u.id===id)?.name||id;
+
+  function exportReport(type){ alert("Exporting "+type+" report for: "+eng.title+"\nThis would generate a "+type+" file in a production environment."); }
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-5">
+        <h3 className="font-semibold text-gray-900">Audit Report Preview</h3>
+        <div className="flex gap-2">
+          <Btn variant="secondary" size="sm" onClick={()=>exportReport("PDF")}>&#128196; Export PDF</Btn>
+          <Btn variant="secondary" size="sm" onClick={()=>exportReport("Word")}>&#128196; Export Word</Btn>
+          <Btn variant="secondary" size="sm" onClick={()=>exportReport("Excel")}>&#128196; Export Excel</Btn>
+        </div>
+      </div>
+      <Card className="max-w-4xl">
+        {/* Report header */}
+        <div className="border-b-2 border-navy-900 pb-4 mb-6" style={{borderColor:"#1e2d4a"}}>
+          <div className="flex justify-between items-start">
+            <div>
+              <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Internal Audit Report</div>
+              <h2 className="text-2xl font-bold text-gray-900">{eng.title}</h2>
+              <p className="text-gray-500 mt-1">{eng.auditableUnit} &bull; {eng.quarter} {new Date().getFullYear()}</p>
+            </div>
+            <div className="text-right">
+              <StatusBadge status={eng.status}/>
+              <p className="text-xs text-gray-400 mt-2">Report Date: {new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Executive Summary */}
+        <section className="mb-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-2 pb-1 border-b">Executive Summary</h3>
+          <p className="text-gray-700 text-sm leading-relaxed">{eng.reportDraft||"Report draft pending."}</p>
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            <div className="text-center p-3 bg-red-50 rounded-lg"><div className="text-2xl font-bold text-red-600">{critical.length}</div><div className="text-xs text-red-500 mt-1">Critical/High Findings</div></div>
+            <div className="text-center p-3 bg-yellow-50 rounded-lg"><div className="text-2xl font-bold text-yellow-600">{medium.length}</div><div className="text-xs text-yellow-500 mt-1">Medium Findings</div></div>
+            <div className="text-center p-3 bg-green-50 rounded-lg"><div className="text-2xl font-bold text-green-600">{low.length}</div><div className="text-xs text-green-500 mt-1">Low/Info Findings</div></div>
+          </div>
+        </section>
+
+        {/* Scope */}
+        <section className="mb-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-2 pb-1 border-b">Scope and Objectives</h3>
+          <p className="text-sm font-medium text-gray-700 mb-1">Objectives</p>
+          <p className="text-gray-600 text-sm mb-3">{eng.objectives}</p>
+          <p className="text-sm font-medium text-gray-700 mb-1">Scope</p>
+          <p className="text-gray-600 text-sm">{eng.scope}</p>
+        </section>
+
+        {/* Findings */}
+        <section className="mb-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-3 pb-1 border-b">Findings and Recommendations</h3>
+          {findings.length===0&&<p className="text-gray-400 text-sm">No findings identified.</p>}
+          {findings.map((f,i)=>(
+            <div key={f.id} className="mb-5 p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-bold text-gray-500">F{i+1}.</span>
+                <h4 className="font-semibold text-gray-900">{f.title}</h4>
+                <SeverityBadge severity={f.severity}/>
+                <StatusBadge status={f.status}/>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                <div><span className="font-medium text-gray-700">Condition: </span><span className="text-gray-600">{f.condition}</span></div>
+                <div><span className="font-medium text-gray-700">Criteria: </span><span className="text-gray-600">{f.criteria}</span></div>
+                <div><span className="font-medium text-gray-700">Cause: </span><span className="text-gray-600">{f.cause}</span></div>
+                <div><span className="font-medium text-gray-700">Consequence: </span><span className="text-gray-600">{f.consequence}</span></div>
+              </div>
+              <div className="bg-blue-50 p-3 rounded-lg mb-2">
+                <p className="text-xs font-semibold text-blue-800 mb-1">RECOMMENDATION</p>
+                <p className="text-sm text-blue-700">{f.recommendation}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs font-semibold text-gray-600 mb-1">MANAGEMENT RESPONSE</p>
+                <p className="text-sm text-gray-700">{f.managementResponse||"Pending management response."}</p>
+              </div>
+              <div className="flex gap-4 text-xs text-gray-400 mt-2">
+                <span>Owner: {getUser(f.owner)}</span>
+                <span>Due: {f.dueDate}</span>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <div className="text-xs text-gray-400 border-t pt-4 text-center">
+          This report was prepared by the Internal Audit function. Confidential - For Management Use Only.
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ============================================================
+// FOLLOW-UP & ISSUE TRACKING PAGE
+// ============================================================
+function FollowUpTracking(){
+  const {followups,setFollowups,engagements,users,canAccess,currentUser,logAction,genId} = useApp();
+  const [filterSev,setFilterSev] = useState("All");
+  const [filterStatus,setFilterStatus] = useState("All");
+  const [filterOwner,setFilterOwner] = useState("All");
+  const [filterOverdue,setFilterOverdue] = useState(false);
+  const [showModal,setShowModal] = useState(false);
+  const [selected,setSelected] = useState(null);
+  const [updateNote,setUpdateNote] = useState("");
+  const [newStatus,setNewStatus] = useState("");
+  const [confirmItem,setConfirmItem] = useState(null);
+
+  const today=new Date();
+  const auditees=users.filter(u=>u.role==="Auditee");
+
+  // Build full followup list from all engagement findings + the standalone ones
+  const allFindings=engagements.flatMap(e=>(e.findings||[]).map(f=>({...f,engTitle:e.title})));
+
+  // Merge followups with finding data
+  let list=followups.map(fu=>{
+    const finding=allFindings.find(f=>f.id===fu.findingId)||{};
+    return {...fu,...finding,findingTitle:fu.findingTitle||finding.title,engagementTitle:fu.engagementTitle||finding.engTitle};
+  });
+
+  if(currentUser?.role==="Auditee") list=list.filter(f=>f.owner===currentUser.id);
+  if(filterSev!=="All") list=list.filter(f=>f.severity===filterSev);
+  if(filterStatus!=="All") list=list.filter(f=>f.status===filterStatus);
+  if(filterOwner!=="All") list=list.filter(f=>f.owner===filterOwner);
+  if(filterOverdue) list=list.filter(f=>f.status!=="Closed"&&new Date(f.dueDate)<today);
+
+  const getOwnerName=id=>users.find(u=>u.id===id)?.name||id;
+
+  function isOverdue(fu){ return fu.status!=="Closed"&&new Date(fu.dueDate)<today; }
+
+  function openUpdate(fu){ setSelected(fu); setNewStatus(fu.status); setUpdateNote(""); setShowModal(true); }
+  function saveUpdate(){
+    if(!selected)return;
+    const note={date:new Date().toLocaleDateString(),note:updateNote,by:currentUser?.name||"User"};
+    setFollowups(prev=>prev.map(fu=>fu.id===selected.id
+      ?{...fu,status:newStatus,updates:[...(fu.updates||[]),note]}
+      :fu
+    ));
+    logAction("Finding Status Updated","Finding: "+selected.findingTitle+" changed to "+newStatus);
+    setShowModal(false);
+  }
+
+  // Summary counts
+  const openCount=followups.filter(f=>f.status==="Open").length;
+  const inProgressCount=followups.filter(f=>f.status==="In Progress").length;
+  const closedCount=followups.filter(f=>f.status==="Closed").length;
+  const overdueCount=followups.filter(f=>f.status!=="Closed"&&new Date(f.dueDate)<today).length;
+
+  const summaryCards=[
+    {label:"Open",value:openCount,color:"bg-orange-50",text:"text-orange-600",border:"border-orange-200"},
+    {label:"In Progress",value:inProgressCount,color:"bg-blue-50",text:"text-blue-600",border:"border-blue-200"},
+    {label:"Closed",value:closedCount,color:"bg-green-50",text:"text-green-600",border:"border-green-200"},
+    {label:"Overdue",value:overdueCount,color:"bg-red-50",text:"text-red-600",border:"border-red-200"}
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Follow-Up Tracking</h1>
+          <p className="text-gray-500 text-sm mt-1">Monitor remediation progress for all open findings</p>
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-4 gap-3 mb-6">
+        {summaryCards.map(c=>(
+          <div key={c.label} className={"kpi-card border "+c.color+" "+c.border}>
+            <div className={"text-3xl font-bold "+c.text}>{c.value}</div>
+            <div className="text-sm text-gray-500 mt-1">{c.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <Card padding="p-3" className="mb-4">
+        <div className="flex gap-3 flex-wrap items-center">
+          <select value={filterSev} onChange={e=>setFilterSev(e.target.value)} className="select-field" style={{maxWidth:140}}>
+            {["All","Critical","High","Medium","Low"].map(s=><option key={s}>{s}</option>)}
+          </select>
+          <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)} className="select-field" style={{maxWidth:140}}>
+            {["All","Open","In Progress","Closed"].map(s=><option key={s}>{s}</option>)}
+          </select>
+          <select value={filterOwner} onChange={e=>setFilterOwner(e.target.value)} className="select-field" style={{maxWidth:180}}>
+            <option value="All">All Owners</option>
+            {auditees.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={filterOverdue} onChange={e=>setFilterOverdue(e.target.checked)} className="rounded"/>
+            <span className="text-sm text-red-600 font-medium">Show Overdue Only</span>
+          </label>
+          <span className="ml-auto text-sm text-gray-400">{list.length} records</span>
+        </div>
+      </Card>
+
+      {/* Table */}
+      <Card padding="p-0">
+        <table className="w-full">
+          <thead><tr className="table-header">
+            <th className="px-4 py-3 text-left">Finding</th>
+            <th className="px-4 py-3 text-left">Engagement</th>
+            <th className="px-4 py-3 text-left">Severity</th>
+            <th className="px-4 py-3 text-left">Status</th>
+            <th className="px-4 py-3 text-left">Owner</th>
+            <th className="px-4 py-3 text-left">Due Date</th>
+            <th className="px-4 py-3 text-left">Last Update</th>
+            <th className="px-4 py-3 text-center">Actions</th>
+          </tr></thead>
+          <tbody>
+            {list.map(fu=>(
+              <tr key={fu.id} className={"table-row "+(isOverdue(fu)?"bg-red-50/40":"")}>
+                <td className="px-4 py-3">
+                  <div className="font-medium text-sm text-gray-800 max-w-xs">{fu.findingTitle}</div>
+                  {isOverdue(fu)&&<span className="badge status-overdue mt-1">Overdue</span>}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">{fu.engagementTitle}</td>
+                <td className="px-4 py-3"><SeverityBadge severity={fu.severity}/></td>
+                <td className="px-4 py-3"><StatusBadge status={fu.status}/></td>
+                <td className="px-4 py-3 text-sm text-gray-700">{getOwnerName(fu.owner)}</td>
+                <td className={"px-4 py-3 text-sm font-medium "+(isOverdue(fu)?"text-red-600":"text-gray-700")}>{fu.dueDate}</td>
+                <td className="px-4 py-3 text-xs text-gray-400">
+                  {(fu.updates||[]).length>0
+                    ? <div><div className="font-medium text-gray-600">{fu.updates[fu.updates.length-1].date}</div><div className="truncate max-w-xs">{fu.updates[fu.updates.length-1].note}</div></div>
+                    : "No updates"}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <Btn size="sm" variant="secondary" onClick={()=>openUpdate(fu)}>Update</Btn>
+                </td>
+              </tr>
+            ))}
+            {list.length===0&&<tr><td colSpan="8" className="text-center text-gray-400 py-10 text-sm">No follow-up items match the current filters.</td></tr>}
+          </tbody>
+        </table>
+      </Card>
+
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title="Update Finding Status">
+        {selected&&(
+          <div>
+            <div className="p-3 bg-gray-50 rounded-lg mb-4">
+              <p className="font-medium text-gray-800 text-sm">{selected.findingTitle}</p>
+              <p className="text-xs text-gray-500 mt-1">{selected.engagementTitle}</p>
+              <div className="flex gap-2 mt-2"><SeverityBadge severity={selected.severity}/><StatusBadge status={selected.status}/></div>
+            </div>
+            <Sel label="New Status" value={newStatus} onChange={setNewStatus} options={["Open","In Progress","In Review","Closed"]}/>
+            <Txta label="Update Note" value={updateNote} onChange={setUpdateNote} rows={3} placeholder="Describe remediation actions taken, evidence obtained..."/>
+            {/* Update history */}
+            {(selected.updates||[]).length>0&&(
+              <div className="mt-3">
+                <p className="text-xs font-medium text-gray-700 mb-2">Update History</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {[...(selected.updates||[])].reverse().map((u,i)=>(
+                    <div key={i} className="text-xs p-2 bg-gray-50 rounded">
+                      <span className="font-medium text-gray-700">{u.date} &bull; {u.by}: </span>
+                      <span className="text-gray-600">{u.note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end gap-3 mt-4">
+              <Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn>
+              <Btn onClick={saveUpdate}>Save Update</Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+// ============================================================
+// QAIP PAGE
+// ============================================================
+function QAIPPage(){
+  const {qaip,setQaip,canAccess,logAction,genId} = useApp();
+  const [showModal,setShowModal] = useState(false);
+  const [selectedAssessment,setSelectedAssessment] = useState(null);
+  const [activeTab,setActiveTab] = useState("log");
+  const [form,setForm] = useState({type:"Internal",assessor:"",date:"",period:"",overall:"Generally Conforms",findings:""});
+  const [stdRatings,setStdRatings] = useState({});
+
+  const STANDARDS=[
+    {std:"1000",name:"Purpose, Authority, and Responsibility"},
+    {std:"1100",name:"Independence and Objectivity"},
+    {std:"1110",name:"Organizational Independence"},
+    {std:"1120",name:"Individual Objectivity"},
+    {std:"1200",name:"Proficiency and Due Professional Care"},
+    {std:"1300",name:"Quality Assurance and Improvement Program"},
+    {std:"2000",name:"Managing the Internal Audit Activity"},
+    {std:"2100",name:"Nature of Work"},
+    {std:"2200",name:"Engagement Planning"},
+    {std:"2300",name:"Performing the Engagement"},
+    {std:"2400",name:"Communicating Results"},
+    {std:"2410",name:"Criteria for Communicating"},
+    {std:"2500",name:"Monitoring Progress"},
+    {std:"2600",name:"Communicating the Acceptance of Risks"},
+    {std:"1000-2600",name:"Overall IIA Standards Conformance"}
+  ];
+
+  function initStdRatings(){ const r={}; STANDARDS.forEach(s=>{ r[s.std]="Conforms"; }); return r; }
+
+  function openNew(){
+    setForm({type:"Internal",assessor:"",date:"",period:"",overall:"Generally Conforms",findings:""});
+    setStdRatings(initStdRatings());
+    setSelectedAssessment(null);
+    setShowModal(true);
+  }
+
+  function viewAssessment(q){ setSelectedAssessment(q); setActiveTab("detail"); }
+
+  function save(){
+    if(!form.assessor||!form.date)return;
+    const standards=STANDARDS.map(s=>({std:s.std,name:s.name,rating:stdRatings[s.std]||"Conforms"}));
+    const entry={id:genId("q"),...form,standards};
+    setQaip(prev=>[...prev,entry]);
+    logAction("QAIP Assessment Added","New "+form.type+" assessment for period: "+form.period);
+    setShowModal(false);
+  }
+
+  function getConformanceScore(assessment){
+    if(!assessment.standards)return 0;
+    const total=assessment.standards.length;
+    const conforms=assessment.standards.filter(s=>s.rating==="Conforms").length;
+    const partial=assessment.standards.filter(s=>s.rating==="Partially Conforms").length;
+    return Math.round(((conforms+(partial*0.5))/total)*100);
+  }
+
+  function ratingColor(r){ return r==="Conforms"?"status-completed":r==="Partially Conforms"?"status-inreview":"status-overdue"; }
+  function overallColor(o){ return o==="Generally Conforms"?"status-completed":o==="Partially Conforms"?"status-inreview":"status-overdue"; }
+
+  const latestScore=qaip.length>0?getConformanceScore([...qaip].sort((a,b)=>b.date.localeCompare(a.date))[0]):0;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Quality Assurance & Improvement Program</h1>
+          <p className="text-gray-500 text-sm mt-1">IIA Standards conformance assessments</p>
+        </div>
+        {canAccess(["CAE","Audit Manager"])&&<Btn onClick={openNew}>+ Add Assessment</Btn>}
+      </div>
+
+      {/* Score and summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+        <Card className="lg:col-span-1 flex flex-col items-center justify-center">
+          <p className="text-sm text-gray-500 mb-2">Overall Conformance Score</p>
+          <ProgressRing percent={latestScore} size={100} stroke={8} color={latestScore>=80?"#10b981":latestScore>=60?"#f59e0b":"#ef4444"}/>
+          <p className="text-xs text-gray-400 mt-2">Latest Assessment</p>
+        </Card>
+        <div className="lg:col-span-3 grid grid-cols-3 gap-3">
+          {[["Generally Conforms","Fully meets IIA Standards requirements","#10b981","bg-green-50 border-green-200"],
+            ["Partially Conforms","Gaps exist; improvements needed","#f59e0b","bg-yellow-50 border-yellow-200"],
+            ["Does Not Conform","Significant deficiencies identified","#ef4444","bg-red-50 border-red-200"]].map(([label,desc,color,cls])=>(
+            <div key={label} className={"card p-4 border "+cls}>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-3 h-3 rounded-full" style={{background:color}}/>
+                <span className="font-semibold text-sm text-gray-800">{label}</span>
+              </div>
+              <p className="text-xs text-gray-500">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 mb-4">
+        <div className="flex">
+          {[["log","Assessment Log"],["detail","Assessment Detail"],["standards","Standards Checklist"]].map(([id,label])=>(
+            <button key={id} className={"tab-btn "+(activeTab===id?"active":"")} onClick={()=>setActiveTab(id)}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      {activeTab==="log"&&(
+        <Card padding="p-0">
+          <table className="w-full">
+            <thead><tr className="table-header">
+              <th className="px-4 py-3 text-left">Type</th>
+              <th className="px-4 py-3 text-left">Assessor</th>
+              <th className="px-4 py-3 text-left">Date</th>
+              <th className="px-4 py-3 text-left">Period Covered</th>
+              <th className="px-4 py-3 text-left">Overall Rating</th>
+              <th className="px-4 py-3 text-left">Score</th>
+              <th className="px-4 py-3 text-center">Actions</th>
+            </tr></thead>
+            <tbody>
+              {qaip.map(q=>(
+                <tr key={q.id} className="table-row">
+                  <td className="px-4 py-3"><span className={"badge "+(q.type==="External"?"bg-purple-50 text-purple-700":"bg-blue-50 text-blue-700")}>{q.type}</span></td>
+                  <td className="px-4 py-3 font-medium text-sm text-gray-800">{q.assessor}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{q.date}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{q.period}</td>
+                  <td className="px-4 py-3"><span className={"badge "+overallColor(q.overall)}>{q.overall}</span></td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-20 bg-gray-100 rounded-full h-2">
+                        <div className="h-2 rounded-full bg-blue-500" style={{width:getConformanceScore(q)+"%"}}/>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-700">{getConformanceScore(q)}%</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={()=>viewAssessment(q)} className="text-blue-500 hover:text-blue-700 text-xs font-medium">View Details</button>
+                  </td>
+                </tr>
+              ))}
+              {qaip.length===0&&<tr><td colSpan="7" className="text-center text-gray-400 py-10 text-sm">No assessments recorded.</td></tr>}
+            </tbody>
+          </table>
+        </Card>
+      )}
+
+      {activeTab==="detail"&&selectedAssessment&&(
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="font-semibold text-gray-900">{selectedAssessment.type} Assessment &mdash; {selectedAssessment.period}</h3>
+            <span className={"badge "+overallColor(selectedAssessment.overall)}>{selectedAssessment.overall}</span>
+            <span className="text-sm text-gray-500">{selectedAssessment.date} &bull; Assessed by {selectedAssessment.assessor}</span>
+          </div>
+          {selectedAssessment.findings&&<div className="bg-amber-50 border border-amber-200 p-4 rounded-lg mb-4 text-sm text-amber-800">{selectedAssessment.findings}</div>}
+          <Card padding="p-0">
+            <table className="w-full">
+              <thead><tr className="table-header">
+                <th className="px-4 py-3 text-left">Standard</th>
+                <th className="px-4 py-3 text-left">Description</th>
+                <th className="px-4 py-3 text-left">Rating</th>
+              </tr></thead>
+              <tbody>
+                {(selectedAssessment.standards||[]).map(s=>(
+                  <tr key={s.std} className="table-row">
+                    <td className="px-4 py-3"><span className="font-mono text-sm font-semibold text-gray-600">{s.std}</span></td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{s.name}</td>
+                    <td className="px-4 py-3"><span className={"badge "+ratingColor(s.rating)}>{s.rating}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      )}
+
+      {activeTab==="detail"&&!selectedAssessment&&(
+        <div className="text-center py-12 text-gray-400">
+          <div className="text-4xl mb-3">&#9733;</div>
+          <p>Select an assessment from the Assessment Log to view details.</p>
+        </div>
+      )}
+
+      {activeTab==="standards"&&(
+        <div>
+          <div className="mb-4">
+            <h3 className="font-semibold text-gray-900 mb-1">IIA Standards Self-Assessment Checklist</h3>
+            <p className="text-sm text-gray-500">Rate conformance with each IIA Standard based on current practices</p>
+          </div>
+          <Card padding="p-0">
+            <table className="w-full">
+              <thead><tr className="table-header">
+                <th className="px-4 py-3 text-left">Standard</th>
+                <th className="px-4 py-3 text-left">Description</th>
+                <th className="px-4 py-3 text-left">Latest Rating (Latest Assessment)</th>
+                <th className="px-4 py-3 text-left">Trend</th>
+              </tr></thead>
+              <tbody>
+                {STANDARDS.slice(0,11).map(s=>{
+                  const latest=qaip.length>0?[...qaip].sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
+                  const rating=latest?.standards?.find(r=>r.std===s.std)?.rating||"Not Assessed";
+                  const prev=qaip.length>1?[...qaip].sort((a,b)=>b.date.localeCompare(a.date))[1]:null;
+                  const prevRating=prev?.standards?.find(r=>r.std===s.std)?.rating||null;
+                  let trend="&#8212;";
+                  if(prevRating){
+                    const rMap={"Conforms":3,"Partially Conforms":2,"Does Not Conform":1};
+                    const diff=(rMap[rating]||2)-(rMap[prevRating]||2);
+                    trend=diff>0?"&#8593; Improved":diff<0?"&#8595; Declined":"&#8212; Same";
+                  }
+                  return (
+                    <tr key={s.std} className="table-row">
+                      <td className="px-4 py-3"><span className="font-mono text-sm font-semibold text-blue-600">{s.std}</span></td>
+                      <td className="px-4 py-3 text-sm text-gray-700">{s.name}</td>
+                      <td className="px-4 py-3"><span className={"badge "+(rating==="Not Assessed"?"bg-gray-100 text-gray-500":ratingColor(rating))}>{rating}</span></td>
+                      <td className="px-4 py-3 text-sm" dangerouslySetInnerHTML={{__html:trend}}/>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      )}
+
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title="Add QAIP Assessment" width="max-w-2xl">
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Assessment Type" value={form.type} onChange={v=>setForm(p=>({...p,type:v}))} options={["Internal","External"]}/>
+          <Inp label="Assessor" value={form.assessor} onChange={v=>setForm(p=>({...p,assessor:v}))} placeholder="Name or firm" required/>
+          <Inp label="Assessment Date" value={form.date} onChange={v=>setForm(p=>({...p,date:v}))} type="date" required/>
+          <Inp label="Period Covered" value={form.period} onChange={v=>setForm(p=>({...p,period:v}))} placeholder="e.g. 2024 or H1 2024"/>
+        </div>
+        <Sel label="Overall Rating" value={form.overall} onChange={v=>setForm(p=>({...p,overall:v}))} options={["Generally Conforms","Partially Conforms","Does Not Conform"]}/>
+        <Txta label="Key Findings / Observations" value={form.findings} onChange={v=>setForm(p=>({...p,findings:v}))} rows={3}/>
+        <div className="border-t pt-3 mt-2">
+          <p className="text-sm font-medium text-gray-700 mb-2">Standards Ratings</p>
+          <div className="max-h-64 overflow-y-auto space-y-2">
+            {STANDARDS.map(s=>(
+              <div key={s.std} className="flex items-center gap-3">
+                <span className="font-mono text-xs text-gray-500 w-16">{s.std}</span>
+                <span className="text-sm text-gray-700 flex-1">{s.name}</span>
+                <select value={stdRatings[s.std]||"Conforms"} onChange={e=>setStdRatings(p=>({...p,[s.std]:e.target.value}))} className="select-field" style={{maxWidth:160}}>
+                  <option>Conforms</option>
+                  <option>Partially Conforms</option>
+                  <option>Does Not Conform</option>
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-4">
+          <Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn>
+          <Btn onClick={save}>Save Assessment</Btn>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ============================================================
+// USER MANAGEMENT PAGE
+// ============================================================
+function UserManagement(){
+  const {users,setUsers,canAccess,logAction,genId,currentUser} = useApp();
+  const [showModal,setShowModal] = useState(false);
+  const [editing,setEditing] = useState(null);
+  const [confirmDeactivate,setConfirmDeactivate] = useState(null);
+  const [search,setSearch] = useState("");
+  const [form,setForm] = useState({name:"",email:"",password:"",role:"Staff Auditor",department:"Internal Audit",active:true,avatar:""});
+
+  if(!canAccess(["CAE"])){ return <div className="text-center py-16 text-gray-400"><div className="text-4xl mb-3">&#128274;</div><p className="font-medium">Access Restricted</p><p className="text-sm mt-1">Only the CAE can access user management.</p></div>; }
+
+  const ROLES=["CAE","Audit Manager","Senior Auditor","Staff Auditor","Auditee"];
+  const DEPARTMENTS=["Internal Audit","Finance","Operations","HR","IT","Legal","Compliance"];
+  const roleColors={CAE:"bg-purple-100 text-purple-800","Audit Manager":"bg-blue-100 text-blue-800","Senior Auditor":"bg-indigo-100 text-indigo-800","Staff Auditor":"bg-cyan-100 text-cyan-800","Auditee":"bg-orange-100 text-orange-800"};
+  const avatarColors=["bg-blue-500","bg-indigo-500","bg-purple-500","bg-teal-500","bg-orange-500","bg-pink-500"];
+
+  const filtered=users.filter(u=>u.name.toLowerCase().includes(search.toLowerCase())||u.email.toLowerCase().includes(search.toLowerCase())||u.role.toLowerCase().includes(search.toLowerCase()));
+
+  function openNew(){ setForm({name:"",email:"",password:"temp123",role:"Staff Auditor",department:"Internal Audit",active:true,avatar:""}); setEditing(null); setShowModal(true); }
+  function openEdit(u){ setForm({name:u.name,email:u.email,password:u.password,role:u.role,department:u.department,active:u.active,avatar:u.avatar}); setEditing(u); setShowModal(true); }
+  function save(){
+    if(!form.name.trim()||!form.email.trim())return;
+    const initials=form.name.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase();
+    const avatar=form.avatar||initials;
+    if(editing){
+      setUsers(prev=>prev.map(u=>u.id===editing.id?{...u,...form,avatar}:u));
+      logAction("User Updated","Updated user: "+form.name);
+    }else{
+      setUsers(prev=>[...prev,{id:genId("u"),...form,avatar}]);
+      logAction("User Created","Created user: "+form.name+" ("+form.role+")");
+    }
+    setShowModal(false);
+  }
+  function toggleActive(u){
+    setUsers(prev=>prev.map(x=>x.id===u.id?{...x,active:!x.active}:x));
+    logAction(u.active?"User Deactivated":"User Activated",(u.active?"Deactivated":"Activated")+" user: "+u.name);
+    setConfirmDeactivate(null);
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-500 text-sm mt-1">{users.length} users &bull; {users.filter(u=>u.active).length} active</p>
+        </div>
+        <Btn onClick={openNew}>+ Add User</Btn>
+      </div>
+      <div className="mb-4">
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search users..." className="input-field" style={{maxWidth:280}}/>
+      </div>
+      <Card padding="p-0">
+        <table className="w-full">
+          <thead><tr className="table-header">
+            <th className="px-4 py-3 text-left">User</th>
+            <th className="px-4 py-3 text-left">Role</th>
+            <th className="px-4 py-3 text-left">Department</th>
+            <th className="px-4 py-3 text-left">Email</th>
+            <th className="px-4 py-3 text-left">Status</th>
+            <th className="px-4 py-3 text-center">Actions</th>
+          </tr></thead>
+          <tbody>
+            {filtered.map((u,i)=>(
+              <tr key={u.id} className="table-row">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar initials={u.avatar} size="sm" color={u.active?avatarColors[i%avatarColors.length]:"bg-gray-300"}/>
+                    <div>
+                      <p className="font-medium text-sm text-gray-800">{u.name}</p>
+                      {u.id===currentUser?.id&&<span className="text-xs text-blue-500">(You)</span>}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3"><span className={"badge "+(roleColors[u.role]||"bg-gray-100 text-gray-700")}>{u.role}</span></td>
+                <td className="px-4 py-3 text-sm text-gray-600">{u.department}</td>
+                <td className="px-4 py-3 text-sm text-gray-500">{u.email}</td>
+                <td className="px-4 py-3"><StatusBadge status={u.active?"Active":"Inactive"}/></td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex gap-2 justify-center">
+                    <button onClick={()=>openEdit(u)} className="text-blue-500 hover:text-blue-700 text-xs font-medium">Edit</button>
+                    <button onClick={()=>setConfirmDeactivate(u)} className={"text-xs font-medium "+(u.active?"text-red-400 hover:text-red-600":"text-green-500 hover:text-green-700")}>
+                      {u.active?"Deactivate":"Activate"}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title={editing?"Edit User":"Add User"}>
+        <div className="grid grid-cols-2 gap-3">
+          <Inp label="Full Name" value={form.name} onChange={v=>setForm(p=>({...p,name:v}))} required/>
+          <Inp label="Email" value={form.email} onChange={v=>setForm(p=>({...p,email:v}))} type="email" required/>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Role" value={form.role} onChange={v=>setForm(p=>({...p,role:v}))} options={ROLES}/>
+          <Sel label="Department" value={form.department} onChange={v=>setForm(p=>({...p,department:v}))} options={DEPARTMENTS}/>
+        </div>
+        <Inp label="Password" value={form.password} onChange={v=>setForm(p=>({...p,password:v}))} type="text"/>
+        <Inp label="Avatar Initials (e.g. AC)" value={form.avatar} onChange={v=>setForm(p=>({...p,avatar:v.toUpperCase().slice(0,2)}))} placeholder="Auto-generated if blank"/>
+        <div className="flex justify-end gap-3 mt-2">
+          <Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn>
+          <Btn onClick={save}>Save User</Btn>
+        </div>
+      </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDeactivate}
+        title={confirmDeactivate?.active?"Deactivate User":"Activate User"}
+        message={"Are you sure you want to "+(confirmDeactivate?.active?"deactivate":"activate")+" "+confirmDeactivate?.name+"?"}
+        onConfirm={()=>toggleActive(confirmDeactivate)}
+        onCancel={()=>setConfirmDeactivate(null)}
+      />
+    </div>
+  );
+}
+
+// ============================================================
+// DOCUMENT MANAGEMENT PAGE
+// ============================================================
+function DocumentManagement(){
+  const {docs,setDocs,users,canAccess,currentUser,logAction,genId} = useApp();
+  const [showModal,setShowModal] = useState(false);
+  const [filterCat,setFilterCat] = useState("All");
+  const [search,setSearch] = useState("");
+  const [showHistory,setShowHistory] = useState(null);
+  const [form,setForm] = useState({name:"",category:"Reports",version:"v1.0",description:"",size:""});
+
+  const CATEGORIES=["All","Governance","Methodology","Reports","Working Papers","Templates","Policies"];
+  const cats=["Governance","Methodology","Reports","Working Papers","Templates","Policies"];
+
+  const catColors={Governance:"bg-purple-50 text-purple-700",Methodology:"bg-blue-50 text-blue-700",Reports:"bg-green-50 text-green-700","Working Papers":"bg-orange-50 text-orange-700",Templates:"bg-indigo-50 text-indigo-700",Policies:"bg-red-50 text-red-700"};
+
+  const filtered=docs
+    .filter(d=>filterCat==="All"||d.category===filterCat)
+    .filter(d=>d.name.toLowerCase().includes(search.toLowerCase())||d.description.toLowerCase().includes(search.toLowerCase()));
+
+  function getUser(id){ return users.find(u=>u.id===id)?.name||id; }
+
+  function save(){
+    if(!form.name.trim())return;
+    const entry={id:genId("d"),...form,uploadedBy:currentUser?.id||"u1",uploadedDate:new Date().toLocaleDateString(),size:form.size||"Unknown",history:[{version:form.version,date:new Date().toLocaleDateString(),by:currentUser?.name||"User",note:"Initial upload"}]};
+    setDocs(prev=>[entry,...prev]);
+    logAction("Document Uploaded","Uploaded document: "+form.name);
+    setShowModal(false);
+    setForm({name:"",category:"Reports",version:"v1.0",description:"",size:""});
+  }
+
+  function deleteDoc(d){
+    setDocs(prev=>prev.filter(x=>x.id!==d.id));
+    logAction("Document Deleted","Deleted document: "+d.name);
+  }
+
+  const fileIcons={Governance:"&#128196;",Methodology:"&#128209;",Reports:"&#128202;","Working Papers":"&#128203;",Templates:"&#128462;",Policies:"&#128220;"};
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Document Management</h1>
+          <p className="text-gray-500 text-sm mt-1">{docs.length} documents &bull; Audit file repository</p>
+        </div>
+        {canAccess(["CAE","Audit Manager","Senior Auditor","Staff Auditor"])&&<Btn onClick={()=>setShowModal(true)}>+ Upload Document</Btn>}
+      </div>
+
+      {/* Category stats */}
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+        {cats.map(c=>{
+          const cnt=docs.filter(d=>d.category===c).length;
+          return (
+            <div key={c} onClick={()=>setFilterCat(c===filterCat?"All":c)} className={"kpi-card cursor-pointer transition-all hover:shadow-md "+(filterCat===c?"ring-2 ring-blue-500":"")}>
+              <div className="text-2xl mb-1" dangerouslySetInnerHTML={{__html:fileIcons[c]||"&#128196;"}}/>
+              <div className="text-xl font-bold text-gray-900">{cnt}</div>
+              <div className="text-xs text-gray-500 mt-0.5">{c}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex gap-3 mb-4">
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search documents..." className="input-field" style={{maxWidth:280}}/>
+        <select value={filterCat} onChange={e=>setFilterCat(e.target.value)} className="select-field" style={{maxWidth:180}}>
+          {CATEGORIES.map(c=><option key={c}>{c}</option>)}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filtered.map(d=>(
+          <Card key={d.id} className="hover:shadow-md transition-shadow">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="text-3xl" dangerouslySetInnerHTML={{__html:fileIcons[d.category]||"&#128196;"}}/>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 text-sm leading-tight truncate">{d.name}</h4>
+                <p className="text-xs text-gray-400 mt-0.5">{d.size} &bull; {d.version}</p>
+              </div>
+              <span className={"badge "+(catColors[d.category]||"bg-gray-100 text-gray-600")}>{d.category}</span>
+            </div>
+            <p className="text-xs text-gray-500 mb-3 leading-relaxed">{d.description}</p>
+            <div className="flex items-center justify-between text-xs text-gray-400 border-t pt-3">
+              <div>
+                <span className="font-medium text-gray-600">{getUser(d.uploadedBy)}</span>
+                <span> &bull; {d.uploadedDate}</span>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={()=>setShowHistory(d)} className="text-blue-500 hover:text-blue-700 font-medium">History</button>
+                {canAccess(["CAE","Audit Manager"])&&<button onClick={()=>deleteDoc(d)} className="text-red-400 hover:text-red-600 font-medium">Delete</button>}
+              </div>
+            </div>
+          </Card>
+        ))}
+        {filtered.length===0&&(
+          <div className="col-span-3 text-center py-16 text-gray-400">
+            <div className="text-5xl mb-3">&#128193;</div>
+            <p className="font-medium">No documents found</p>
+            <p className="text-sm mt-1">Upload documents to get started</p>
+          </div>
+        )}
+      </div>
+
+      <Modal open={showModal} onClose={()=>setShowModal(false)} title="Upload Document">
+        <Inp label="Document Name" value={form.name} onChange={v=>setForm(p=>({...p,name:v}))} required/>
+        <div className="grid grid-cols-2 gap-3">
+          <Sel label="Category" value={form.category} onChange={v=>setForm(p=>({...p,category:v}))} options={cats}/>
+          <Inp label="Version" value={form.version} onChange={v=>setForm(p=>({...p,version:v}))} placeholder="e.g. v1.0"/>
+        </div>
+        <Inp label="File Size (optional)" value={form.size} onChange={v=>setForm(p=>({...p,size:v}))} placeholder="e.g. 1.2 MB"/>
+        <Txta label="Description" value={form.description} onChange={v=>setForm(p=>({...p,description:v}))} rows={3} placeholder="Brief description of this document..."/>
+        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg mb-4 text-xs text-blue-700">
+          <span>&#128139;</span> In a production environment, this would provide a file picker to upload the actual file. For this demo, the document entry is saved to the repository.
+        </div>
+        <div className="flex justify-end gap-3">
+          <Btn variant="secondary" onClick={()=>setShowModal(false)}>Cancel</Btn>
+          <Btn onClick={save}>Save Document</Btn>
+        </div>
+      </Modal>
+
+      <Modal open={!!showHistory} onClose={()=>setShowHistory(null)} title={"Version History: "+(showHistory?.name||"")}>
+        {showHistory&&(
+          <div>
+            <div className="space-y-2">
+              {(showHistory.history||[{version:showHistory.version,date:showHistory.uploadedDate,by:getUser(showHistory.uploadedBy),note:"Current version"}]).map((h,i)=>(
+                <div key={i} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="w-16 flex-shrink-0">
+                    <span className="badge bg-blue-50 text-blue-700">{h.version}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{h.note||"Updated"}</p>
+                    <p className="text-xs text-gray-400">{h.by} &bull; {h.date}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end mt-4">
+              <Btn variant="secondary" onClick={()=>setShowHistory(null)}>Close</Btn>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN APP ROUTER
+// ============================================================
+function AppContent(){
+  const {currentUser,page,selectedEngagement} = useApp();
+
+  if(!currentUser) return <LoginPage/>;
+
+  function PageContent(){
+    switch(page){
+      case "dashboard": return <Dashboard/>;
+      case "universe": return <AuditUniverse/>;
+      case "plan": return <AnnualPlan/>;
+      case "engagements": return <EngagementsList/>;
+      case "engagement_detail": return selectedEngagement?<EngagementDetail/>:<EngagementsList/>;
+      case "followup": return <FollowUpTracking/>;
+      case "qaip": return <QAIPPage/>;
+      case "users": return <UserManagement/>;
+      case "docs": return <DocumentManagement/>;
+      default: return <Dashboard/>;
+    }
+  }
+
+  return (
+    <Layout>
+      <PageContent/>
+    </Layout>
+  );
+}
+
+function App(){
+  return (
+    <AppProvider>
+      <AppContent/>
+    </AppProvider>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App/>);
+</script>
+</body>
+</html>

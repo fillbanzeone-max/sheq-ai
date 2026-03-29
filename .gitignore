@@ -1,0 +1,10 @@
+# Local AI memory — never commit
+.claude/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
