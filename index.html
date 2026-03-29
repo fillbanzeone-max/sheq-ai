@@ -1859,7 +1859,10 @@
 <div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:8888;display:flex;flex-direction:column;gap:8px;pointer-events:none"></div>
 
 <!-- ===== OVERDUE BANNER ===== -->
-<div id="overdue-banner" style="display:none;background:#fef3c7;border-bottom:2px solid #f59e0b;padding:8px 20px;font-size:.82rem;color:#92400e;font-weight:500;text-align:center;position:sticky;top:0;z-index:100"></div>
+<div id="overdue-banner" style="display:none;background:#fef3c7;border-bottom:2px solid #f59e0b;padding:8px 20px;font-size:.82rem;color:#92400e;font-weight:500;text-align:center;position:sticky;top:0;z-index:100;cursor:pointer" onclick="navigateTo('capa')">
+  <span id="overdue-banner-text"></span>&nbsp;&nbsp;<span style="text-decoration:underline">→ Review CAPA Tracker</span>
+  <button onclick="event.stopPropagation();document.getElementById('overdue-banner').style.display='none';sessionStorage.setItem('sheqai_banner_dismissed','1')" style="margin-left:16px;background:none;border:none;color:#92400e;font-size:1.1rem;cursor:pointer;font-weight:700;line-height:1;vertical-align:middle" title="Dismiss">✕</button>
+</div>
 
 <!-- ===== SIDEBAR ===== -->
 <nav id="sidebar">
@@ -2737,11 +2740,12 @@ function showToast(msg,type='info',duration=4500){
 
 function showOverdueBanner(count){
   const b=document.getElementById('overdue-banner');
-  if(count>0){
-    b.textContent=`⚠ ${count} CAPA${count>1?'s are':' is'} overdue. Review the CAPA Tracker.`;
+  if(count>0 && !sessionStorage.getItem('sheqai_banner_dismissed')){
+    document.getElementById('overdue-banner-text').textContent=`⚠ ${count} CAPA${count>1?'s are':' is'} overdue.`;
     b.style.display='block';
-  } else {
+  } else if(count===0){
     b.style.display='none';
+    sessionStorage.removeItem('sheqai_banner_dismissed');
   }
 }
 
@@ -2764,14 +2768,47 @@ function getData() {
   catch(e) { return null; }
 }
 
+// Sanitize calendar keys for Firebase (no . # $ / [ ] allowed in keys)
+function sanitizeForFirebase(d) {
+  if (!d || !d.calendar) return d;
+  const out = JSON.parse(JSON.stringify(d));
+  Object.keys(out.calendar).forEach(year => {
+    Object.keys(out.calendar[year]).forEach(key => {
+      const safe = key.replace(/[.#$\/\[\]]/g, '-');
+      if (safe !== key) {
+        out.calendar[year][safe] = out.calendar[year][key];
+        delete out.calendar[year][key];
+      }
+    });
+  });
+  return out;
+}
+
+// Migrate existing localStorage calendar keys (fixes "Emergency Drill / Simulacro")
+function migrateCalendarKeys(d) {
+  if (!d || !d.calendar) return d;
+  let changed = false;
+  Object.keys(d.calendar).forEach(year => {
+    Object.keys(d.calendar[year]).forEach(key => {
+      const safe = key.replace(/[.#$\/\[\]]/g, '-');
+      if (safe !== key) {
+        d.calendar[year][safe] = d.calendar[year][key];
+        delete d.calendar[year][key];
+        changed = true;
+      }
+    });
+  });
+  return { data: d, changed };
+}
+
 function saveData(d) {
   let saveOk = true;
   try { localStorage.setItem(LS_KEY, JSON.stringify(d)); }
   catch(e) { saveOk = false; console.error('Save failed', e); }
   updateSyncStatus(saveOk);
-  // Push to Firebase (non-blocking)
+  // Push to Firebase (non-blocking) — sanitize keys first
   if (_fbReady) {
-    _db.ref(FB_PATH).set(d).catch(e => console.warn('Firebase write failed', e));
+    _db.ref(FB_PATH).set(sanitizeForFirebase(d)).catch(e => console.warn('Firebase write failed', e));
   }
 }
 
@@ -2871,7 +2908,7 @@ function buildDefaultCalendar() {
     'Monthly SHEQ Inspection','Monthly SHEQ Meeting with DG','Monthly Report to DG',
     'Internal Audit Q1','Internal Audit Q2','Internal Audit Q3','Internal Audit Q4',
     'IMS Management Review','External ISO Surveillance Audit','Risk Register Review',
-    'Emergency Drill / Simulacro','Regulatory Review','Environmental Monitoring',
+    'Emergency Drill - Simulacro','Regulatory Review','Environmental Monitoring',
     'Contractor Safety Induction','PTW Audit','Training Needs Analysis',
     'Annual Performance Report','Emergency Plan Review','SHEQ Policy Review'
   ];
@@ -2892,7 +2929,7 @@ function buildDefaultCalendar() {
     'IMS Management Review': ['Apr','Oct'],
     'External ISO Surveillance Audit': ['Sep'],
     'Risk Register Review': ['Jan','Jul'],
-    'Emergency Drill / Simulacro': ['Apr','Oct'],
+    'Emergency Drill - Simulacro': ['Apr','Oct'],
     'Regulatory Review': ['Jun','Dec'],
     'Environmental Monitoring': ['Mar','Jun','Sep','Dec'],
     'Contractor Safety Induction': ['Jan','Apr','Jul','Oct'],
@@ -4255,6 +4292,9 @@ window.addEventListener('DOMContentLoaded',()=>{
     // Boot from localStorage for instant display
     let d=getData();
     if(!d||!d.initialized){ d=getDefaultData(); localStorage.setItem(LS_KEY,JSON.stringify(d)); }
+    // Migrate any invalid Firebase keys in existing data
+    const migResult=migrateCalendarKeys(d);
+    if(migResult.changed){ d=migResult.data; localStorage.setItem(LS_KEY,JSON.stringify(d)); }
     autoMarkOverdue(d);
     const k=sessionStorage.getItem('sheqai_apikey');
     if(k)document.getElementById('api-key-input').value=k;
