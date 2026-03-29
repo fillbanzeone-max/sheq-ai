@@ -2676,8 +2676,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const _db = firebase.database();
 const FB_PATH = 'sheqai/data';
+const FB_REST = 'https://ctrg-sheq-ai-default-rtdb.firebaseio.com/' + FB_PATH + '.json';
 let _fbConnected = false;
 let _fbReady = false;
+let _restMode = false;   // true when SDK can't connect but REST works
+let _restPollTimer = null;
 let currentUser = null;
 
 // ============================================================
@@ -2789,14 +2792,66 @@ function migrateCalendarKeys(d) {
   return { data: d, changed };
 }
 
+// ---- REST API fallback (used when WebSocket/long-poll can't connect) ----
+async function _restGetToken() {
+  try { return await firebase.auth().currentUser?.getIdToken(); } catch(e) { return null; }
+}
+
+async function restWrite(d) {
+  const token = await _restGetToken();
+  if (!token) return;
+  try {
+    const r = await fetch(FB_REST + '?auth=' + token, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(sanitizeForFirebase(d))
+    });
+    if (r.ok) { _restMode = true; updateSyncStatus(); }
+  } catch(e) { console.warn('REST write failed', e); }
+}
+
+async function restRead() {
+  const token = await _restGetToken();
+  if (!token) return;
+  try {
+    const r = await fetch(FB_REST + '?auth=' + token);
+    if (!r.ok) return;
+    const fbData = await r.json();
+    if (!fbData || !fbData.initialized) {
+      restWrite(getData()); return;
+    }
+    const localStr = localStorage.getItem(LS_KEY);
+    const fbStr = JSON.stringify(fbData);
+    if (fbStr !== localStr) {
+      localStorage.setItem(LS_KEY, fbStr);
+      autoMarkOverdue(fbData);
+      const cur = document.querySelector('.page.active');
+      if (cur) navigateTo(cur.id.replace('page-',''));
+      const od = (fbData.capas||[]).filter(c=>c.status==='Overdue').length;
+      showOverdueBanner(od);
+    }
+    _restMode = true; updateSyncStatus();
+  } catch(e) { console.warn('REST read failed', e); }
+}
+
+function startRestFallback() {
+  if (_fbConnected || _restPollTimer) return;
+  restRead();                                        // immediate sync
+  _restPollTimer = setInterval(restRead, 30000);     // then every 30 s
+}
+// -------------------------------------------------------------------------
+
 function saveData(d) {
   let saveOk = true;
   try { localStorage.setItem(LS_KEY, JSON.stringify(d)); }
   catch(e) { saveOk = false; console.error('Save failed', e); }
   updateSyncStatus(saveOk);
-  // Push to Firebase (non-blocking) — sanitize keys first
   if (_fbReady) {
+    // SDK real-time connection is active
     _db.ref(FB_PATH).set(sanitizeForFirebase(d)).catch(e => console.warn('Firebase write failed', e));
+  } else if (currentUser) {
+    // SDK can't connect — fall back to REST PUT
+    restWrite(d);
   }
 }
 
@@ -2806,7 +2861,7 @@ function updateSyncStatus(saveOk=true) {
   const d = getData();
   const total = ((d?.observations||[]).length + (d?.nearMisses||[]).length + (d?.incidents||[]).length + (d?.permits||[]).length + (d?.risks||[]).length + (d?.capas||[]).length);
   const key = sessionStorage.getItem('sheqai_apikey');
-  const syncTxt = _fbConnected ? '☁ Synced' : '⬤ Local only';
+  const syncTxt = _fbConnected ? '☁ Synced' : _restMode ? '☁ Synced' : '⬤ Local only';
   if (key) {
     el.className = _fbConnected ? 'ai-ready' : 'ready';
     el.textContent = syncTxt + ' • AI Ready • ' + total + ' records';
@@ -4305,6 +4360,9 @@ window.addEventListener('DOMContentLoaded',()=>{
       if(!_fbConnected) _fbReady=false;
       updateSyncStatus();
     });
+
+    // If SDK doesn't connect within 8s, switch to REST polling fallback
+    setTimeout(()=>{ if(!_fbConnected) startRestFallback(); }, 8000);
 
     // Firebase real-time sync listener
     _db.ref(FB_PATH).on('value', snap=>{
