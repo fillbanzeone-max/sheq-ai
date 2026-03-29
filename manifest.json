@@ -1,0 +1,17 @@
+{
+  "name": "SHEQ-AI | GRCentral",
+  "short_name": "SHEQ-AI",
+  "description": "AI-powered Safety, Health, Environment & Quality management system",
+  "start_url": "/sheq-ai/",
+  "display": "standalone",
+  "background_color": "#0f1e2d",
+  "theme_color": "#1e3a5f",
+  "orientation": "any",
+  "icons": [
+    { "src": "docs/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "docs/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en"
+}
+ 
