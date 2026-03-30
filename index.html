@@ -1871,7 +1871,7 @@
     <li class="nav-item"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">SHEQ Calendar</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📄</span><span class="nav-label">Monthly Report</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="capa" style="position:relative"><span class="nav-icon">✅</span><span id="capa-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span><span class="nav-label">CAPA Tracker</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -2731,12 +2731,14 @@ function showToast(msg,type='info',duration=4500){
 
 function showOverdueBanner(count){
   const b=document.getElementById('overdue-banner');
-  if(count>0 && !sessionStorage.getItem('sheqai_banner_dismissed')){
-    document.getElementById('overdue-banner-text').textContent=`⚠ ${count} CAPA${count>1?'s are':' is'} overdue.`;
+  const badge=document.getElementById('capa-badge');
+  if(badge){badge.style.display=count>0?'inline-block':'none';badge.textContent=count;}
+  const onCapa=(window._currentPage==='capa');
+  if(count>0 && !onCapa && !sessionStorage.getItem('sheqai_banner_dismissed')){
+    b.querySelector('span')?b.querySelector('span').textContent='⚠ '+count+' CAPA'+(count===1?'':'s')+' overdue. Review the CAPA Tracker.':null;
     b.style.display='block';
-  } else if(count===0){
+  }else{
     b.style.display='none';
-    sessionStorage.removeItem('sheqai_banner_dismissed');
   }
 }
 
@@ -3161,6 +3163,7 @@ let currentPage='dashboard';
 const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',chat:'SHEQ-AI Chat'};
 
 function navigateTo(page){
+  window._currentPage=page;sessionStorage.removeItem('sheqai_banner_dismissed');
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
   const el=document.getElementById('page-'+page);
   if(el){el.classList.add('active');el.style.display=page==='chat'?'flex':'block';}
