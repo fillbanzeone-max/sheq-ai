@@ -2,12 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://www.gstatic.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.anthropic.com; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="SHEQ-AI by GRCentral — AI-powered Safety, Health, Environment &amp; Quality management system for industrial operations.">
+<meta property="og:title" content="SHEQ-AI | GRCentral">
+<meta property="og:description" content="AI-powered SHEQ management: Incidents, Near Misses, Permits, Risk Register, Legal Compliance, CAPAs and more.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1e3a5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SHEQ-AI | GRCentral</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js" integrity="sha384-HLJUgAQ2oo6rdMC4QW+Oz2qQfPOtu/lzncKG4sZiq8+2W9uOa3K0b3UGpckKqv7H" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js" integrity="sha384-f6/UpzjTjIXASlp20cArQsaRh1EvHVJd5kegy/gYR9W2D0a32TnEqUEiW4Zm/5O0" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js" integrity="sha384-+/4lqMnmLqwbdHXshvGDmBTeWlNoPRdjXi4ZsiBj10EhQXaTBe3RF5JZktdSjug6" crossorigin="anonymous"></script>
   <style>
     /* ============================================================
        GOOGLE FONTS
@@ -2280,17 +2291,17 @@
   <div class="modal">
     <div class="modal-title" id="obs-modal-title">Add Job Observation <button class="modal-close" onclick="closeModal('obs-modal')">✕</button></div>
     <div class="form-row">
-      <div class="form-group"><label>Observer Name</label><input type="text" id="obs-f-observer" placeholder="Full name"></div>
-      <div class="form-group"><label>Date</label><input type="date" id="obs-f-date"></div>
+      <div class="form-group"><label>Observer Name</label><input type="text" id="obs-f-observer" required placeholder="Full name"></div>
+      <div class="form-group"><label>Date</label><input type="date" id="obs-f-date" required></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Location / Area</label><input type="text" id="obs-f-location" placeholder="e.g. Turbine Hall"></div>
+      <div class="form-group"><label>Location / Area</label><input type="text" id="obs-f-location" required placeholder="e.g. Turbine Hall"></div>
       <div class="form-group"><label>Work Activity</label><input type="text" id="obs-f-activity" placeholder="e.g. Electrical isolation"></div>
     </div>
     <div class="form-group"><label>Observation Type</label>
-      <select id="obs-f-type"><option value="SAFE">Safe</option><option value="AT-RISK">At-Risk</option><option value="IMPROVEMENT">Improvement</option></select>
+      <select id="obs-f-type" required><option value="SAFE">Safe</option><option value="AT-RISK">At-Risk</option><option value="IMPROVEMENT">Improvement</option></select>
     </div>
-    <div class="form-group"><label>Description</label><textarea id="obs-f-desc" placeholder="Describe what was observed…"></textarea></div>
+    <div class="form-group"><label>Description</label><textarea id="obs-f-desc" required placeholder="Describe what was observed…"></textarea></div>
     <div class="form-group"><label>Immediate Action Taken</label><textarea id="obs-f-action" placeholder="Action taken on the spot…"></textarea></div>
     <div class="form-row">
       <div class="form-group"><label>RCA Required?</label>
@@ -2325,18 +2336,18 @@
   <div class="modal">
     <div class="modal-title" id="nm-modal-title">Add Near Miss <button class="modal-close" onclick="closeModal('nm-modal')">✕</button></div>
     <div class="form-row">
-      <div class="form-group"><label>Reporter</label><input type="text" id="nm-f-reporter" placeholder="Full name"></div>
-      <div class="form-group"><label>Date</label><input type="date" id="nm-f-date"></div>
+      <div class="form-group"><label>Reporter</label><input type="text" id="nm-f-reporter" required placeholder="Full name"></div>
+      <div class="form-group"><label>Date</label><input type="date" id="nm-f-date" required></div>
     </div>
-    <div class="form-group"><label>Location</label><input type="text" id="nm-f-location" placeholder="e.g. Cooling Tower"></div>
-    <div class="form-group"><label>Description</label><textarea id="nm-f-desc" placeholder="Describe the near miss event…"></textarea></div>
+    <div class="form-group"><label>Location</label><input type="text" id="nm-f-location" required placeholder="e.g. Cooling Tower"></div>
+    <div class="form-group"><label>Description</label><textarea id="nm-f-desc" required placeholder="Describe the near miss event…"></textarea></div>
     <div class="form-group"><label>Potential Outcome</label><input type="text" id="nm-f-outcome" placeholder="What could have happened?"></div>
     <div class="form-row">
       <div class="form-group"><label>High Potential (HiPo)?</label>
         <select id="nm-f-hipo"><option value="0">No</option><option value="1">Yes</option></select>
       </div>
       <div class="form-group"><label>Severity</label>
-        <select id="nm-f-sev"><option value="1">1 – Critical</option><option value="2">2 – High</option><option value="3">3 – Medium</option><option value="4">4 – Low</option></select>
+        <select id="nm-f-sev" required><option value="1">1 – Critical</option><option value="2">2 – High</option><option value="3">3 – Medium</option><option value="4">4 – Low</option></select>
       </div>
     </div>
     <div class="form-group"><label>Immediate Action Taken</label><textarea id="nm-f-action" placeholder="Action taken immediately…"></textarea></div>
@@ -2375,18 +2386,18 @@
   <div class="modal">
     <div class="modal-title" id="inc-modal-title">Add Incident <button class="modal-close" onclick="closeModal('inc-modal')">✕</button></div>
     <div class="form-row">
-      <div class="form-group"><label>Date</label><input type="date" id="inc-f-date"></div>
+      <div class="form-group"><label>Date</label><input type="date" id="inc-f-date" required></div>
       <div class="form-group"><label>Type</label>
-        <select id="inc-f-type"><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Quality">Quality</option><option value="Security">Security</option></select>
+        <select id="inc-f-type" required><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Quality">Quality</option><option value="Security">Security</option></select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Severity</label>
-        <select id="inc-f-sev"><option value="1">1 – Critical</option><option value="2">2 – High</option><option value="3">3 – Medium</option><option value="4">4 – Low</option></select>
+        <select id="inc-f-sev" required><option value="1">1 – Critical</option><option value="2">2 – High</option><option value="3">3 – Medium</option><option value="4">4 – Low</option></select>
       </div>
-      <div class="form-group"><label>Location</label><input type="text" id="inc-f-location" placeholder="e.g. Boiler House"></div>
+      <div class="form-group"><label>Location</label><input type="text" id="inc-f-location" required placeholder="e.g. Boiler House"></div>
     </div>
-    <div class="form-group"><label>Description</label><textarea id="inc-f-desc" placeholder="Describe the incident…"></textarea></div>
+    <div class="form-group"><label>Description</label><textarea id="inc-f-desc" required placeholder="Describe the incident…"></textarea></div>
     <div class="form-row">
       <div class="form-group"><label>Person Involved</label><input type="text" id="inc-f-person" placeholder="Name / Employee #"></div>
       <div class="form-group"><label>Status</label>
@@ -2420,15 +2431,15 @@
     <div class="modal-title" id="ptw-modal-title">Add Permit to Work <button class="modal-close" onclick="closeModal('ptw-modal')">✕</button></div>
     <div class="form-row">
       <div class="form-group"><label>Type</label>
-        <select id="ptw-f-type"><option value="Hot Work">🔥 Hot Work</option><option value="Electrical">⚡ Electrical</option><option value="Confined Space">🚪 Confined Space</option><option value="Working at Height">🪜 Working at Height</option><option value="Line Breaking">🔧 Line Breaking</option></select>
+        <select id="ptw-f-type" required><option value="Hot Work">🔥 Hot Work</option><option value="Electrical">⚡ Electrical</option><option value="Confined Space">🚪 Confined Space</option><option value="Working at Height">🪜 Working at Height</option><option value="Line Breaking">🔧 Line Breaking</option></select>
       </div>
-      <div class="form-group"><label>Requestor</label><input type="text" id="ptw-f-requestor" placeholder="Name"></div>
+      <div class="form-group"><label>Requestor</label><input type="text" id="ptw-f-requestor" required placeholder="Name"></div>
     </div>
-    <div class="form-group"><label>Work Activity</label><input type="text" id="ptw-f-activity" placeholder="Describe the work to be done"></div>
-    <div class="form-group"><label>Location</label><input type="text" id="ptw-f-location" placeholder="e.g. Transformer Bay"></div>
+    <div class="form-group"><label>Work Activity</label><input type="text" id="ptw-f-activity" required placeholder="Describe the work to be done"></div>
+    <div class="form-group"><label>Location</label><input type="text" id="ptw-f-location" required placeholder="e.g. Transformer Bay"></div>
     <div class="form-row">
-      <div class="form-group"><label>Valid From</label><input type="datetime-local" id="ptw-f-from"></div>
-      <div class="form-group"><label>Valid To</label><input type="datetime-local" id="ptw-f-to"></div>
+      <div class="form-group"><label>Valid From</label><input type="datetime-local" id="ptw-f-from" required></div>
+      <div class="form-group"><label>Valid To</label><input type="datetime-local" id="ptw-f-to" required></div>
     </div>
     <div class="form-group"><label>Precautions / Conditions</label><textarea id="ptw-f-precautions" placeholder="List all required precautions…"></textarea></div>
 
@@ -2520,12 +2531,12 @@
   <div class="modal">
     <div class="modal-title" id="risk-modal-title">Add Risk <button class="modal-close" onclick="closeModal('risk-modal')">✕</button></div>
     <div class="form-row">
-      <div class="form-group"><label>Hazard</label><input type="text" id="risk-f-hazard" placeholder="e.g. Rotating machinery"></div>
+      <div class="form-group"><label>Hazard</label><input type="text" id="risk-f-hazard" required placeholder="e.g. Rotating machinery"></div>
       <div class="form-group"><label>Category</label>
-        <select id="risk-f-category"><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Health">Health</option><option value="Quality">Quality</option><option value="Security">Security</option></select>
+        <select id="risk-f-category" required><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Health">Health</option><option value="Quality">Quality</option><option value="Security">Security</option></select>
       </div>
     </div>
-    <div class="form-group"><label>Consequence</label><textarea id="risk-f-consequence" placeholder="Describe potential consequences…"></textarea></div>
+    <div class="form-group"><label>Consequence</label><textarea id="risk-f-consequence" required placeholder="Describe potential consequences…"></textarea></div>
     <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:var(--sp-1)">Inherent Risk (Before Controls)</div>
     <div class="form-row">
       <div class="form-group"><label>Probability (P)</label>
@@ -2583,12 +2594,12 @@
   <div class="modal">
     <div class="modal-title">Add Legal Item <button class="modal-close" onclick="closeModal('legal-modal')">✕</button></div>
     <div class="form-row">
-      <div class="form-group"><label>Law / Standard</label><input type="text" id="legal-f-law" placeholder="e.g. ISO 45001:2018"></div>
+      <div class="form-group"><label>Law / Standard</label><input type="text" id="legal-f-law" required placeholder="e.g. ISO 45001:2018"></div>
       <div class="form-group"><label>Reference</label><input type="text" id="legal-f-ref" placeholder="e.g. LR-008"></div>
     </div>
-    <div class="form-group"><label>Requirement</label><textarea id="legal-f-req" placeholder="Describe the compliance requirement…"></textarea></div>
+    <div class="form-group"><label>Requirement</label><textarea id="legal-f-req" required placeholder="Describe the compliance requirement…"></textarea></div>
     <div class="form-row">
-      <div class="form-group"><label>Responsible</label><input type="text" id="legal-f-responsible" placeholder="Name / Role"></div>
+      <div class="form-group"><label>Responsible</label><input type="text" id="legal-f-responsible" required placeholder="Name / Role"></div>
       <div class="form-group"><label>Frequency</label>
         <select id="legal-f-freq"><option value="Monthly">Monthly</option><option value="Quarterly">Quarterly</option><option value="Semi-Annual">Semi-Annual</option><option value="Annual">Annual</option><option value="Ad-hoc">Ad-hoc</option></select>
       </div>
@@ -2614,7 +2625,7 @@
     <div class="form-row">
       <div class="form-group"><label>CAPA ID</label><input type="text" id="capa-f-id" placeholder="Auto-generated" readonly style="background:var(--card2)"></div>
       <div class="form-group"><label>Priority</label>
-        <select id="capa-f-priority"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select>
+        <select id="capa-f-priority" required><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select>
       </div>
     </div>
     <div class="form-row">
@@ -2623,10 +2634,10 @@
       </div>
       <div class="form-group"><label>Source Reference</label><input type="text" id="capa-f-ref" placeholder="e.g. OBS-001"></div>
     </div>
-    <div class="form-group"><label>WHAT – Corrective Action Description</label><textarea id="capa-f-what" placeholder="What corrective action must be taken?"></textarea></div>
+    <div class="form-group"><label>WHAT – Corrective Action Description</label><textarea id="capa-f-what" required placeholder="What corrective action must be taken?"></textarea></div>
     <div class="form-row">
-      <div class="form-group"><label>WHO – Responsible Person</label><input type="text" id="capa-f-who" placeholder="Name / Role"></div>
-      <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="capa-f-when"></div>
+      <div class="form-group"><label>WHO – Responsible Person</label><input type="text" id="capa-f-who" required placeholder="Name / Role"></div>
+      <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="capa-f-when" required></div>
     </div>
     <div class="form-group"><label>HOW – Verification Method</label><textarea id="capa-f-how" placeholder="How will completion be verified?"></textarea></div>
     <div class="form-row">
