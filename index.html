@@ -2741,16 +2741,10 @@ function showToast(msg,type='info',duration=4500){
 }
 
 function showOverdueBanner(count){
-  const b=document.getElementById('overdue-banner');
   const badge=document.getElementById('capa-badge');
   if(badge){badge.style.display=count>0?'inline-block':'none';badge.textContent=count;}
-  const onCapa=(window._currentPage==='capa');
-  if(count>0 && !onCapa && !sessionStorage.getItem('sheqai_banner_dismissed')){
-    b.querySelector('span')?b.querySelector('span').textContent='⚠ '+count+' CAPA'+(count===1?'':'s')+' overdue. Review the CAPA Tracker.':null;
-    b.style.display='block';
-  }else{
-    b.style.display='none';
-  }
+  const b=document.getElementById('overdue-banner');
+  if(b)b.style.display='none';
 }
 
 function checkBackupReminder(){
@@ -3174,7 +3168,7 @@ let currentPage='dashboard';
 const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',chat:'SHEQ-AI Chat'};
 
 function navigateTo(page){
-  window._currentPage=page;sessionStorage.removeItem('sheqai_banner_dismissed');
+  window._currentPage=page;
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
   const el=document.getElementById('page-'+page);
   if(el){el.classList.add('active');el.style.display=page==='chat'?'flex':'block';}
