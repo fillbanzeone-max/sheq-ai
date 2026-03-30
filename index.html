@@ -1921,6 +1921,16 @@
     <div class="kpi-card" style="--kpi-color:var(--orange)"><div class="kpi-label">Open Incidents</div><div class="kpi-value" id="kpi-inc">—</div><div class="kpi-sub">Not closed</div></div>
     <div class="kpi-card" style="--kpi-color:var(--teal)"><div class="kpi-label">Open CAPAs</div><div class="kpi-value" id="kpi-capa">—</div><div class="kpi-sub">Not closed</div></div>
     <div class="kpi-card" style="--kpi-color:var(--red)"><div class="kpi-label">CAPAs Overdue</div><div class="kpi-value" id="kpi-capa-od">—</div><div class="kpi-sub">Past target date</div></div>
+    <div class="kpi-card" style="--kpi-color:var(--teal)" id="kpi-card-ptw">
+      <div class="kpi-label">Open Permits (PTW)</div>
+      <div class="kpi-value" id="kpi-ptw">–</div>
+      <div class="kpi-sub" id="kpi-ptw-sub">Active + Pending</div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--orange)" id="kpi-card-risk">
+      <div class="kpi-label">Risk Register</div>
+      <div class="kpi-value" id="kpi-risk">–</div>
+      <div class="kpi-sub" id="kpi-risk-sub">Open risks</div>
+    </div>
   </div>
   <div class="charts-row">
     <div class="card"><div class="card-title">Incident Trend (Monthly)</div><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
@@ -3245,6 +3255,28 @@ function renderDashboard(){
   (d.nearMisses||[]).slice(-2).reverse().forEach(n=>feed.push({color:'#f97316',text:`Near Miss ${escapeHtml(n.id)}: ${escapeHtml(truncate(n.outcome,50))}`,time:fmtDate(n.date)}));
   (d.observations||[]).slice(-3).reverse().forEach(o=>feed.push({color:'#22c55e',text:`Observation ${escapeHtml(o.id)}: ${escapeHtml(truncate(o.desc,50))}`,time:fmtDate(o.date)}));
   document.getElementById('dash-activity').innerHTML=feed.slice(0,8).map(f=>`<div class="activity-item"><div class="activity-dot" style="background:${f.color}"></div><div><div class="activity-text">${f.text}</div><div class="activity-time">${f.time}</div></div></div>`).join('');
+
+  // PTW stats
+  const permits=Object.values(d.permits||{});
+  const nowIso=new Date().toISOString();
+  const ptwOpen=permits.filter(p=>p.status==='ACTIVE'||p.status==='PENDING').length;
+  const ptwExpired=permits.filter(p=>p.status==='ACTIVE'&&p.to&&p.to<nowIso).length;
+  const ptwEl=document.getElementById('kpi-ptw');
+  const ptwSub=document.getElementById('kpi-ptw-sub');
+  const ptwCard=document.getElementById('kpi-card-ptw');
+  if(ptwEl)ptwEl.textContent=ptwOpen;
+  if(ptwSub)ptwSub.textContent=ptwExpired>0?ptwExpired+' expired':'Active + Pending';
+  if(ptwCard&&ptwExpired>0)ptwCard.style.setProperty('--kpi-color','var(--red)');
+  // Risk stats
+  const risks=Object.values(d.risks||{});
+  const riskOpen=risks.filter(r=>!r.status||r.status==='Open'||r.status==='OPEN').length;
+  const riskHigh=risks.filter(r=>r.rRating==='HIGH'||r.rRating==='EXTREME').length;
+  const riskEl=document.getElementById('kpi-risk');
+  const riskSub=document.getElementById('kpi-risk-sub');
+  const riskCard=document.getElementById('kpi-card-risk');
+  if(riskEl)riskEl.textContent=riskOpen;
+  if(riskSub)riskSub.textContent=riskHigh>0?riskHigh+' High/Extreme':'Open risks';
+  if(riskCard&&riskHigh>0)riskCard.style.setProperty('--kpi-color','var(--red)');
 }
 
 // ============================================================
