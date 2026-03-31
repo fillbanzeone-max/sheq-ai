@@ -660,22 +660,18 @@
     ============================================================ */
     .charts-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: var(--sp-2);
       margin-bottom: var(--sp-3);
     }
 
     .chart-wrap {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-sm);
-      padding: var(--sp-3);
       position: relative;
+      padding-top: var(--sp-1);
     }
 
     .chart-wrap canvas {
-      max-height: 280px;
+      max-height: 240px;
     }
 
     /* ============================================================
