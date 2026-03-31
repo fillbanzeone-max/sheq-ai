@@ -567,10 +567,30 @@
     ============================================================ */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: var(--sp-2);
       margin-bottom: var(--sp-3);
     }
+    .kpi-breakdown {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin-top: 6px;
+    }
+    .kpib {
+      font-size: .67rem;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .kpib-green  { background:#dcfce7; color:#15803d; }
+    .kpib-red    { background:#fee2e2; color:#b91c1c; }
+    .kpib-orange { background:#ffedd5; color:#c2410c; }
+    .kpib-blue   { background:#dbeafe; color:#1d4ed8; }
+    .kpib-yellow { background:#fef9c3; color:#854d0e; }
+    .kpib-gray   { background:#f1f5f9; color:#475569; }
+    .kpib-teal   { background:#ccfbf1; color:#0f766e; }
 
     .kpi-card {
       background: var(--card);
@@ -1900,20 +1920,11 @@
 
 <!-- ======= DASHBOARD ======= -->
 <div id="page-dashboard" class="page active">
-  <div class="kpi-grid" id="dash-kpi-row">
-    <div class="kpi-card" style="--kpi-color:var(--accent)"><div class="kpi-label">Total Observations</div><div class="kpi-value" id="kpi-obs">—</div><div class="kpi-sub">This month</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--yellow)"><div class="kpi-label">Near Misses</div><div class="kpi-value" id="kpi-nm">—</div><div class="kpi-sub">YTD</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--orange)"><div class="kpi-label">Open Incidents</div><div class="kpi-value" id="kpi-inc">—</div><div class="kpi-sub">Not closed</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--teal)"><div class="kpi-label">Open CAPAs</div><div class="kpi-value" id="kpi-capa">—</div><div class="kpi-sub">Not closed</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--red)"><div class="kpi-label">CAPAs Overdue</div><div class="kpi-value" id="kpi-capa-od">—</div><div class="kpi-sub">Past target date</div></div>
-  </div>
+  <div class="kpi-grid" id="dash-kpi-row"></div>
   <div class="charts-row">
     <div class="card"><div class="card-title">Incident Trend (Monthly)</div><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
     <div class="card"><div class="card-title">Observation Type Ratio</div><div class="chart-wrap"><canvas id="chart-ratio"></canvas></div></div>
-  </div>
-  <div class="charts-row">
     <div class="card"><div class="card-title">Risk Register by Rating</div><div class="chart-wrap"><canvas id="chart-risk"></canvas></div></div>
-    <div class="card"><div class="card-title">Recent Activity</div><div class="activity-feed" id="dash-activity"></div></div>
   </div>
 </div>
 
@@ -3189,50 +3200,114 @@ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString
 let trendChart,ratioChart,riskChart;
 function renderDashboard(){
   const d=getData()||getDefaultData();
-  const now=new Date();const ym=now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0');
-  const obsMonth=(d.observations||[]).filter(o=>o.date&&o.date.substring(0,7)===ym).length;
-  const nmYTD=(d.nearMisses||[]).filter(n=>n.date&&n.date.startsWith(now.getFullYear()+'')).length;
-  const openInc=(d.incidents||[]).filter(i=>i.status!=='Closed').length;
-  const openCapa=(d.capas||[]).filter(c=>c.status!=='Closed').length;
-  const overdCapa=(d.capas||[]).filter(c=>c.status==='Overdue').length;
-  document.getElementById('kpi-obs').textContent=obsMonth;
-  document.getElementById('kpi-nm').textContent=nmYTD;
-  document.getElementById('kpi-inc').textContent=openInc;
-  document.getElementById('kpi-capa').textContent=openCapa;
-  document.getElementById('kpi-capa-od').textContent=overdCapa;
-  // Color overdue KPI red if > 0
-  document.getElementById('kpi-capa-od').closest('.kpi-card').style.setProperty('--kpi-color', overdCapa>0?'var(--red)':'var(--green)');
+  const now=new Date();
+
+  // --- Observations ---
+  const obs=d.observations||[];
+  const obsSafe=obs.filter(o=>o.type==='SAFE').length;
+  const obsRisk=obs.filter(o=>o.type==='AT-RISK').length;
+  const obsImpr=obs.filter(o=>o.type==='IMPROVEMENT').length;
+
+  // --- Near Misses ---
+  const nms=d.nearMisses||[];
+  const nmOpen=nms.filter(n=>n.status!=='Closed').length;
+  const nmHipo=nms.filter(n=>n.hipo==1||n.hipo==='1'||n.hipo===true).length;
+  const nmClosed=nms.filter(n=>n.status==='Closed').length;
+
+  // --- Incidents ---
+  const incs=d.incidents||[];
+  const incOpen=incs.filter(i=>i.status!=='Closed').length;
+  const incClosed=incs.filter(i=>i.status==='Closed').length;
+
+  // --- Permits (PTW) ---
+  const permits=d.permits||[];
+  const ptwActive=permits.filter(p=>p.status==='ACTIVE').length;
+  const ptwExpired=permits.filter(p=>p.status==='EXPIRED').length;
+  const ptwClosed=permits.filter(p=>p.status==='CLOSED').length;
+
+  // --- Risk Register ---
+  const risks=d.risks||[];
+  const rExt=risks.filter(r=>r.rRating==='EXTREME').length;
+  const rHigh=risks.filter(r=>r.rRating==='HIGH').length;
+  const rMed=risks.filter(r=>r.rRating==='MEDIUM').length;
+  const rLow=risks.filter(r=>r.rRating==='LOW').length;
+
+  // --- CAPAs ---
+  const capas=d.capas||[];
+  const capaOpen=capas.filter(c=>c.status==='Open'||c.status==='In Progress').length;
+  const capaOverdue=capas.filter(c=>c.status==='Overdue').length;
+  const capaClosed=capas.filter(c=>c.status==='Closed').length;
+
+  document.getElementById('dash-kpi-row').innerHTML=`
+    <div class="kpi-card" style="--kpi-color:var(--accent)">
+      <div class="kpi-label">Observations</div>
+      <div class="kpi-value">${obs.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">Safe: ${obsSafe}</span>
+        <span class="kpib kpib-red">At-Risk: ${obsRisk}</span>
+        <span class="kpib kpib-blue">Impr: ${obsImpr}</span>
+      </div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--yellow)">
+      <div class="kpi-label">Near Misses</div>
+      <div class="kpi-value">${nms.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-orange">Open: ${nmOpen}</span>
+        <span class="kpib kpib-red">HiPo: ${nmHipo}</span>
+        <span class="kpib kpib-green">Closed: ${nmClosed}</span>
+      </div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--orange)">
+      <div class="kpi-label">Incidents</div>
+      <div class="kpi-value">${incs.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-orange">Open: ${incOpen}</span>
+        <span class="kpib kpib-green">Closed: ${incClosed}</span>
+      </div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--teal)">
+      <div class="kpi-label">Permits (PTW)</div>
+      <div class="kpi-value">${permits.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-teal">Active: ${ptwActive}</span>
+        <span class="kpib kpib-red">Expired: ${ptwExpired}</span>
+        <span class="kpib kpib-gray">Closed: ${ptwClosed}</span>
+      </div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${rExt>0?'var(--red)':'var(--accent)'}">
+      <div class="kpi-label">Risk Register</div>
+      <div class="kpi-value">${risks.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-red">Ext: ${rExt}</span>
+        <span class="kpib kpib-orange">High: ${rHigh}</span>
+        <span class="kpib kpib-yellow">Med: ${rMed}</span>
+        <span class="kpib kpib-green">Low: ${rLow}</span>
+      </div>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${capaOverdue>0?'var(--red)':'var(--green)'}">
+      <div class="kpi-label">CAPAs</div>
+      <div class="kpi-value">${capas.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-orange">Open: ${capaOpen}</span>
+        <span class="kpib kpib-red">Overdue: ${capaOverdue}</span>
+        <span class="kpib kpib-green">Closed: ${capaClosed}</span>
+      </div>
+    </div>`;
 
   // Incident trend chart (last 6 months)
   const months=[];const incCounts=[];
   for(let i=5;i>=0;i--){const d2=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d2.toLocaleDateString('en-GB',{month:'short',year:'2-digit'}));const ym2=d2.getFullYear()+'-'+(d2.getMonth()+1).toString().padStart(2,'0');incCounts.push((d.incidents||[]).filter(x=>x.date&&x.date.startsWith(ym2)).length);}
   if(trendChart)trendChart.destroy();
-  const ctx1=document.getElementById('chart-trend').getContext('2d');
-  trendChart=new Chart(ctx1,{type:'bar',data:{labels:months,datasets:[{label:'Incidents',data:incCounts,backgroundColor:'rgba(234,88,12,.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  trendChart=new Chart(document.getElementById('chart-trend').getContext('2d'),{type:'bar',data:{labels:months,datasets:[{label:'Incidents',data:incCounts,backgroundColor:'rgba(234,88,12,.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
 
   // Observation ratio chart
-  const safe=(d.observations||[]).filter(o=>o.type==='SAFE').length;
-  const atRisk=(d.observations||[]).filter(o=>o.type==='AT-RISK').length;
-  const impr=(d.observations||[]).filter(o=>o.type==='IMPROVEMENT').length;
+  const safe=obsSafe,atRisk=obsRisk,impr=obsImpr;
   if(ratioChart)ratioChart.destroy();
-  const ctx2=document.getElementById('chart-ratio').getContext('2d');
-  ratioChart=new Chart(ctx2,{type:'pie',data:{labels:['Safe','At-Risk','Improvement'],datasets:[{data:[safe,atRisk,impr],backgroundColor:['#22c55e','#ef4444','#06b6d4']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  ratioChart=new Chart(document.getElementById('chart-ratio').getContext('2d'),{type:'pie',data:{labels:['Safe','At-Risk','Improvement'],datasets:[{data:[safe,atRisk,impr],backgroundColor:['#22c55e','#ef4444','#06b6d4']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
 
   // Risk by rating donut
-  const low=(d.risks||[]).filter(r=>r.rRating==='LOW').length;
-  const med=(d.risks||[]).filter(r=>r.rRating==='MEDIUM').length;
-  const high=(d.risks||[]).filter(r=>r.rRating==='HIGH').length;
-  const ext=(d.risks||[]).filter(r=>r.rRating==='EXTREME').length;
   if(riskChart)riskChart.destroy();
-  const ctx3=document.getElementById('chart-risk').getContext('2d');
-  riskChart=new Chart(ctx3,{type:'doughnut',data:{labels:['Low','Medium','High','Extreme'],datasets:[{data:[low,med,high,ext],backgroundColor:['#22c55e','#fde047','#f97316','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
-
-  // Activity feed
-  const feed=[];
-  (d.incidents||[]).slice(-3).reverse().forEach(i=>feed.push({color:'#ef4444',text:`Incident ${escapeHtml(i.id)}: ${escapeHtml(truncate(i.desc,50))}`,time:fmtDate(i.date)}));
-  (d.nearMisses||[]).slice(-2).reverse().forEach(n=>feed.push({color:'#f97316',text:`Near Miss ${escapeHtml(n.id)}: ${escapeHtml(truncate(n.outcome,50))}`,time:fmtDate(n.date)}));
-  (d.observations||[]).slice(-3).reverse().forEach(o=>feed.push({color:'#22c55e',text:`Observation ${escapeHtml(o.id)}: ${escapeHtml(truncate(o.desc,50))}`,time:fmtDate(o.date)}));
-  document.getElementById('dash-activity').innerHTML=feed.slice(0,8).map(f=>`<div class="activity-item"><div class="activity-dot" style="background:${f.color}"></div><div><div class="activity-text">${f.text}</div><div class="activity-time">${f.time}</div></div></div>`).join('');
+  riskChart=new Chart(document.getElementById('chart-risk').getContext('2d'),{type:'doughnut',data:{labels:['Low','Medium','High','Extreme'],datasets:[{data:[rLow,rMed,rHigh,rExt],backgroundColor:['#22c55e','#fde047','#f97316','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
 }
 
 // ============================================================
