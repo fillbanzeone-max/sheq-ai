@@ -1992,7 +1992,6 @@
     <select id="inc-filter-sev"><option value="">All Severities</option><option value="1">Critical</option><option value="2">High</option><option value="3">Medium</option><option value="4">Low</option></select>
     <select id="inc-filter-type"><option value="">All Types</option><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Quality">Quality</option><option value="Security">Security</option></select>
   </div>
-  <div class="kpi-grid-4" id="inc-kpi-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-2);margin-bottom:var(--sp-2);"></div>
   <div class="card">
     <div class="table-wrap">
       <table class="mobile-cards">
@@ -3603,13 +3602,6 @@ function renderIncidents(page=1){
     const ms=!search||[i.id,i.type,i.location,i.desc,i.person].some(v=>(v||'').toLowerCase().includes(search));
     const mv=!sf||String(i.sev)===sf;const mt=!tf||i.type===tf;return ms&&mv&&mt;
   });
-  const total2=items.length,crit=items.filter(x=>x.sev===1).length,high=items.filter(x=>x.sev===2).length,med=items.filter(x=>x.sev===3).length,low=items.filter(x=>x.sev===4).length;
-  document.getElementById('inc-kpi-row').innerHTML=`
-    <div class="kpi-card" style="--kpi-color:var(--text)"><div class="kpi-label">Total</div><div class="kpi-value">${total2}</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--red)"><div class="kpi-label">Critical</div><div class="kpi-value">${crit}</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--orange)"><div class="kpi-label">High</div><div class="kpi-value">${high}</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--yellow)"><div class="kpi-label">Medium</div><div class="kpi-value">${med}</div></div>
-    <div class="kpi-card" style="--kpi-color:var(--green)"><div class="kpi-label">Low</div><div class="kpi-value">${low}</div></div>`;
   const {items:rows,total}=paginate(items,page);
   document.getElementById('inc-tbody').innerHTML=rows.map(i=>`
     <tr>
