@@ -1926,6 +1926,15 @@
     <div class="card"><div class="card-title">Observation Type Ratio</div><div class="chart-wrap"><canvas id="chart-ratio"></canvas></div></div>
     <div class="card"><div class="card-title">Risk Register by Rating</div><div class="chart-wrap"><canvas id="chart-risk"></canvas></div></div>
   </div>
+  <div class="card" style="margin-top:var(--sp-2)">
+    <div class="card-title">Module Activity Overview</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Module</th><th>Total</th><th>Open</th><th>Overdue</th><th>Closed</th><th>Status</th></tr></thead>
+        <tbody id="dash-module-tbody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- ======= JOB OBSERVATIONS ======= -->
@@ -3307,6 +3316,36 @@ function renderDashboard(){
   // Risk by rating donut
   if(riskChart)riskChart.destroy();
   riskChart=new Chart(document.getElementById('chart-risk').getContext('2d'),{type:'doughnut',data:{labels:['Low','Medium','High','Critical'],datasets:[{data:[rLow,rMed,rHigh,rExt],backgroundColor:['#22c55e','#fde047','#f97316','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+
+  // Module Activity Overview table
+  const incOverdue=incs.filter(i=>i.status==='Overdue').length;
+  const nmOverdue=nms.filter(n=>n.status==='Overdue').length;
+  const ptwOpen=permits.filter(p=>p.status==='ACTIVE'||p.status==='PENDING').length;
+
+  function moduleStatus(overdue, open, total){
+    if(overdue>0) return '<span class="pill pill-red">Overdue</span>';
+    if(open>0 && open/total>0.5) return '<span class="pill pill-yellow">Attention</span>';
+    return '<span class="pill pill-green">On Track</span>';
+  }
+
+  const moduleRows=[
+    {name:'Observations',  total:obs.length,    open:obsRisk+obsImpr, overdue:0,           closed:obsSafe},
+    {name:'Near Misses',   total:nms.length,    open:nmOpen,          overdue:nmOverdue,    closed:nmClosed},
+    {name:'Incidents',     total:incs.length,   open:incOpen,         overdue:incOverdue,   closed:incClosed},
+    {name:'Permits (PTW)', total:permits.length, open:ptwOpen,        overdue:ptwExpired,   closed:ptwClosed},
+    {name:'Risk Register', total:risks.length,  open:rExt+rHigh,      overdue:rExt,         closed:rLow},
+    {name:'CAPAs',         total:capas.length,  open:capaOpen,        overdue:capaOverdue,  closed:capaClosed},
+  ];
+
+  document.getElementById('dash-module-tbody').innerHTML=moduleRows.map(r=>`
+    <tr>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.total}</td>
+      <td>${r.open}</td>
+      <td>${r.overdue}</td>
+      <td>${r.closed}</td>
+      <td>${moduleStatus(r.overdue, r.open, r.total||1)}</td>
+    </tr>`).join('');
 }
 
 // ============================================================
