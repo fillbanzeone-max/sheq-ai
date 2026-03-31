@@ -3214,8 +3214,8 @@ function renderDashboard(){
 
   // --- Near Misses ---
   const nms=d.nearMisses||[];
-  const nmOpen=nms.filter(n=>n.status!=='Closed').length;
-  const nmHipo=nms.filter(n=>n.hipo==1||n.hipo==='1'||n.hipo===true).length;
+  const nmOpen=nms.filter(n=>n.status!=='Closed'&&n.status!=='Overdue').length;
+  const nmOverdue=nms.filter(n=>n.status==='Overdue').length;
   const nmClosed=nms.filter(n=>n.status==='Closed').length;
 
   // --- Incidents ---
@@ -3257,7 +3257,7 @@ function renderDashboard(){
       <div class="kpi-value">${nms.length}</div>
       <div class="kpi-breakdown">
         <span class="kpib kpib-orange">Open: ${nmOpen}</span>
-        <span class="kpib kpib-red">HiPo: ${nmHipo}</span>
+        <span class="kpib kpib-red">Overdue: ${nmOverdue}</span>
         <span class="kpib kpib-green">Closed: ${nmClosed}</span>
       </div>
     </div>
@@ -3315,7 +3315,6 @@ function renderDashboard(){
 
   // Module Activity Overview table
   const incOverdue=incs.filter(i=>i.status==='Overdue').length;
-  const nmOverdue=nms.filter(n=>n.status==='Overdue').length;
   const ptwOpen=permits.filter(p=>p.status==='ACTIVE'||p.status==='PENDING').length;
 
   function moduleStatus(overdue, open, total){
