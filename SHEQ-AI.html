@@ -2048,7 +2048,7 @@
         <span style="color:#15803d">● LOW (1–4)</span>
         <span style="color:#854d0e">● MEDIUM (5–9)</span>
         <span style="color:#9a3412">● HIGH (10–16)</span>
-        <span style="color:#991b1b">● EXTREME (17–25)</span>
+        <span style="color:#991b1b">● CRITICAL (17–25)</span>
       </div>
       <div style="display:grid;grid-template-columns:58px repeat(5,1fr);gap:3px;margin-bottom:6px">
         <div></div>
@@ -2134,7 +2134,7 @@
       </table>
       <div style="margin-top:var(--sp-2);display:flex;gap:var(--sp-2);flex-wrap:wrap">
         <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;width:100%">Risk Tolerability</div>
-        <span style="background:#fee2e2;color:#991b1b;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">EXTREME (17–25) — Unacceptable · CEO/Board escalation · Urgent action required</span>
+        <span style="background:#fee2e2;color:#991b1b;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">CRITICAL (17–25) — Unacceptable · CEO/Board escalation · Urgent action required</span>
         <span style="background:#ffedd5;color:#9a3412;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">HIGH (10–16) — Task not performed without Functional Manager approval</span>
         <span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">MEDIUM (5–9) — ALARP · Monitored · Action plan required</span>
         <span style="background:#dcfce7;color:#15803d;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700">LOW (1–4) — Acceptable · Routine monitoring</span>
@@ -2144,7 +2144,7 @@
   </div>
   <div class="toolbar" style="margin-top:var(--sp-2)">
     <input type="text" id="risk-search" placeholder="Search risks…">
-    <select id="risk-filter-rating"><option value="">All Ratings</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="EXTREME">Extreme</option></select>
+    <select id="risk-filter-rating"><option value="">All Ratings</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="CRITICAL">Critical</option></select>
     <select id="risk-filter-cat"><option value="">All Categories</option><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Health">Health</option><option value="Quality">Quality</option><option value="Security">Security</option></select>
   </div>
   <div class="card">
@@ -2907,14 +2907,14 @@ function getDefaultData() {
     ],
     permits: [
       {id:'PTW-001',type:'Hot Work',requestor:'Carlos Tembe',activity:'Welding on generator exhaust flange',location:'Generator Hall',from:'2026-03-17T08:00',to:'2026-03-17T16:00',precautions:'Fire watch, fire extinguishers placed, area barricaded.',status:'CLOSED',capa:'N',capaRef:'',hazard:'',ip:3,ii:3,iScore:9,iRating:'MEDIUM',controls:'',rp:1,ri:2,rScore:2,rRating:'LOW',ppe:[],isolation:'Y',emergency:'Y'},
-      {id:'PTW-002',type:'Electrical',requestor:'Ricardo Guambe',activity:'Replacement of MCC starter panel',location:'HV Switchgear Room',from:'2026-03-18T07:30',to:'2026-03-18T12:00',precautions:'Full LOTO applied, isolation certificate issued, arc flash PPE.',status:'CLOSED',capa:'N',capaRef:'',hazard:'',ip:4,ii:5,iScore:20,iRating:'EXTREME',controls:'LOTO, arc flash PPE',rp:1,ri:3,rScore:3,rRating:'LOW',ppe:['hardhat','gloves','fr','face'],isolation:'Y',emergency:'Y'},
+      {id:'PTW-002',type:'Electrical',requestor:'Ricardo Guambe',activity:'Replacement of MCC starter panel',location:'HV Switchgear Room',from:'2026-03-18T07:30',to:'2026-03-18T12:00',precautions:'Full LOTO applied, isolation certificate issued, arc flash PPE.',status:'CLOSED',capa:'N',capaRef:'',hazard:'',ip:4,ii:5,iScore:20,iRating:'CRITICAL',controls:'LOTO, arc flash PPE',rp:1,ri:3,rScore:3,rRating:'LOW',ppe:['hardhat','gloves','fr','face'],isolation:'Y',emergency:'Y'},
       {id:'PTW-003',type:'Confined Space',requestor:'João Machava',activity:'Inspection of water storage tank interior',location:'Raw Water Tank',from:'2026-03-19T08:00',to:'2026-03-19T14:00',precautions:'Gas test clear, standby attendant, rescue equipment on site.',status:'ACTIVE',capa:'N',capaRef:'',hazard:'',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Gas monitor, standby attendant',rp:2,ri:3,rScore:6,rRating:'MEDIUM',ppe:['hardhat','glasses','harness'],isolation:'N',emergency:'Y'},
       {id:'PTW-004',type:'Working at Height',requestor:'Pedro Mabunda',activity:'Painting of cooling tower exterior',location:'Cooling Tower No. 2',from:'2026-03-20T07:00',to:'2026-03-22T17:00',precautions:'Scaffold erected and inspected, full body harness required.',status:'PENDING',capa:'N',capaRef:'',hazard:'',ip:4,ii:4,iScore:16,iRating:'HIGH',controls:'Scaffold, harness',rp:2,ri:3,rScore:6,rRating:'MEDIUM',ppe:['hardhat','harness'],isolation:'N',emergency:'Y'},
       {id:'PTW-005',type:'Line Breaking',requestor:'Lucia Bila',activity:'Replacement of fuel gas filter element',location:'Fuel Gas Filter Skid',from:'2026-03-19T09:00',to:'2026-03-19T13:00',precautions:'Isolation confirmed, depressurised, H2S monitor worn.',status:'ACTIVE',capa:'N',capaRef:'',hazard:'',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Isolation, gas monitor',rp:1,ri:4,rScore:4,rRating:'LOW',ppe:['resp','gloves'],isolation:'Y',emergency:'Y'},
       {id:'PTW-006',type:'Electrical',requestor:'Ana Muchanga',activity:'Installation of additional lighting in warehouse',location:'Warehouse',from:'2026-03-21T08:00',to:'2026-03-21T16:00',precautions:'Circuit isolated and locked out, test before touch.',status:'PENDING',capa:'N',capaRef:'',hazard:'',ip:3,ii:3,iScore:9,iRating:'MEDIUM',controls:'LOTO',rp:1,ri:2,rScore:2,rRating:'LOW',ppe:['hardhat','glasses'],isolation:'Y',emergency:'N'}
     ],
     risks: [
-      {id:'RSK-001',hazard:'Rotating machinery – turbine coupling',category:'Safety',consequence:'Entanglement, amputation, fatality',ip:4,ii:5,iScore:20,iRating:'EXTREME',controls:'Guards fitted, LOTO procedure, training.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Operations Manager',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''},
+      {id:'RSK-001',hazard:'Rotating machinery – turbine coupling',category:'Safety',consequence:'Entanglement, amputation, fatality',ip:4,ii:5,iScore:20,iRating:'CRITICAL',controls:'Guards fitted, LOTO procedure, training.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Operations Manager',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''},
       {id:'RSK-002',hazard:'High voltage electrical equipment',category:'Safety',consequence:'Electrocution, arc flash, fatality',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Isolation procedure, arc flash PPE, authorised persons only.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Electrical Supervisor',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''},
       {id:'RSK-003',hazard:'Fuel gas leakage',category:'Safety',consequence:'Fire, explosion, mass casualty',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Gas detection system, ESD, no-ignition zone, PTW.',rp:2,ri:5,rScore:10,rRating:'HIGH',owner:'Process Engineer',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:''},
       {id:'RSK-004',hazard:'Working at height >2m',category:'Safety',consequence:'Fall, serious injury, fatality',ip:4,ii:4,iScore:16,iRating:'HIGH',controls:'Scaffold inspection, harness policy, exclusion zones.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'SHEQ Officer',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''},
@@ -2922,7 +2922,7 @@ function getDefaultData() {
       {id:'RSK-006',hazard:'Oil spill to storm drain',category:'Environmental',consequence:'Soil and water contamination',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Bunded areas, oil separator, spill response plan.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'Environmental Officer',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:''},
       {id:'RSK-007',hazard:'Manual handling of heavy equipment',category:'Health',consequence:'Musculoskeletal injury',ip:4,ii:2,iScore:8,iRating:'MEDIUM',controls:'Lifting equipment, team lifts, training.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'Maintenance Supervisor',reviewDate:'2026-12-01',status:'Open',capa:'N',capaRef:''},
       {id:'RSK-008',hazard:'Noise exposure in turbine hall',category:'Health',consequence:'Hearing damage (NIHL)',ip:5,ii:2,iScore:10,iRating:'HIGH',controls:'Hearing protection mandatory, audiometry programme.',rp:3,ri:2,rScore:6,rRating:'MEDIUM',owner:'Occupational Health',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-009',hazard:'Extreme heat – outdoor work',category:'Health',consequence:'Heat stroke, fatality',ip:4,ii:3,iScore:12,iRating:'HIGH',controls:'Heat stress policy, hydration stations, buddy system.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'SHEQ Manager',reviewDate:'2026-03-31',status:'Open',capa:'N',capaRef:''},
+      {id:'RSK-009',hazard:'Critical heat – outdoor work',category:'Health',consequence:'Heat stroke, fatality',ip:4,ii:3,iScore:12,iRating:'HIGH',controls:'Heat stress policy, hydration stations, buddy system.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'SHEQ Manager',reviewDate:'2026-03-31',status:'Open',capa:'N',capaRef:''},
       {id:'RSK-010',hazard:'Vehicle / pedestrian interface',category:'Safety',consequence:'Struck by vehicle, fatality',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Designated walkways, speed limits, marshalls.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'Security Manager',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''}
     ],
     legalItems: [
@@ -3053,9 +3053,9 @@ function autoMarkOverdue(d) {
 // Rows = Probability P1-P5, Columns = Impact I1-I5
 const RS=[[1,3,6,10,15],[2,5,9,14,19],[4,8,13,18,22],[7,12,17,21,24],[11,16,20,23,25]];
 function getRiskScore(p,i){return RS[(p||1)-1][(i||1)-1]||1;}
-function riskRating(s){return s<=4?'LOW':s<=9?'MEDIUM':s<=16?'HIGH':'EXTREME';}
+function riskRating(s){return s<=4?'LOW':s<=9?'MEDIUM':s<=16?'HIGH':'CRITICAL';}
 function riskCellClass(s){return s<=4?'cell-green':s<=9?'cell-yellow':s<=16?'cell-orange':'cell-red';}
-function ratingPill(r){const m={LOW:'pill-green',MEDIUM:'pill-yellow',HIGH:'pill-orange',EXTREME:'pill-red'};return`<span class="pill ${m[r]||'pill-gray'}">${r}</span>`;}
+function ratingPill(r){const m={LOW:'pill-green',MEDIUM:'pill-yellow',HIGH:'pill-orange',CRITICAL:'pill-red'};return`<span class="pill ${m[r]||'pill-gray'}">${r}</span>`;}
 function sevPill(s){const l={1:'CRITICAL',2:'HIGH',3:'MEDIUM',4:'LOW'},c={1:'pill-red',2:'pill-orange',3:'pill-yellow',4:'pill-green'};return`<span class="pill ${c[s]||'pill-gray'}">${l[s]||s}</span>`;}
 function priorityPill(p){const m={Critical:'pill-red',High:'pill-orange',Medium:'pill-yellow',Low:'pill-green'};return`<span class="pill ${m[p]||'pill-gray'}">${p||'—'}</span>`;}
 function statusPill(s){const m={COMPLIANT:'pill-green',OVERDUE:'pill-red',PENDING:'pill-yellow',SCHEDULED:'pill-blue',Open:'pill-orange',Closed:'pill-green',CLOSED:'pill-gray',ACTIVE:'pill-green','PENDING':'pill-yellow',SUSPENDED:'pill-orange','Under Investigation':'pill-yellow','CAPA Issued':'pill-orange','In Progress':'pill-blue',Overdue:'pill-red',EXPIRED:'pill-red'};return`<span class="pill ${m[s]||'pill-gray'}">${s}</span>`;}
@@ -3227,7 +3227,7 @@ function renderDashboard(){
 
   // --- Risk Register ---
   const risks=d.risks||[];
-  const rExt=risks.filter(r=>r.rRating==='EXTREME').length;
+  const rExt=risks.filter(r=>r.rRating==='CRITICAL').length;
   const rHigh=risks.filter(r=>r.rRating==='HIGH').length;
   const rMed=risks.filter(r=>r.rRating==='MEDIUM').length;
   const rLow=risks.filter(r=>r.rRating==='LOW').length;
@@ -3307,7 +3307,7 @@ function renderDashboard(){
 
   // Risk by rating donut
   if(riskChart)riskChart.destroy();
-  riskChart=new Chart(document.getElementById('chart-risk').getContext('2d'),{type:'doughnut',data:{labels:['Low','Medium','High','Extreme'],datasets:[{data:[rLow,rMed,rHigh,rExt],backgroundColor:['#22c55e','#fde047','#f97316','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  riskChart=new Chart(document.getElementById('chart-risk').getContext('2d'),{type:'doughnut',data:{labels:['Low','Medium','High','Critical'],datasets:[{data:[rLow,rMed,rHigh,rExt],backgroundColor:['#22c55e','#fde047','#f97316','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
 }
 
 // ============================================================
@@ -4234,8 +4234,8 @@ function generateReport(){
       ${legal.map(l=>`<tr><td>${l.id}</td><td>${l.law}</td><td>${l.freq}</td><td>${fmtDate(l.lastComplied)||'—'}</td><td style="color:${l.status==='COMPLIANT'?'#16a34a':l.status==='OVERDUE'?'#dc2626':'#d97706'}">${l.status}</td></tr>`).join('')}
     </tbody></table>
 
-    <h2>I. Risk Register — HIGH & EXTREME Items</h2>
-    ${risks.filter(r=>r.rRating==='HIGH'||r.rRating==='EXTREME').length?`<table><thead><tr><th>ID</th><th>Hazard</th><th>Category</th><th>Residual Score</th><th>Rating</th><th>Owner</th></tr></thead><tbody>${risks.filter(r=>r.rRating==='HIGH'||r.rRating==='EXTREME').map(r=>`<tr style="background:${r.rRating==='EXTREME'?'#fee2e2':'#ffedd5'}"><td>${r.id}</td><td>${r.hazard}</td><td>${r.category}</td><td>${r.rScore}</td><td>${r.rRating}</td><td>${r.owner}</td></tr>`).join('')}</tbody></table>`:'<p style="color:#777;font-style:italic">No HIGH or EXTREME residual risks.</p>'}
+    <h2>I. Risk Register — HIGH & CRITICAL Items</h2>
+    ${risks.filter(r=>r.rRating==='HIGH'||r.rRating==='CRITICAL').length?`<table><thead><tr><th>ID</th><th>Hazard</th><th>Category</th><th>Residual Score</th><th>Rating</th><th>Owner</th></tr></thead><tbody>${risks.filter(r=>r.rRating==='HIGH'||r.rRating==='CRITICAL').map(r=>`<tr style="background:${r.rRating==='CRITICAL'?'#fee2e2':'#ffedd5'}"><td>${r.id}</td><td>${r.hazard}</td><td>${r.category}</td><td>${r.rScore}</td><td>${r.rRating}</td><td>${r.owner}</td></tr>`).join('')}</tbody></table>`:'<p style="color:#777;font-style:italic">No HIGH or CRITICAL residual risks.</p>'}
 
     <h2>J. SHEQ Calendar — ${monthName} ${year}</h2>
     <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>
