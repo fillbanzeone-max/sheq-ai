@@ -2667,7 +2667,10 @@
   <div class="modal" style="max-width:640px;width:100%">
     <div class="modal-title" id="view-modal-title">Details <button class="modal-close" onclick="closeModal('view-modal')">✕</button></div>
     <div id="view-modal-body"></div>
-    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('view-modal')">Close</button></div>
+    <div class="modal-actions">
+      <button id="view-modal-raise-capa" class="btn btn-primary" style="display:none">+ Raise CAPA</button>
+      <button class="btn btn-ghost" onclick="closeModal('view-modal')">Close</button>
+    </div>
   </div>
 </div>
 
@@ -3120,6 +3123,21 @@ function openView(module,id){
   }
   document.getElementById('view-modal-title').textContent=title;
   document.getElementById('view-modal-body').innerHTML=body;
+  // Show Raise CAPA button for PTW/Risk records with no linked CAPA
+  const raiseBtn=document.getElementById('view-modal-raise-capa');
+  if(module==='ptw'||module==='risk'){
+    const rec=(module==='ptw'?(d.permits||[]):(d.risks||[])).find(x=>x.id===id);
+    if(rec&&!rec.capaRef){
+      raiseBtn.style.display='';
+      raiseBtn.onclick=()=>{
+        closeModal('view-modal');
+        const src=module==='ptw'?'PTW':'RISK';
+        openAddCapa();
+        document.getElementById('capa-f-source').value=src;
+        document.getElementById('capa-f-ref').value=id;
+      };
+    } else { raiseBtn.style.display='none'; }
+  } else { raiseBtn.style.display='none'; }
   openModal('view-modal');
 }
 
@@ -3726,8 +3744,12 @@ function savePermit(){
     capaRef:'',
     createdBy:currentUser?.email||''
   };
-  if(editId){const idx=d.permits.findIndex(x=>x.id===editId);if(idx>=0){rec.status=d.permits[idx].status;rec.capaRef=d.permits[idx].capaRef||'';d.permits[idx]=rec;}}
-  else{
+  if(editId){
+    const idx=d.permits.findIndex(x=>x.id===editId);
+    if(idx>=0){rec.status=d.permits[idx].status;rec.capaRef=d.permits[idx].capaRef||'';d.permits[idx]=rec;
+      if(rec.capa==='Y'&&!rec.capaRef){rec.capaRef=autoCreateCapa(d,'PTW',rec.id,rec.rcaWhat||'Review PTW controls and implement corrective actions.',rec.rcaWho||'SHEQ Officer',rec.rcaWhen||'','PTW audit and sign-off.',rec.priority);d.permits[idx]=rec;}
+    }
+  } else{
     if(rec.capa==='Y'){rec.capaRef=autoCreateCapa(d,'PTW',rec.id,rec.rcaWhat||'Review PTW controls and implement corrective actions.',rec.rcaWho||'SHEQ Officer',rec.rcaWhen||'','PTW audit and sign-off.',rec.priority);}
     d.permits.push(rec);
   }
@@ -3866,8 +3888,12 @@ function saveRisk(){
     capaRef:'',
     createdBy:currentUser?.email||''
   };
-  if(editId){const idx=d.risks.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.risks[idx].capaRef||'';d.risks[idx]=rec;}}
-  else{
+  if(editId){
+    const idx=d.risks.findIndex(x=>x.id===editId);
+    if(idx>=0){rec.capaRef=d.risks[idx].capaRef||'';d.risks[idx]=rec;
+      if(rec.capa==='Y'&&!rec.capaRef){rec.capaRef=autoCreateCapa(d,'RISK',rec.id,rec.rcaWhat||'Implement additional controls to reduce residual risk.',rec.rcaWho||rec.owner,rec.rcaWhen||rec.reviewDate,'Risk review and sign-off by SHEQ Manager.','Medium');d.risks[idx]=rec;}
+    }
+  } else{
     if(rec.capa==='Y'){rec.capaRef=autoCreateCapa(d,'RISK',rec.id,rec.rcaWhat||'Implement additional controls to reduce residual risk.',rec.rcaWho||rec.owner,rec.rcaWhen||rec.reviewDate,'Risk review and sign-off by SHEQ Manager.','Medium');}
     d.risks.push(rec);
   }
