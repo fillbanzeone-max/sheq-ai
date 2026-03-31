@@ -3055,9 +3055,43 @@ function autoMarkOverdue(d) {
   if(changed) saveData(d);
 }
 
-// Migration: create CAPAs for PTW/Risk records that have capa='Y' but no capaRef
+// Migration: create CAPAs for ALL module records that have action data but no capaRef
 function migrateMissingCapas(d) {
   let changed = false;
+
+  // ── Observations (Job Obs) ──────────────────────────────
+  (d.observations||[]).forEach(o => {
+    if(o.capa==='Y' && !o.capaRef) {
+      o.capaRef = autoCreateCapa(d,'JO',o.id,
+        o.rcaWhat||o.action||'Corrective action required.',
+        o.rcaWho||o.observer||'SHEQ Officer',
+        o.rcaWhen||'', o.rcaHow||'', o.priority||'Medium');
+      changed = true;
+    }
+  });
+
+  // ── Near Misses ─────────────────────────────────────────
+  (d.nearmiss||[]).forEach(n => {
+    if(n.capa==='Y' && !n.capaRef) {
+      n.capaRef = autoCreateCapa(d,'NM',n.id,
+        n.rcaWhat||n.action||'Corrective action required.',
+        n.rcaWho||n.reporter||'SHEQ Officer',
+        n.rcaWhen||'', n.rcaHow||'', n.priority||'Medium');
+      changed = true;
+    }
+  });
+
+  // ── Incidents ───────────────────────────────────────────
+  (d.incidents||[]).forEach(i => {
+    if(i.capaWhat && !i.capaRef) {
+      i.capaRef = autoCreateCapa(d,'INC',i.id,
+        i.capaWhat, i.capaWho||'SHEQ Officer',
+        i.capaWhen||'', i.capaHow||'', i.priority||'Medium');
+      changed = true;
+    }
+  });
+
+  // ── Permits (PTW) ───────────────────────────────────────
   (d.permits||[]).forEach(p => {
     if(p.capa==='Y' && !p.capaRef) {
       p.capaRef = autoCreateCapa(d,'PTW',p.id,
@@ -3066,6 +3100,8 @@ function migrateMissingCapas(d) {
       changed = true;
     }
   });
+
+  // ── Risk Register ───────────────────────────────────────
   (d.risks||[]).forEach(r => {
     if(r.capa==='Y' && !r.capaRef) {
       r.capaRef = autoCreateCapa(d,'RISK',r.id,
@@ -3074,10 +3110,13 @@ function migrateMissingCapas(d) {
       changed = true;
     }
   });
-  // Seed default PTW/Risk CAPAs for existing users whose localStorage predates them
+
+  // ── Seed default CAPAs for existing users whose localStorage predates them ──
   const seedCapas = [
     {id:'CAPA-2026-009',source_module:'PTW',source_ref:'PTW-001',what:'Review all hot work permits and verify fire watch procedures are documented and communicated.',who:'SHEQ Officer',when:'2026-04-15',how:'PTW audit checklist sign-off.',priority:'High',status:'Open',created:'2026-03-10',closed_date:'',evidence:''},
-    {id:'CAPA-2026-010',source_module:'RISK',source_ref:'RSK-001',what:'Implement additional fall protection controls and update risk assessment for working at heights.',who:'Safety Manager',when:'2026-04-30',how:'Risk review and sign-off by SHEQ Manager.',priority:'Critical',status:'Open',created:'2026-03-15',closed_date:'',evidence:''}
+    {id:'CAPA-2026-010',source_module:'RISK',source_ref:'RSK-001',what:'Implement additional fall protection controls and update risk assessment for working at heights.',who:'Safety Manager',when:'2026-04-30',how:'Risk review and sign-off by SHEQ Manager.',priority:'Critical',status:'Open',created:'2026-03-15',closed_date:'',evidence:''},
+    {id:'CAPA-2026-011',source_module:'INC',source_ref:'INC-004',what:'Cleaning team to deploy wet floor signs at all entrance/exit points immediately after mopping.',who:'Facilities Supervisor',when:'2026-04-10',how:'Toolbox talk and wet floor sign audit.',priority:'High',status:'Open',created:'2026-03-20',closed_date:'',evidence:''},
+    {id:'CAPA-2026-012',source_module:'INC',source_ref:'INC-005',what:'Pending investigation outcome — review chemical storage procedures and provide refresher training.',who:'SHEQ Officer',when:'2026-04-20',how:'Investigation report review and sign-off.',priority:'Medium',status:'Open',created:'2026-03-22',closed_date:'',evidence:''}
   ];
   seedCapas.forEach(sc => {
     if(!(d.capas||[]).find(c=>c.id===sc.id)){
@@ -3086,6 +3125,16 @@ function migrateMissingCapas(d) {
       changed = true;
     }
   });
+
+  // ── Back-fill capaRef on incident records matching seed CAPAs ──
+  const incSeedMap = {'INC-004':'CAPA-2026-011','INC-005':'CAPA-2026-012'};
+  (d.incidents||[]).forEach(i => {
+    if(incSeedMap[i.id] && !i.capaRef) {
+      i.capaRef = incSeedMap[i.id];
+      changed = true;
+    }
+  });
+
   if(changed) saveData(d);
 }
 
