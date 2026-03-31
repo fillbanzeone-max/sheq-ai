@@ -3074,6 +3074,18 @@ function migrateMissingCapas(d) {
       changed = true;
     }
   });
+  // Seed default PTW/Risk CAPAs for existing users whose localStorage predates them
+  const seedCapas = [
+    {id:'CAPA-2026-009',source_module:'PTW',source_ref:'PTW-001',what:'Review all hot work permits and verify fire watch procedures are documented and communicated.',who:'SHEQ Officer',when:'2026-04-15',how:'PTW audit checklist sign-off.',priority:'High',status:'Open',created:'2026-03-10',closed_date:'',evidence:''},
+    {id:'CAPA-2026-010',source_module:'RISK',source_ref:'RSK-001',what:'Implement additional fall protection controls and update risk assessment for working at heights.',who:'Safety Manager',when:'2026-04-30',how:'Risk review and sign-off by SHEQ Manager.',priority:'Critical',status:'Open',created:'2026-03-15',closed_date:'',evidence:''}
+  ];
+  seedCapas.forEach(sc => {
+    if(!(d.capas||[]).find(c=>c.id===sc.id)){
+      d.capas = d.capas||[];
+      d.capas.push(sc);
+      changed = true;
+    }
+  });
   if(changed) saveData(d);
 }
 
