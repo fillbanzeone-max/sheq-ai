@@ -2952,7 +2952,9 @@ function getDefaultData() {
       {id:'CAPA-2026-005',source_module:'NM',source_ref:'NM-002',what:'Mandatory isolation verification step in PTW. Toolbox talk on LOTO for all electrical workers.',who:'SHEQ Manager',when:'2026-03-15',how:'PTW audit and toolbox talk attendance records.',priority:'Critical',status:'Open',created:'2026-03-07',closed_date:'',evidence:''},
       {id:'CAPA-2026-006',source_module:'INC',source_ref:'INC-001',what:'Install fixed guards on all angle grinders and implement pre-use checklist.',who:'Maintenance Supervisor',when:'2026-01-25',how:'Physical inspection by SHEQ Officer before close-out.',priority:'Medium',status:'Closed',created:'2026-01-12',closed_date:'2026-01-24',evidence:'Guards installed on 8 grinders. Checklist implemented.'},
       {id:'CAPA-2026-007',source_module:'INC',source_ref:'INC-002',what:'Repair level sensor and clear blockage. Inspect all oil separators.',who:'Environmental Officer',when:'2026-02-10',how:'Operational test witnessed by SHEQ and signed off.',priority:'Medium',status:'Closed',created:'2026-01-28',closed_date:'2026-02-09',evidence:'Sensor repaired and tested. All 3 separators inspected.'},
-      {id:'CAPA-2026-008',source_module:'INC',source_ref:'INC-003',what:'Mandatory scaffold inspection register. Harness use policy enforced with consequence management.',who:'SHEQ Manager',when:'2026-03-01',how:'Audit of scaffold inspection records monthly.',priority:'High',status:'In Progress',created:'2026-02-14',closed_date:'',evidence:''}
+      {id:'CAPA-2026-008',source_module:'INC',source_ref:'INC-003',what:'Mandatory scaffold inspection register. Harness use policy enforced with consequence management.',who:'SHEQ Manager',when:'2026-03-01',how:'Audit of scaffold inspection records monthly.',priority:'High',status:'In Progress',created:'2026-02-14',closed_date:'',evidence:''},
+      {id:'CAPA-2026-009',source_module:'PTW',source_ref:'PTW-001',what:'Review all hot work permits and verify fire watch procedures are documented and communicated.',who:'SHEQ Officer',when:'2026-04-15',how:'PTW audit checklist sign-off.',priority:'High',status:'Open',created:'2026-03-10',closed_date:'',evidence:''},
+      {id:'CAPA-2026-010',source_module:'RISK',source_ref:'RSK-001',what:'Implement additional fall protection controls and update risk assessment for working at heights.',who:'Safety Manager',when:'2026-04-30',how:'Risk review and sign-off by SHEQ Manager.',priority:'Critical',status:'Open',created:'2026-03-15',closed_date:'',evidence:''}
     ],
     calendar: buildDefaultCalendar()
   };
@@ -3048,6 +3050,28 @@ function autoMarkOverdue(d) {
   (d.capas||[]).forEach(c => {
     if(c.status !== 'Closed' && c.when && c.when < today) {
       c.status = 'Overdue'; changed = true;
+    }
+  });
+  if(changed) saveData(d);
+}
+
+// Migration: create CAPAs for PTW/Risk records that have capa='Y' but no capaRef
+function migrateMissingCapas(d) {
+  let changed = false;
+  (d.permits||[]).forEach(p => {
+    if(p.capa==='Y' && !p.capaRef) {
+      p.capaRef = autoCreateCapa(d,'PTW',p.id,
+        p.rcaWhat||'Review PTW controls and implement corrective actions.',
+        p.rcaWho||'SHEQ Officer', p.rcaWhen||'', 'PTW audit and sign-off.', p.priority||'Medium');
+      changed = true;
+    }
+  });
+  (d.risks||[]).forEach(r => {
+    if(r.capa==='Y' && !r.capaRef) {
+      r.capaRef = autoCreateCapa(d,'RISK',r.id,
+        r.rcaWhat||'Implement additional controls to reduce residual risk.',
+        r.rcaWho||r.owner, r.rcaWhen||r.reviewDate||'', 'Risk review and sign-off by SHEQ Manager.', 'Medium');
+      changed = true;
     }
   });
   if(changed) saveData(d);
@@ -4068,6 +4092,11 @@ function toggleCal(act,month){
 let capaPage=1;
 let highlightCapaId=null;
 function highlightCapa(id){navigateTo('capa');highlightCapaId=id;renderCapas();}
+function highlightSource(mod,ref){
+  const map={JO:'observations',NM:'nearmiss',INC:'incidents',PTW:'permits',RISK:'risks'};
+  const page=map[mod];
+  if(page) navigateTo(page);
+}
 function openAddCapa(){
   document.getElementById('capa-modal-title').textContent='Add CAPA';
   document.getElementById('capa-f-edit-id').value='';
@@ -4159,8 +4188,8 @@ function renderCapas(page=1){
     const dOpen=c.status==='Closed'?'—':daysOpen(c.created)+' d';
     return`<tr class="${rowCls}${isHighlighted?' selected':''}">
       <td><strong>${c.id}</strong></td>
-      <td>${c.source_module||'—'}</td>
-      <td>${c.source_ref||'—'}</td>
+      <td>${({JO:'Job Obs',NM:'Near Miss',INC:'Incident',PTW:'Permit (PTW)',RISK:'Risk Register',MANUAL:'Manual'}[c.source_module]||c.source_module||'—')}</td>
+      <td><a style="color:var(--accent);cursor:pointer;text-decoration:underline" onclick="highlightSource('${escapeHtml(c.source_module||'')}','${escapeHtml(c.source_ref||'')}')">${c.source_ref||'—'}</a></td>
       <td title="${c.what||''}">${truncate(c.what,40)}</td>
       <td>${c.who||'—'}</td>
       <td>${fmtDate(c.when)||'—'}</td>
@@ -4462,6 +4491,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     const migResult=migrateCalendarKeys(d);
     if(migResult.changed){ d=migResult.data; localStorage.setItem(LS_KEY,JSON.stringify(d)); }
     autoMarkOverdue(d);
+    migrateMissingCapas(d);
     const k=sessionStorage.getItem('sheqai_apikey');
     if(k)document.getElementById('api-key-input').value=k;
     updateSyncStatus();
