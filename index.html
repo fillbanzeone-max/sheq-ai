@@ -3259,12 +3259,13 @@ function paginate(data,page,perPage=10){const total=Math.ceil(data.length/perPag
 function renderPagination(id,total,page,cb){
   const el=document.getElementById(id);if(!el)return;
   if(total<=1){el.innerHTML='';return;}
-  let h=`<button ${page<=1?'disabled':''} onclick="(${cb.toString()})(${page-1})">‹</button>`;
+  const fn=cb.name;
+  let h=`<button ${page<=1?'disabled':''} onclick="${fn}(${page-1})">‹</button>`;
   const start=Math.max(1,page-2),end=Math.min(total,page+2);
-  if(start>1)h+=`<button onclick="(${cb.toString()})(1)">1</button>${start>2?'<span>…</span>':''}`;
-  for(let i=start;i<=end;i++)h+=`<button class="${i===page?'active':''}" onclick="(${cb.toString()})(${i})">${i}</button>`;
-  if(end<total)h+=`${end<total-1?'<span>…</span>':''}<button onclick="(${cb.toString()})(${total})">${total}</button>`;
-  h+=`<button ${page>=total?'disabled':''} onclick="(${cb.toString()})(${page+1})">›</button>`;
+  if(start>1)h+=`<button onclick="${fn}(1)">1</button>${start>2?'<span>…</span>':''}`;
+  for(let i=start;i<=end;i++)h+=`<button class="${i===page?'active':''}" onclick="${fn}(${i})">${i}</button>`;
+  if(end<total)h+=`${end<total-1?'<span>…</span>':''}<button onclick="${fn}(${total})">${total}</button>`;
+  h+=`<button ${page>=total?'disabled':''} onclick="${fn}(${page+1})">›</button>`;
   el.innerHTML=h;
 }
 
