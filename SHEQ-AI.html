@@ -2725,30 +2725,26 @@
       <div class="risk-section-body" id="ptw-ra-body">
         <div class="form-group"><label>Hazard Identification</label><textarea id="ptw-f-hazard" placeholder="List all identified hazards…"></textarea></div>
         <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:var(--sp-1)">Risk Rating Before Controls</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-1)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-1)">
           <div class="form-group" style="margin:0"><label>Probability (P)</label>
             <select id="ptw-f-ip" onchange="calcPTWRisk('i')"><option value="1">P1 – Rare</option><option value="2">P2 – Unlikely</option><option value="3">P3 – Possible</option><option value="4">P4 – Likely</option><option value="5">P5 – Almost Certain</option></select>
           </div>
           <div class="form-group" style="margin:0"><label>Impact (I)</label>
             <select id="ptw-f-ii" onchange="calcPTWRisk('i')"><option value="1">I1 – Insignificant</option><option value="2">I2 – Minor</option><option value="3">I3 – Moderate</option><option value="4">I4 – Major</option><option value="5">I5 – Catastrophic</option></select>
           </div>
-          <div class="form-group" style="margin:0"><label>Inherent Score</label>
-            <div class="risk-score-display" id="ptw-inherent-display" style="margin:0;min-height:38px;display:flex;align-items:center">Score: — Rating: —</div>
-          </div>
         </div>
+        <div class="risk-score-display" id="ptw-inherent-display" style="display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-2)">Score: — &nbsp; Rating: —</div>
         <div class="form-group"><label>Control Measures</label><textarea id="ptw-f-controls" placeholder="Describe control measures…"></textarea></div>
         <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:var(--sp-1)">Risk Rating After Controls</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-1)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-1)">
           <div class="form-group" style="margin:0"><label>Residual Probability (P)</label>
             <select id="ptw-f-rp" onchange="calcPTWRisk('r')"><option value="1">P1 – Rare</option><option value="2">P2 – Unlikely</option><option value="3">P3 – Possible</option><option value="4">P4 – Likely</option><option value="5">P5 – Almost Certain</option></select>
           </div>
           <div class="form-group" style="margin:0"><label>Residual Impact (I)</label>
             <select id="ptw-f-ri" onchange="calcPTWRisk('r')"><option value="1">I1 – Insignificant</option><option value="2">I2 – Minor</option><option value="3">I3 – Moderate</option><option value="4">I4 – Major</option><option value="5">I5 – Catastrophic</option></select>
           </div>
-          <div class="form-group" style="margin:0"><label>Residual Score</label>
-            <div class="risk-score-display" id="ptw-residual-display" style="margin:0;min-height:38px;display:flex;align-items:center">Score: — Rating: —</div>
-          </div>
         </div>
+        <div class="risk-score-display" id="ptw-residual-display" style="display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-2)">Residual Score: — &nbsp; Rating: —</div>
         <div class="form-group" style="margin-top:var(--sp-1)"><label>Additional PPE Required</label>
           <div class="ppe-checkbox-grid">
             <label><input type="checkbox" id="ppe-hardhat"> Hard hat</label>
@@ -4113,8 +4109,8 @@ document.getElementById('inc-filter-type').addEventListener('change',()=>renderI
 // ============================================================
 let ptwPage=1;
 function calcPTWRisk(type){
-  if(type==='i'){const p=parseInt(document.getElementById('ptw-f-ip').value)||1,i=parseInt(document.getElementById('ptw-f-ii').value)||1,s=getRiskScore(p,i),r=riskRating(s);document.getElementById('ptw-inherent-display').innerHTML=`Score: <strong>${s}</strong> — Rating: ${ratingPill(r)}`;}
-  else{const p=parseInt(document.getElementById('ptw-f-rp').value)||1,i=parseInt(document.getElementById('ptw-f-ri').value)||1,s=getRiskScore(p,i),r=riskRating(s);document.getElementById('ptw-residual-display').innerHTML=`Residual Score: <strong>${s}</strong> — Rating: ${ratingPill(r)}`;}
+  if(type==='i'){const p=parseInt(document.getElementById('ptw-f-ip').value)||1,i=parseInt(document.getElementById('ptw-f-ii').value)||1,s=getRiskScore(p,i),r=riskRating(s);document.getElementById('ptw-inherent-display').innerHTML=`<span>Inherent Score: <strong style="font-size:1.1em">${s}</strong></span><span style="display:flex;align-items:center;gap:6px">Rating: ${ratingPill(r)}</span>`;}
+  else{const p=parseInt(document.getElementById('ptw-f-rp').value)||1,i=parseInt(document.getElementById('ptw-f-ri').value)||1,s=getRiskScore(p,i),r=riskRating(s);document.getElementById('ptw-residual-display').innerHTML=`<span>Residual Score: <strong style="font-size:1.1em">${s}</strong></span><span style="display:flex;align-items:center;gap:6px">Rating: ${ratingPill(r)}</span>`;}
 }
 function getPpeList(){
   const ids=['hardhat','glasses','gloves','boots','harness','fr','resp','face','other'];
