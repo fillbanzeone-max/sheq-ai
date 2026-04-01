@@ -1899,6 +1899,7 @@
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="audits"><span class="nav-icon">📝</span><span class="nav-label">Audits &amp; Inspections</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="investigation"><span class="nav-icon">🔍</span><span class="nav-label">Investigations (RCA)</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -2394,6 +2395,42 @@
       </table>
     </div>
     <div class="pagination" id="moc-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= INCIDENT INVESTIGATIONS (RCA) ======= -->
+<div id="page-investigation" class="page">
+  <div class="section-header">
+    <span class="section-title">Incident Investigations — Root Cause Analysis</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('investigation')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="openAddInvestigation()">+ New Investigation</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="inv-search" placeholder="Search investigations…">
+    <select id="inv-filter-method">
+      <option value="">All Methods</option>
+      <option value="5why">5-Why</option>
+      <option value="fishbone">Fishbone</option>
+      <option value="both">Both</option>
+    </select>
+    <select id="inv-filter-status">
+      <option value="">All Statuses</option>
+      <option>Open</option>
+      <option>In Progress</option>
+      <option>Complete</option>
+    </select>
+  </div>
+  <div class="stats-row" id="inv-stats"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Inv. ID</th><th>Incident Ref</th><th>Title</th><th>Investigator</th><th>Date</th><th>Method</th><th>Root Cause (summary)</th><th>CAPAs</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="inv-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="inv-pagination"></div>
   </div>
 </div>
 
@@ -3069,6 +3106,76 @@
   </div>
 </div>
 
+<!-- INVESTIGATION / RCA MODAL -->
+<div class="modal-overlay" id="inv-modal">
+  <div class="modal" style="max-width:96vw;width:980px;max-height:92vh;overflow-y:auto">
+    <div class="modal-title" id="inv-modal-title">New Incident Investigation <button class="modal-close" onclick="closeModal('inv-modal')">✕</button></div>
+
+    <!-- Basic info -->
+    <div class="form-row">
+      <div class="form-group"><label>Incident Reference</label><input type="text" id="inv-f-inc-ref" placeholder="e.g. INC-003"></div>
+      <div class="form-group"><label>Investigation Date</label><input type="date" id="inv-f-date"></div>
+    </div>
+    <div class="form-group"><label>Investigation Title</label><input type="text" id="inv-f-title" placeholder="e.g. Fall from Scaffold — Turbine Hall"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Lead Investigator</label><input type="text" id="inv-f-investigator" placeholder="Name / Role"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="inv-f-status"><option>Open</option><option>In Progress</option><option>Complete</option></select>
+      </div>
+    </div>
+
+    <!-- Method toggle -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin:8px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <strong style="font-size:13px">RCA Method:</strong>
+      <button id="inv-btn-5why"     class="btn btn-sm btn-primary" onclick="setInvMethod('5why')">🔗 5-Why</button>
+      <button id="inv-btn-fishbone" class="btn btn-sm btn-ghost"   onclick="setInvMethod('fishbone')">🐟 Fishbone</button>
+      <button id="inv-btn-both"     class="btn btn-sm btn-ghost"   onclick="setInvMethod('both')">🔗🐟 Both</button>
+      <span style="font-size:12px;color:var(--muted);margin-left:6px">Use <strong>5-Why</strong> for simple linear cause chains. Use <strong>Fishbone</strong> for complex multi-factor incidents. Use <strong>Both</strong> for high-severity events.</span>
+    </div>
+
+    <!-- ══ 5-WHY SECTION ══ -->
+    <div id="inv-5why-section">
+      <div style="margin:12px 0 6px;padding:7px 12px;background:#1e3a5f;color:#fff;border-radius:6px;font-weight:600;font-size:13px">🔗 5-Why Analysis</div>
+      <div id="inv-5why-rows"></div>
+      <div class="form-group" style="margin-top:8px">
+        <label>Root Cause Statement <span style="color:var(--muted);font-weight:400">(from 5-Why — the final deep cause)</span></label>
+        <textarea id="inv-f-rc-5why" placeholder="State the single root cause identified at the end of the 5-Why chain…"></textarea>
+      </div>
+    </div>
+
+    <!-- ══ FISHBONE SECTION ══ -->
+    <div id="inv-fishbone-section" style="display:none">
+      <div style="margin:12px 0 6px;padding:7px 12px;background:#1e3a5f;color:#fff;border-radius:6px;font-weight:600;font-size:13px">🐟 Fishbone (Ishikawa) Analysis</div>
+      <div class="form-group"><label>Effect / Problem Statement <span style="font-weight:400;color:var(--muted)">(the incident — goes in the fish head)</span></label>
+        <input type="text" id="inv-f-fb-effect" placeholder="e.g. Worker fell from scaffold at 2.5m" oninput="refreshFishboneSVG()">
+      </div>
+      <!-- Live SVG preview -->
+      <div id="inv-fb-svg" style="margin:8px 0"></div>
+      <!-- 6-category cause grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0" id="inv-fb-grid"></div>
+      <div class="form-group" style="margin-top:8px">
+        <label>Root Cause Statement <span style="color:var(--muted);font-weight:400">(from Fishbone — the dominant systemic cause)</span></label>
+        <textarea id="inv-f-rc-fb" placeholder="State the primary root cause identified from the fishbone analysis…"></textarea>
+      </div>
+    </div>
+
+    <!-- ══ FINDINGS & RECOMMENDATIONS ══ -->
+    <div style="margin:12px 0 6px;padding:7px 12px;background:var(--accent);color:#fff;border-radius:6px;font-weight:600;font-size:13px">📋 Findings &amp; Recommendations</div>
+    <div class="form-group"><label>Key Findings</label><textarea id="inv-f-findings" placeholder="What did the investigation reveal? Contributing factors, systemic gaps, unsafe conditions…"></textarea></div>
+    <div class="form-group"><label>Recommendations / Corrective Actions</label><textarea id="inv-f-recommendations" placeholder="Numbered list of actions to prevent recurrence…"></textarea></div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin:8px 0;display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="inv-f-auto-capa" style="width:16px;height:16px">
+      <label for="inv-f-auto-capa" style="margin:0;font-size:13px;cursor:pointer">Auto-create a <strong>CAPA</strong> from the root cause and recommendations when saving</label>
+    </div>
+
+    <input type="hidden" id="inv-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('inv-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInvestigation()">💾 Save Investigation</button>
+    </div>
+  </div>
+</div>
+
 <!-- AUDIT / INSPECTION MODAL -->
 <div class="modal-overlay" id="audit-modal">
   <div class="modal" style="max-width:95vw;width:960px;max-height:92vh;overflow-y:auto">
@@ -3445,6 +3552,31 @@ function getDefaultData() {
       {id:'MOC-2026-004',title:'Night Shift Supervision Structure Change — Remove Shift Supervisor Role',type:'Personnel',initiator:'Operations Manager',dept:'Operations',date:'2026-03-12',target:'2026-05-01',desc:'Proposal to remove dedicated Shift Supervisor role on night shifts and replace with a senior operator lead model, reducing headcount by 1 FTE per shift.',reason:'Cost reduction initiative. Senior operators currently perform most supervisory tasks during nights.',hazards:'Reduced supervisory oversight during critical operations. Slower incident response command. Risk of duty of care gap.',controls:'SHEQ impact assessment required. Minimum competency levels for senior operator lead to be defined. Trial period of 60 days with weekly SHEQ review.',riskLevel:'High',status:'Pending Approval',approver:'Plant Manager',approvedDate:'',training:'Yes',trainingNotes:'Senior operators to receive leadership and incident response training if approved.',reviewNotes:'',createdBy:''},
       {id:'MOC-2026-005',title:'Install CCTV Cameras at Fuel Gas Pipeline Entry Points',type:'Structural',initiator:'Security Manager',dept:'Security',date:'2026-03-18',target:'2026-06-30',desc:'Installation of 4 CCTV cameras at fuel gas pipeline entry/isolation points to improve security monitoring and support incident investigation.',reason:'Recent security review identified blind spots at critical infrastructure. Aligns with insurance requirements.',hazards:'Civil works required for conduit installation near live pipelines. Electrical installation in potentially hazardous area.',controls:'PTW required for any civil works near pipelines. All electrical work in Zone 1 area requires EX-rated equipment and specialist installer.',riskLevel:'Medium',status:'Draft',approver:'Plant Manager',approvedDate:'',training:'No',trainingNotes:'',reviewNotes:'',createdBy:''}
     ],
+    investigations: [
+      {id:'INV-2026-001',incidentRef:'INC-003',title:'Investigation: Fall from Scaffold — Turbine Hall',investigator:'SHEQ Manager',date:'2026-02-18',method:'5why',status:'Complete',
+        whys:['Worker fell from scaffold platform at 2.5 m while installing cable tray','Worker was not wearing a fall-arrest harness while on the scaffold','Harness was not available at the work point — PPE was not staged before work commenced','No pre-task safety brief or equipment check was performed before the job started','There is no formal pre-task checklist for scaffold-based electrical work in the current procedure'],
+        rootCause5why:'The absence of a mandatory pre-task checklist for elevated work means PPE staging and scaffold safety verification is not systematically performed before every job.',
+        fishbone:{effect:'',People:[],Process:[],Equipment:[],Environment:[],Materials:[],Management:[]},
+        rootCauseFishbone:'',
+        findings:'Root cause confirmed as a systematic process gap. No pre-task briefing checklist for working at height. Scaffold had no inspection tag. Harness requirement was not enforced at supervisor level. Contributed to by: lack of supervisor oversight and absence of a permit for elevated work.',
+        recommendations:'1. Mandatory scaffold inspection and tag system before work commences.\n2. Pre-task safety checklist for all elevated work (>1.8 m).\n3. Supervisor sign-off required before elevated work starts.\n4. PPE staging check added as step 1 of all work orders involving height.\n5. Issue PTW for any scaffold work at this site.',
+        capaRefs:['CAPA-2026-012']},
+      {id:'INV-2026-002',incidentRef:'INC-001',title:'Investigation: Grinder Laceration — Maintenance Workshop',investigator:'SHEQ Officer',date:'2026-01-17',method:'fishbone',status:'Complete',
+        whys:['','','','',''],rootCause5why:'',
+        fishbone:{
+          effect:'Hand laceration from unguarded angle grinder',
+          People:['Technician removed guard without authorisation','Inadequate refresher training on tool safety'],
+          Process:['No pre-use equipment inspection checklist','Guard removal not captured in near-miss reporting system'],
+          Equipment:['Guard not replaced after previous use','Guard design allows easy one-handed removal'],
+          Environment:['Workshop area — no identified environmental factor'],
+          Materials:[''],
+          Management:['No periodic power tool inspection programme','Safety rules on guard removal not enforced by supervision']
+        },
+        rootCauseFishbone:'Management system failure: no periodic tool inspection programme to verify guards are fitted, and tool safety rules lack consistent supervisory enforcement.',
+        findings:'The grinder guard was found removed and stored next to the equipment. Last recorded tool inspection was >6 months prior to incident. No near-miss report was made when the guard was previously removed, indicating a reporting culture gap.',
+        recommendations:'1. Monthly power tool inspection with guard verification as part of scheduled checks.\n2. Mandatory pre-use checklist displayed on each angle grinder.\n3. Guard removal classified as a safety violation — disciplinary procedure to apply.\n4. Refresher training on tool safety for all maintenance staff.\n5. Near-miss reporting culture workshop.',
+        capaRefs:['CAPA-2026-013']}
+    ],
     audits: [
       {id:'AUD-2026-001',template:'Fire Safety',title:'Monthly Fire Safety Inspection — Turbine Hall',auditor:'Maria Sitoe',date:'2026-03-03',location:'Turbine Hall',status:'Complete',score:82,passes:9,fails:2,critFails:1,capaRefs:['CAPA-2026-009'],notes:'One critical finding: extinguisher Bay B out of service date. Hot work permit log gap noted.',
         answers:{'FS-1':{result:'Pass',notes:''},'FS-2':{result:'Pass',notes:''},'FS-3':{result:'Pass',notes:''},'FS-4':{result:'Pass',notes:''},'FS-5':{result:'Pass',notes:''},'FS-6':{result:'Fail',notes:'Extinguisher at Bay B expired Feb 2026 — CRITICAL, replaced same day.'},'FS-7':{result:'Pass',notes:''},'FS-8':{result:'Pass',notes:''},'FS-9':{result:'Pass',notes:''},'FS-10':{result:'Fail',notes:'Hot work log had 2-day gap — being updated.'},'FS-11':{result:'Pass',notes:''}}},
@@ -3798,7 +3930,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'SHEQ-AI Chat'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',investigation:'Incident Investigations (RCA)',chat:'SHEQ-AI Chat'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -3823,6 +3955,7 @@ function navigateTo(page){
   else if(page==='moc')renderMoc();
   else if(page==='assets')renderAssets();
   else if(page==='audits')renderAudits();
+  else if(page==='investigation')renderInvestigations();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>navigateTo(l.dataset.page)));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -3999,6 +4132,12 @@ function renderDashboard(){
   const assetDue=assets.filter(a=>a.status==='Due Soon').length;
   const assetOverdue=assets.filter(a=>a.status==='Overdue'||a.status==='Fail').length;
 
+  // Investigations
+  const investigations=(d.investigations||[]).filter(i=>inPeriod(i.date));
+  const invComplete=investigations.filter(i=>i.status==='Complete').length;
+  const invOpen=investigations.filter(i=>i.status==='Open'||i.status==='In Progress').length;
+  const invNoCapa=investigations.filter(i=>i.status==='Complete'&&!(i.capaRefs||[]).length).length;
+
   // Audits
   const audits=(d.audits||[]).filter(a=>inPeriod(a.date));
   const auditComplete=audits.filter(a=>a.status==='Complete').length;
@@ -4026,6 +4165,7 @@ function renderDashboard(){
     {name:'Management of Change',icon:'🔄', page:'moc',          total:mocs.length,       open:mocOpen,          overdue:mocPending,  closed:mocCompleted},
     {name:'Asset Inspections',   icon:'🔧', page:'assets',       total:assets.length,     open:assetDue,         overdue:assetOverdue,closed:assetPass},
     {name:'Audits & Inspections',icon:'📝', page:'audits',       total:audits.length,     open:auditInProg,      overdue:auditCritFails,closed:auditComplete},
+    {name:'Investigations (RCA)',icon:'🔍', page:'investigation', total:investigations.length, open:invOpen,      overdue:invNoCapa,     closed:invComplete},
   ];
 
   document.getElementById('dash-module-tbody').innerHTML=moduleRows.map(r=>`
@@ -4351,6 +4491,7 @@ function renderIncidents(page=1){
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('inc','${i.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editInc('${i.id}')">Edit</button>
+        <button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${i.id}')" title="Start RCA investigation for this incident">🔍 RCA</button>
         <button class="btn btn-sm btn-danger" onclick="deleteInc('${i.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -5442,6 +5583,337 @@ document.getElementById('asset-filter-cat').addEventListener('change',()=>render
 document.getElementById('asset-filter-status').addEventListener('change',()=>renderAssets(1));
 
 // ============================================================
+// INCIDENT INVESTIGATIONS — RCA (5-WHY & FISHBONE)
+// ============================================================
+let invPage=1;
+const FB_CATS=['People','Process','Equipment','Environment','Materials','Management'];
+
+function genInvId(arr){
+  const y=new Date().getFullYear();
+  const ex=(arr||[]).filter(x=>x.id&&x.id.startsWith('INV-'+y+'-'));
+  const nums=ex.map(x=>parseInt((x.id||'').split('-')[2])||0);
+  return 'INV-'+y+'-'+(( Math.max(0,...nums)+1 ).toString().padStart(3,'0'));
+}
+
+// ── Fishbone SVG renderer ──────────────────────────────────
+function renderFishboneSVG(fishData){
+  const effect=((fishData&&fishData.effect)||'Effect / Problem').substring(0,34);
+  // Bone definitions: upper 3 attach at x=230,430,630; lower 3 at 330,530,730
+  const bones=[
+    {cat:'People',      spineX:230,tipX:148,tipY:88, upper:true},
+    {cat:'Process',     spineX:430,tipX:348,tipY:88, upper:true},
+    {cat:'Equipment',   spineX:630,tipX:548,tipY:88, upper:true},
+    {cat:'Environment', spineX:330,tipX:248,tipY:272,upper:false},
+    {cat:'Materials',   spineX:530,tipX:448,tipY:272,upper:false},
+    {cat:'Management',  spineX:730,tipX:648,tipY:272,upper:false},
+  ];
+  const spY=180;
+  let s=`<svg viewBox="0 0 875 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:8px;background:#f8faff;border:1px solid var(--border)">`;
+  // Spine
+  s+=`<line x1="65" y1="${spY}" x2="760" y2="${spY}" stroke="#1e3a5f" stroke-width="3.5"/>`;
+  s+=`<polygon points="753,173 772,180 753,187" fill="#1e3a5f"/>`;
+  // Effect box
+  s+=`<rect x="764" y="${spY-28}" width="100" height="56" rx="6" fill="#1e3a5f"/>`;
+  s+=`<text x="814" y="${spY-9}" fill="white" text-anchor="middle" font-size="8" font-weight="700" letter-spacing="0.5">EFFECT</text>`;
+  const ew=effect.split(' '), eh=Math.ceil(ew.length/2);
+  s+=`<text x="814" y="${spY+5}" fill="#bfdbfe" text-anchor="middle" font-size="7.5">${escapeHtml(ew.slice(0,eh).join(' '))}</text>`;
+  if(ew.slice(eh).length)s+=`<text x="814" y="${spY+16}" fill="#bfdbfe" text-anchor="middle" font-size="7.5">${escapeHtml(ew.slice(eh).join(' '))}</text>`;
+  bones.forEach(b=>{
+    const causes=((fishData&&fishData[b.cat])||[]).filter(Boolean);
+    const col=causes.length?'#2563eb':'#cbd5e1';
+    const tcol=causes.length?'#1e293b':'#94a3b8';
+    s+=`<line x1="${b.tipX}" y1="${b.tipY}" x2="${b.spineX}" y2="${spY}" stroke="${col}" stroke-width="2.5"/>`;
+    const lblY=b.upper?b.tipY-14:b.tipY+22;
+    s+=`<text x="${b.tipX+4}" y="${lblY}" text-anchor="end" fill="${tcol}" font-size="11" font-weight="700">${b.cat}</text>`;
+    if(causes.length){
+      s+=`<circle cx="${b.tipX+16}" cy="${b.upper?b.tipY+4:b.tipY-4}" r="9" fill="#2563eb"/>`;
+      s+=`<text x="${b.tipX+16}" y="${b.upper?b.tipY+8:b.tipY}" text-anchor="middle" fill="white" font-size="9" font-weight="700">${causes.length}</text>`;
+    }
+    causes.slice(0,4).forEach((c,ci)=>{
+      const cy=b.upper?b.tipY+20+ci*12:b.tipY-24-ci*12;
+      s+=`<text x="${b.tipX+26}" y="${cy}" fill="#374151" font-size="7.5">• ${escapeHtml((c||'').substring(0,25))}</text>`;
+    });
+  });
+  s+='</svg>';
+  return s;
+}
+
+function refreshFishboneSVG(){
+  const fishData={effect:document.getElementById('inv-f-fb-effect').value||''};
+  FB_CATS.forEach(cat=>{
+    fishData[cat]=[];
+    for(let i=1;i<=4;i++){
+      const el=document.getElementById('inv-fb-'+cat+'-'+i);
+      if(el&&el.value.trim())fishData[cat].push(el.value.trim());
+    }
+  });
+  document.getElementById('inv-fb-svg').innerHTML=renderFishboneSVG(fishData);
+}
+
+function buildFishboneGrid(existing){
+  const grid=document.getElementById('inv-fb-grid');
+  if(!grid)return;
+  grid.innerHTML=FB_CATS.map(cat=>{
+    const saved=(existing&&existing[cat])||[];
+    const inputs=[1,2,3,4].map(i=>`<input type="text" id="inv-fb-${cat}-${i}" value="${escapeHtml(saved[i-1]||'')}" placeholder="Cause ${i}…" oninput="refreshFishboneSVG()" style="margin-bottom:4px">`).join('');
+    return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px">
+      <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:6px">${cat}</div>
+      ${inputs}
+    </div>`;
+  }).join('');
+}
+
+// ── 5-Why rows ─────────────────────────────────────────────
+const INV_WHY_PROMPTS=['Why did the incident occur?','Why did that happen?','Why was that the case?','Why?','Why? (deepest root cause)'];
+function build5WhyRows(savedWhys){
+  const rows=document.getElementById('inv-5why-rows');
+  if(!rows)return;
+  let html='';
+  for(let i=0;i<5;i++){
+    const val=savedWhys&&savedWhys[i]?escapeHtml(savedWhys[i]):'';
+    const prompt=i===0?INV_WHY_PROMPTS[0]:`<em id="inv-why-ctx-${i}">Why did that happen?</em>`;
+    html+=`<div style="display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:start;margin-bottom:8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px">
+      <div style="text-align:center">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;margin:0 auto">${i+1}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Why ${i+1}</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px">${i===0?INV_WHY_PROMPTS[0]:`<span id="inv-why-ctx-${i}">Why did that happen?</span>`}</div>
+        <textarea id="inv-why-${i}" rows="2" placeholder="Enter your answer here…" oninput="update5WhyContext(${i})">${val}</textarea>
+      </div>
+    </div>`;
+  }
+  rows.innerHTML=html;
+  // Re-chain contexts from saved data
+  for(let i=0;i<4;i++){
+    const el=document.getElementById('inv-why-'+i);
+    if(el&&el.value)update5WhyContext(i);
+  }
+}
+function update5WhyContext(row){
+  if(row>=4)return;
+  const ans=(document.getElementById('inv-why-'+row).value||'').trim();
+  const ctx=document.getElementById('inv-why-ctx-'+(row+1));
+  if(ctx)ctx.textContent=ans?'Why: "'+ans.substring(0,70)+(ans.length>70?'…':'')+'"':INV_WHY_PROMPTS[row+1]||'Why?';
+}
+
+// ── Method toggle ────────────────────────────────────────
+let _invMethod='5why';
+function setInvMethod(m){
+  _invMethod=m;
+  document.getElementById('inv-btn-5why').className    ='btn btn-sm '+(m==='5why'||m==='both'?'btn-primary':'btn-ghost');
+  document.getElementById('inv-btn-fishbone').className='btn btn-sm '+(m==='fishbone'||m==='both'?'btn-primary':'btn-ghost');
+  document.getElementById('inv-btn-both').className    ='btn btn-sm '+(m==='both'?'btn-primary':'btn-ghost');
+  document.getElementById('inv-5why-section').style.display    =(m==='5why'||m==='both')?'':'none';
+  document.getElementById('inv-fishbone-section').style.display=(m==='fishbone'||m==='both')?'':'none';
+}
+
+// ── Open / Edit ─────────────────────────────────────────
+function openAddInvestigation(incidentRef){
+  document.getElementById('inv-modal-title').textContent='New Incident Investigation';
+  document.getElementById('inv-f-edit-id').value='';
+  document.getElementById('inv-f-inc-ref').value=incidentRef||'';
+  document.getElementById('inv-f-date').value=today();
+  document.getElementById('inv-f-title').value='';
+  document.getElementById('inv-f-investigator').value='';
+  document.getElementById('inv-f-status').value='Open';
+  document.getElementById('inv-f-rc-5why').value='';
+  document.getElementById('inv-f-rc-fb').value='';
+  document.getElementById('inv-f-findings').value='';
+  document.getElementById('inv-f-recommendations').value='';
+  document.getElementById('inv-f-fb-effect').value='';
+  document.getElementById('inv-f-auto-capa').checked=true;
+  _invMethod='5why';
+  setInvMethod('5why');
+  build5WhyRows(null);
+  buildFishboneGrid(null);
+  refreshFishboneSVG();
+  // Auto-fill title from incident description
+  if(incidentRef){
+    const d=getData()||getDefaultData();
+    const inc=(d.incidents||[]).find(x=>x.id===incidentRef);
+    if(inc){document.getElementById('inv-f-title').value='Investigation: '+truncate(inc.desc,60);}
+  }
+  openModal('inv-modal');
+}
+
+function editInvestigation(id){
+  const d=getData()||getDefaultData();
+  const inv=(d.investigations||[]).find(x=>x.id===id);if(!inv)return;
+  document.getElementById('inv-modal-title').textContent='Edit Investigation';
+  document.getElementById('inv-f-edit-id').value=id;
+  document.getElementById('inv-f-inc-ref').value=inv.incidentRef||'';
+  document.getElementById('inv-f-date').value=inv.date||'';
+  document.getElementById('inv-f-title').value=inv.title||'';
+  document.getElementById('inv-f-investigator').value=inv.investigator||'';
+  document.getElementById('inv-f-status').value=inv.status||'Open';
+  document.getElementById('inv-f-rc-5why').value=inv.rootCause5why||'';
+  document.getElementById('inv-f-rc-fb').value=inv.rootCauseFishbone||'';
+  document.getElementById('inv-f-findings').value=inv.findings||'';
+  document.getElementById('inv-f-recommendations').value=inv.recommendations||'';
+  document.getElementById('inv-f-fb-effect').value=(inv.fishbone&&inv.fishbone.effect)||'';
+  document.getElementById('inv-f-auto-capa').checked=false;
+  _invMethod=inv.method||'5why';
+  setInvMethod(_invMethod);
+  build5WhyRows(inv.whys||[]);
+  buildFishboneGrid(inv.fishbone||null);
+  refreshFishboneSVG();
+  openModal('inv-modal');
+}
+
+// ── Save ──────────────────────────────────────────────────
+function saveInvestigation(){
+  if(!validateRequired([['inv-f-investigator','Lead Investigator'],['inv-f-date','Date'],['inv-f-inc-ref','Incident Reference']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.investigations=d.investigations||[];
+  const editId=document.getElementById('inv-f-edit-id').value;
+  // Collect 5-Why answers
+  const whys=[];
+  for(let i=0;i<5;i++){const el=document.getElementById('inv-why-'+i);whys.push(el?el.value.trim():'');}
+  // Collect Fishbone data
+  const fishData={effect:document.getElementById('inv-f-fb-effect').value.trim()};
+  FB_CATS.forEach(cat=>{
+    fishData[cat]=[];
+    for(let i=1;i<=4;i++){const el=document.getElementById('inv-fb-'+cat+'-'+i);if(el&&el.value.trim())fishData[cat].push(el.value.trim());}
+  });
+  const rc5=document.getElementById('inv-f-rc-5why').value.trim();
+  const rcFb=document.getElementById('inv-f-rc-fb').value.trim();
+  const rootCause=rc5||rcFb||'';
+  const rec={
+    id:editId||genInvId(d.investigations),
+    incidentRef:document.getElementById('inv-f-inc-ref').value.trim(),
+    title:document.getElementById('inv-f-title').value||'Investigation',
+    investigator:document.getElementById('inv-f-investigator').value,
+    date:document.getElementById('inv-f-date').value,
+    method:_invMethod,
+    status:document.getElementById('inv-f-status').value,
+    whys,rootCause5why:rc5,
+    fishbone:fishData,rootCauseFishbone:rcFb,
+    findings:document.getElementById('inv-f-findings').value||'',
+    recommendations:document.getElementById('inv-f-recommendations').value||'',
+    capaRefs:editId?((d.investigations.find(x=>x.id===editId)||{}).capaRefs||[]):[]
+  };
+  // Auto-create CAPA
+  if(!editId&&document.getElementById('inv-f-auto-capa').checked&&rootCause){
+    const dueDate=new Date(new Date(rec.date).getTime()+21*864e5).toISOString().substring(0,10);
+    const cid=autoCreateCapa(d,'Investigation',rec.id,
+      rootCause+'\n\nRecommendations:\n'+rec.recommendations,
+      rec.investigator,dueDate,
+      'Implement corrective actions to address root cause. Evidence of implementation required.',
+      'High');
+    rec.capaRefs=[cid];
+    showToast('CAPA '+cid+' auto-created from root cause','warn',4000);
+  }
+  if(editId){const idx=d.investigations.findIndex(x=>x.id===editId);if(idx>=0)d.investigations[idx]=rec;}
+  else d.investigations.push(rec);
+  saveData(d);closeModal('inv-modal');renderInvestigations(1);
+  showToast('Investigation saved — '+rec.id,'success');
+  sendNotificationEmail('Incident Investigation',{id:rec.id,date:rec.date,location:'',desc:rec.title},rec.investigator,`Method: ${rec.method} | Root cause: ${rootCause.substring(0,120)}`);
+}
+
+// ── Report view ───────────────────────────────────────────
+function viewInvestigationReport(id){
+  const d=getData()||getDefaultData();
+  const inv=(d.investigations||[]).find(x=>x.id===id);if(!inv)return;
+  const inc=(d.incidents||[]).find(x=>x.id===inv.incidentRef)||null;
+  let html=`<div class="report-doc">
+    <h1>🔍 Incident Investigation Report — ${escapeHtml(inv.id)}</h1>
+    <p style="text-align:center;color:#666;font-size:12px">${escapeHtml(inv.title||'')} | ${fmtDate(inv.date)}</p>
+    <hr style="border:2px solid #2563eb;margin:12px 0">
+    <table><tbody>
+      <tr><td><strong>Inv. ID</strong></td><td>${escapeHtml(inv.id)}</td><td><strong>Incident Ref</strong></td><td>${escapeHtml(inv.incidentRef||'—')}</td></tr>
+      <tr><td><strong>Lead Investigator</strong></td><td>${escapeHtml(inv.investigator||'—')}</td><td><strong>Date</strong></td><td>${fmtDate(inv.date)}</td></tr>
+      <tr><td><strong>Method</strong></td><td>${escapeHtml(inv.method||'—')}</td><td><strong>Status</strong></td><td>${escapeHtml(inv.status||'—')}</td></tr>
+    </tbody></table>`;
+  if(inc){
+    html+=`<h2>Incident Summary</h2><table><tbody>
+      <tr><td><strong>Type</strong></td><td>${escapeHtml(inc.type||'—')}</td><td><strong>Severity</strong></td><td>${inc.sev}</td></tr>
+      <tr><td><strong>Location</strong></td><td>${escapeHtml(inc.location||'—')}</td><td><strong>Date</strong></td><td>${fmtDate(inc.date)}</td></tr>
+      <tr><td><strong>Description</strong></td><td colspan="3">${escapeHtml(inc.desc||'—')}</td></tr>
+    </tbody></table>`;
+  }
+  // 5-Why
+  if(inv.method==='5why'||inv.method==='both'){
+    html+=`<h2>5-Why Analysis</h2><table><thead><tr><th style="width:80px">Step</th><th>Answer / Finding</th></tr></thead><tbody>`;
+    (inv.whys||[]).forEach((w,i)=>{if(w)html+=`<tr><td style="text-align:center;font-weight:700;font-size:16px;background:${i===4?'#dbeafe':'#f8fafc'}">${i+1}</td><td${i===4?' style="background:#dbeafe"':''}>${escapeHtml(w)}</td></tr>`;});
+    html+=`</tbody></table>`;
+    if(inv.rootCause5why)html+=`<div style="background:#fef9c3;border-left:4px solid #ca8a04;padding:10px 14px;margin:8px 0;border-radius:0 8px 8px 0"><strong>Root Cause (5-Why):</strong> ${escapeHtml(inv.rootCause5why)}</div>`;
+  }
+  // Fishbone
+  if(inv.method==='fishbone'||inv.method==='both'){
+    html+=`<h2>Fishbone (Ishikawa) Analysis</h2>`;
+    html+=renderFishboneSVG(inv.fishbone||{});
+    html+=`<table style="margin-top:8px"><thead><tr><th>Category</th><th>Identified Causes</th></tr></thead><tbody>`;
+    FB_CATS.forEach(cat=>{
+      const causes=((inv.fishbone||{})[cat]||[]).filter(Boolean);
+      if(causes.length)html+=`<tr><td style="font-weight:700;width:130px">${cat}</td><td>${causes.map(c=>escapeHtml(c)).join('<br>')}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+    if(inv.rootCauseFishbone)html+=`<div style="background:#fef9c3;border-left:4px solid #ca8a04;padding:10px 14px;margin:8px 0;border-radius:0 8px 8px 0"><strong>Root Cause (Fishbone):</strong> ${escapeHtml(inv.rootCauseFishbone)}</div>`;
+  }
+  // Findings & Recommendations
+  if(inv.findings)html+=`<h2>Key Findings</h2><p style="white-space:pre-line">${escapeHtml(inv.findings)}</p>`;
+  if(inv.recommendations)html+=`<h2>Recommendations</h2><p style="white-space:pre-line">${escapeHtml(inv.recommendations)}</p>`;
+  if((inv.capaRefs||[]).length)html+=`<h2>CAPAs Raised</h2><p>${inv.capaRefs.map(c=>`<strong>${c}</strong>`).join(', ')}</p>`;
+  html+=`<div style="margin-top:30px;border-top:2px solid #2563eb;padding-top:12px;font-size:11px;color:#777;text-align:center">
+    ${escapeHtml(inv.id)} | ${fmtDate(inv.date)} | CONFIDENTIAL<br>Lead Investigator: ${escapeHtml(inv.investigator||'—')} | GRCentral SHEQ-AI
+  </div></div>`;
+  document.getElementById('report-output').innerHTML=html;
+  navigateTo('report');
+}
+
+// ── Delete & Render ────────────────────────────────────────
+function deleteInvestigation(id){
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete investigation '+id+'?\nThis cannot be undone.'))return;
+  d.investigations=(d.investigations||[]).filter(x=>x.id!==id);saveData(d);renderInvestigations(invPage);
+}
+
+function renderInvestigations(page=1){
+  invPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('inv-search').value||'').toLowerCase();
+  const mf=document.getElementById('inv-filter-method').value;
+  const sf=document.getElementById('inv-filter-status').value;
+  let items=(d.investigations||[]).filter(x=>{
+    const ms=!search||[x.id,x.incidentRef,x.title,x.investigator,x.rootCause5why,x.rootCauseFishbone].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!mf||x.method===mf)&&(!sf||x.status===sf);
+  });
+  items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const complete=items.filter(x=>x.status==='Complete').length;
+  const open=items.filter(x=>x.status==='Open'||x.status==='In Progress').length;
+  document.getElementById('inv-stats').innerHTML=`
+    <span class="stat-chip">Total: ${items.length}</span>
+    <span class="stat-chip" style="color:#16a34a">✓ Complete: ${complete}</span>
+    <span class="stat-chip" style="color:#2563eb">⟳ Open/In Progress: ${open}</span>`;
+  const{items:rows,total}=paginate(items,page);
+  const methodBadge=m=>({
+    '5why':'<span class="pill pill-blue" style="font-size:10px">5-Why</span>',
+    fishbone:'<span class="pill pill-teal" style="font-size:10px">Fishbone</span>',
+    both:'<span class="pill pill-blue" style="font-size:10px">5-Why</span> <span class="pill pill-teal" style="font-size:10px">Fishbone</span>'
+  }[m]||m);
+  const stPill=s=>s==='Complete'?'<span class="pill pill-green">Complete</span>':s==='In Progress'?'<span class="pill pill-yellow">In Progress</span>':'<span class="pill pill-orange">Open</span>';
+  document.getElementById('inv-tbody').innerHTML=rows.map(x=>`<tr>
+    <td><strong>${x.id}</strong></td>
+    <td><span class="pill pill-orange" style="font-size:10px">${x.incidentRef||'—'}</span></td>
+    <td title="${escapeHtml(x.title||'')}">${truncate(x.title||'',38)}</td>
+    <td>${x.investigator||'—'}</td>
+    <td>${fmtDate(x.date)}</td>
+    <td>${methodBadge(x.method)}</td>
+    <td style="max-width:200px;font-size:12px">${truncate((x.rootCause5why||x.rootCauseFishbone||'—'),55)}</td>
+    <td>${(x.capaRefs||[]).length?`<span class="pill pill-orange" style="font-size:10px">${(x.capaRefs||[]).length} CAPA${(x.capaRefs||[]).length>1?'s':''}</span>`:'—'}</td>
+    <td>${stPill(x.status)}</td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm btn-ghost" onclick="viewInvestigationReport('${x.id}')" title="View full report">Report</button>
+      <button class="btn btn-sm btn-ghost" onclick="editInvestigation('${x.id}')">Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteInvestigation('${x.id}')">Del</button>
+    </td>
+  </tr>`).join('');
+  renderPagination('inv-pagination',total,page,renderInvestigations);
+}
+document.getElementById('inv-search').addEventListener('input',()=>renderInvestigations(1));
+document.getElementById('inv-filter-method').addEventListener('change',()=>renderInvestigations(1));
+document.getElementById('inv-filter-status').addEventListener('change',()=>renderInvestigations(1));
+
+// ============================================================
 // AUDITS & INSPECTIONS
 // ============================================================
 let auditPage=1;
@@ -6201,6 +6673,9 @@ function exportCSV(module){
   } else if(module==='audits'){
     cols=['Audit ID','Type','Title','Auditor','Date','Location','Score %','Passes','Fails','Critical Fails','CAPAs Raised','Status','Notes'];
     rows=(d.audits||[]).map(a=>[a.id,a.template,a.title,a.auditor,a.date,a.location,a.score,a.passes,a.fails,a.critFails,(a.capaRefs||[]).join('; '),a.status,a.notes]);
+  } else if(module==='investigation'){
+    cols=['Inv. ID','Incident Ref','Title','Investigator','Date','Method','Root Cause (5-Why)','Root Cause (Fishbone)','Findings','Recommendations','CAPAs','Status'];
+    rows=(d.investigations||[]).map(i=>[i.id,i.incidentRef,i.title,i.investigator,i.date,i.method,i.rootCause5why,i.rootCauseFishbone,i.findings,i.recommendations,(i.capaRefs||[]).join('; '),i.status]);
   }
   const csv=[cols,...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
