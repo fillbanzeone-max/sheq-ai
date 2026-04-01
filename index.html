@@ -605,12 +605,12 @@
       position: relative;
       overflow: hidden;
       transition: box-shadow 0.15s, transform 0.15s;
-      cursor: default;
+      cursor: pointer;
     }
 
     .kpi-card:hover {
       box-shadow: var(--shadow-md);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
     }
 
     .kpi-label {
@@ -3380,7 +3380,7 @@ function renderDashboard(){
   const capaClosed=capas.filter(c=>c.status==='Closed').length;
 
   document.getElementById('dash-kpi-row').innerHTML=`
-    <div class="kpi-card" style="--kpi-color:var(--accent)">
+    <div class="kpi-card" style="--kpi-color:var(--accent)" onclick="navigateTo('observations')" title="Go to Job Observations">
       <div class="kpi-label">Observations</div>
       <div class="kpi-value">${obs.length}</div>
       <div class="kpi-breakdown">
@@ -3388,8 +3388,9 @@ function renderDashboard(){
         <span class="kpib kpib-red">At-Risk: ${obsRisk}</span>
         <span class="kpib kpib-blue">Impr: ${obsImpr}</span>
       </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:var(--yellow)">
+    <div class="kpi-card" style="--kpi-color:var(--yellow)" onclick="navigateTo('nearmiss')" title="Go to Near Miss Register">
       <div class="kpi-label">Near Misses</div>
       <div class="kpi-value">${nms.length}</div>
       <div class="kpi-breakdown">
@@ -3397,16 +3398,18 @@ function renderDashboard(){
         <span class="kpib kpib-red">Overdue: ${nmOverdue}</span>
         <span class="kpib kpib-green">Closed: ${nmClosed}</span>
       </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:var(--orange)">
+    <div class="kpi-card" style="--kpi-color:var(--orange)" onclick="navigateTo('incidents')" title="Go to Incident Register">
       <div class="kpi-label">Incidents</div>
       <div class="kpi-value">${incs.length}</div>
       <div class="kpi-breakdown">
         <span class="kpib kpib-orange">Open: ${incOpen}</span>
         <span class="kpib kpib-green">Closed: ${incClosed}</span>
       </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:var(--teal)">
+    <div class="kpi-card" style="--kpi-color:var(--teal)" onclick="navigateTo('permits')" title="Go to Permit to Work">
       <div class="kpi-label">Permits (PTW)</div>
       <div class="kpi-value">${permits.length}</div>
       <div class="kpi-breakdown">
@@ -3414,8 +3417,9 @@ function renderDashboard(){
         <span class="kpib kpib-red">Expired: ${ptwExpired}</span>
         <span class="kpib kpib-gray">Closed: ${ptwClosed}</span>
       </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:${rExt>0?'var(--red)':'var(--accent)'}">
+    <div class="kpi-card" style="--kpi-color:${rExt>0?'var(--red)':'var(--accent)'}" onclick="navigateTo('risks')" title="Go to Risk Register">
       <div class="kpi-label">Risk Register</div>
       <div class="kpi-value">${risks.length}</div>
       <div class="kpi-breakdown">
@@ -3424,8 +3428,9 @@ function renderDashboard(){
         <span class="kpib kpib-yellow">Med: ${rMed}</span>
         <span class="kpib kpib-green">Low: ${rLow}</span>
       </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:${capaOverdue>0?'var(--red)':'var(--green)'}">
+    <div class="kpi-card" style="--kpi-color:${capaOverdue>0?'var(--red)':'var(--green)'}" onclick="navigateTo('capa')" title="Go to CAPA Tracker">
       <div class="kpi-label">CAPAs</div>
       <div class="kpi-value">${capas.length}</div>
       <div class="kpi-breakdown">
@@ -3433,6 +3438,7 @@ function renderDashboard(){
         <span class="kpib kpib-red">Overdue: ${capaOverdue}</span>
         <span class="kpib kpib-green">Closed: ${capaClosed}</span>
       </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
 
   // Incident trend chart (last 6 months)
