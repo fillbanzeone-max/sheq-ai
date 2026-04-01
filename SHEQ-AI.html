@@ -1997,7 +1997,7 @@
   <div class="card">
     <div class="table-wrap">
       <table class="mobile-cards">
-        <thead><tr><th>ID</th><th>Reporter</th><th>Date</th><th>Location</th><th>Potential Outcome</th><th>HiPo</th><th>Severity</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th>Reporter</th><th>Date</th><th>Location</th><th>Potential Outcome</th><th>HiPo</th><th>Severity</th><th>Status</th><th>Investigation</th><th>Actions</th></tr></thead>
         <tbody id="nm-tbody"></tbody>
       </table>
     </div>
@@ -2022,7 +2022,7 @@
   <div class="card">
     <div class="table-wrap">
       <table class="mobile-cards">
-        <thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Severity</th><th>Location</th><th>Description</th><th>Person</th><th>Status</th><th>CAPA</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Severity</th><th>Location</th><th>Description</th><th>Person</th><th>Status</th><th>CAPA</th><th>Investigation</th><th>Actions</th></tr></thead>
         <tbody id="inc-tbody"></tbody>
       </table>
     </div>
@@ -3223,6 +3223,7 @@
     <div id="view-modal-body"></div>
     <div class="modal-actions">
       <button id="view-modal-raise-capa" class="btn btn-primary" style="display:none">+ Raise CAPA</button>
+      <button id="view-modal-raise-inv" class="btn btn-ghost" style="display:none">🔍 Start Investigation</button>
       <button class="btn btn-ghost" onclick="closeModal('view-modal')">Close</button>
     </div>
   </div>
@@ -3830,25 +3831,41 @@ function capaBadge(capaRef, d){
 function viewTable(rows){
   return '<table style="width:100%;border-collapse:collapse">'+rows.map(([k,v])=>`<tr><td style="padding:6px 10px;font-weight:600;color:var(--muted);width:38%;border-bottom:1px solid var(--border);vertical-align:top;white-space:nowrap">${escapeHtml(String(k))}</td><td style="padding:6px 10px;border-bottom:1px solid var(--border)">${v}</td></tr>`).join('')+'</table>';
 }
+// ── Investigation badge helper ────────────────────────────────
+function invBadge(sourceRef, d){
+  if(!sourceRef) return '';
+  const inv=(d.investigations||[]).find(x=>x.incidentRef===sourceRef||x.id===sourceRef);
+  if(!inv) return '';
+  const cls=inv.status==='Complete'?'pill-green':inv.status==='In Progress'?'pill-yellow':'pill-orange';
+  return `<span class="pill ${cls}" style="font-size:10px;cursor:pointer" onclick="navigateTo('investigation')" title="Investigation: ${escapeHtml(inv.id)} — ${escapeHtml(inv.status)}">🔍 ${escapeHtml(inv.id)}</span>`;
+}
+// ── Investigation link row for view modal ─────────────────────
+function invViewRow(sourceRef, d){
+  const inv=(d.investigations||[]).find(x=>x.incidentRef===sourceRef);
+  if(!inv) return ['Investigation','<span style="color:var(--muted);font-size:12px">None linked — <button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="closeModal(\'view-modal\');openAddInvestigation(\''+escapeHtml(sourceRef)+'\')">+ Start RCA</button></span>'];
+  const cls=inv.status==='Complete'?'#16a34a':inv.status==='In Progress'?'#d97706':'#ea580c';
+  return ['Investigation',`<strong style="color:${cls}">${escapeHtml(inv.id)}</strong> — ${escapeHtml(inv.status)} | Method: ${escapeHtml(inv.method||'—')} <button class="btn btn-sm btn-ghost" style="font-size:11px" onclick="closeModal('view-modal');viewInvestigationReport('${escapeHtml(inv.id)}')">View Report</button>`];
+}
+
 function openView(module,id){
   const d=getData()||getDefaultData();
   let title='',body='';
   if(module==='obs'){
     const r=(d.observations||[]).find(x=>x.id===id);if(!r)return;
     title='Observation: '+escapeHtml(r.id);
-    body=viewTable([['ID',escapeHtml(r.id)],['Observer',escapeHtml(r.observer||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Activity',escapeHtml(r.activity||'')],['Type',typePill(r.type)],['Description',escapeHtml(r.desc||'')],['Immediate Action',escapeHtml(r.action||'')],['CAPA Required',r.capa],['Priority',priorityPill(r.priority)],['CAPA',capaBadge(r.capaRef,d)]]);
+    body=viewTable([['ID',escapeHtml(r.id)],['Observer',escapeHtml(r.observer||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Activity',escapeHtml(r.activity||'')],['Type',typePill(r.type)],['Description',escapeHtml(r.desc||'')],['Immediate Action',escapeHtml(r.action||'')],['RCA Required',r.capa==='Y'?'<span class="pill pill-orange">Yes</span>':'<span class="pill pill-gray">No</span>'],r.capa==='Y'?['RCA Details',escapeHtml(r.rcaDetails||'—')]:null,['Priority',priorityPill(r.priority)],['CAPA',capaBadge(r.capaRef,d)],r.capa==='Y'?invViewRow(r.id,d):null].filter(Boolean));
   } else if(module==='nm'){
     const r=(d.nearMisses||[]).find(x=>x.id===id);if(!r)return;
     title='Near Miss: '+escapeHtml(r.id);
-    body=viewTable([['ID',escapeHtml(r.id)],['Reporter',escapeHtml(r.reporter||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Potential Outcome',escapeHtml(r.outcome||'')],['HiPo',r.hipo?'<span class="pill pill-red">Yes</span>':'<span class="pill pill-gray">No</span>'],['Severity',sevPill(r.sev)],['Status',statusPill(r.status)],['Action Taken',escapeHtml(r.action||'')],['CAPA',capaBadge(r.capaRef,d)]]);
+    body=viewTable([['ID',escapeHtml(r.id)],['Reporter',escapeHtml(r.reporter||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Potential Outcome',escapeHtml(r.outcome||'')],['HiPo',r.hipo?'<span class="pill pill-red">Yes</span>':'<span class="pill pill-gray">No</span>'],['Severity',sevPill(r.sev)],['Status',statusPill(r.status)],['Action Taken',escapeHtml(r.action||'')],['RCA Details',escapeHtml(r.rcaDetails||'—')],['CAPA',capaBadge(r.capaRef,d)],invViewRow(r.id,d)]);
   } else if(module==='inc'){
     const r=(d.incidents||[]).find(x=>x.id===id);if(!r)return;
     title='Incident: '+escapeHtml(r.id);
-    body=viewTable([['ID',escapeHtml(r.id)],['Date',fmtDate(r.date)],['Type',escapeHtml(r.type||'')],['Severity',sevPill(r.sev)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Person Involved',escapeHtml(r.person||'')],['Root Cause',escapeHtml(r.rootCause||'')],['Status',statusPill(r.status)],['CAPA',capaBadge(r.capaRef,d)]]);
+    body=viewTable([['ID',escapeHtml(r.id)],['Date',fmtDate(r.date)],['Type',escapeHtml(r.type||'')],['Severity',sevPill(r.sev)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Person Involved',escapeHtml(r.person||'')],['Root Cause',escapeHtml(r.rootCause||'')],['Status',statusPill(r.status)],['CAPA',capaBadge(r.capaRef,d)],invViewRow(r.id,d)]);
   } else if(module==='ptw'){
     const r=(d.permits||[]).find(x=>x.id===id);if(!r)return;
     title='Permit: '+escapeHtml(r.id);
-    body=viewTable([['ID',escapeHtml(r.id)],['Type',ptwTypeIcon(r.type)],['Requestor',escapeHtml(r.requestor||'')],['Activity',escapeHtml(r.activity||'')],['Location',escapeHtml(r.location||'')],['Valid From',r.from?r.from.replace('T',' ').substring(0,16):'—'],['Valid To',r.to?r.to.replace('T',' ').substring(0,16):'—'],['Status',statusPill(getPTWStatus(r))],['Precautions',escapeHtml(r.precautions||'')],['Hazard',escapeHtml(r.hazard||'')],['Inherent Risk',r.iScore+' — '+ratingPill(r.iRating)],['Controls',escapeHtml(r.controls||'')],['Residual Risk',r.rScore+' — '+ratingPill(r.rRating)],['PPE Required',escapeHtml((r.ppe||[]).join(', ')||'None')],['Isolation Required',r.isolation==='Y'?'Yes':'No'],['CAPA',capaBadge(r.capaRef,d)]]);
+    body=viewTable([['ID',escapeHtml(r.id)],['Type',ptwTypeIcon(r.type)],['Requestor',escapeHtml(r.requestor||'')],['Activity',escapeHtml(r.activity||'')],['Location',escapeHtml(r.location||'')],['Valid From',r.from?r.from.replace('T',' ').substring(0,16):'—'],['Valid To',r.to?r.to.replace('T',' ').substring(0,16):'—'],['Status',statusPill(getPTWStatus(r))],['Precautions',escapeHtml(r.precautions||'')],['Hazard',escapeHtml(r.hazard||'')],['Inherent Risk',r.iScore+' — '+ratingPill(r.iRating)],['Controls',escapeHtml(r.controls||'')],['Residual Risk',r.rScore+' — '+ratingPill(r.rRating)],['PPE Required',escapeHtml((r.ppe||[]).join(', ')||'None')],['Isolation Required',r.isolation==='Y'?'Yes':'No'],['CAPA',capaBadge(r.capaRef,d)],invViewRow(r.id,d)]);
   } else if(module==='risk'){
     const r=(d.risks||[]).find(x=>x.id===id);if(!r)return;
     title='Risk: '+escapeHtml(r.id);
@@ -3867,6 +3884,7 @@ function openView(module,id){
   document.getElementById('view-modal-body').innerHTML=body;
   // Show Raise CAPA button for PTW/Risk records with no linked CAPA
   const raiseBtn=document.getElementById('view-modal-raise-capa');
+  const invBtn=document.getElementById('view-modal-raise-inv');
   if(module==='ptw'||module==='risk'){
     const rec=(module==='ptw'?(d.permits||[]):(d.risks||[])).find(x=>x.id===id);
     if(rec&&!rec.capaRef){
@@ -3880,6 +3898,14 @@ function openView(module,id){
       };
     } else { raiseBtn.style.display='none'; }
   } else { raiseBtn.style.display='none'; }
+  // Show Start Investigation button for incidents/near-misses/observations with no linked investigation
+  if(module==='inc'||module==='nm'||module==='obs'){
+    const hasInv=(d.investigations||[]).some(x=>x.incidentRef===id);
+    if(!hasInv){
+      invBtn.style.display='';
+      invBtn.onclick=()=>{ closeModal('view-modal'); openAddInvestigation(id); };
+    } else { invBtn.style.display='none'; }
+  } else { invBtn.style.display='none'; }
   openModal('view-modal');
 }
 
@@ -4284,10 +4310,11 @@ function renderObservations(page=1){
       <td data-label="Location">${o.location}</td>
       <td data-label="Type">${typePill(o.type)}</td>
       <td data-label="Description">${truncate(o.desc,45)}</td>
-      <td data-label="CAPA">${capaBadge(o.capaRef,d)}</td>
+      <td data-label="CAPA">${capaBadge(o.capaRef,d)} ${invBadge(o.id,d)}</td>
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('obs','${o.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editObs('${o.id}')">Edit</button>
+        ${o.capa==='Y'&&!invBadge(o.id,d)?`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${o.id}')" title="Start RCA">🔍 RCA</button>`:''}
         <button class="btn btn-sm btn-danger" onclick="deleteObs('${o.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -4344,6 +4371,17 @@ function saveNearMiss(){
     d.nearMisses.push(rec);
   }
   saveData(d);closeModal('nm-modal');renderNearMiss(1);
+  // Prompt to investigate HiPo near misses (new records only)
+  if(!editId && rec.hipo==1){
+    const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
+    if(!hasInv){
+      setTimeout(()=>{
+        if(confirm(`🔴 High Potential (HiPo) near miss logged — ${rec.id}\n\nHiPo events require a Root Cause Analysis to prevent future harm.\n\nStart an investigation now?`)){
+          openAddInvestigation(rec.id);
+        }
+      },300);
+    }
+  }
 }
 function deleteNM(id){const d=getData()||getDefaultData();const n=(d.nearMisses||[]).find(x=>x.id===id);if(!confirm('Delete near miss '+id+(n?': '+truncate(n.outcome||n.desc,50):'')+'\nThis cannot be undone.'))return;d.nearMisses=(d.nearMisses||[]).filter(x=>x.id!==id);saveData(d);renderNearMiss(nmPage);}
 function renderNearMiss(page=1){
@@ -4366,9 +4404,11 @@ function renderNearMiss(page=1){
       <td data-label="HiPo" class="ctr">${n.hipo?'🔴':'⚪'}</td>
       <td data-label="Severity">${sevPill(n.sev)}</td>
       <td data-label="Status">${statusPill(n.status)}</td>
+      <td data-label="Investigation">${invBadge(n.id,d)||'—'}</td>
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('nm','${n.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editNM('${n.id}')">Edit</button>
+        ${!invBadge(n.id,d)?`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${n.id}')" title="Start RCA investigation">🔍 RCA</button>`:''}
         <button class="btn btn-sm btn-danger" onclick="deleteNM('${n.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -4446,6 +4486,18 @@ function saveIncident(){
     d.incidents.push(rec);
   }
   saveData(d);closeModal('inc-modal');renderIncidents(1);
+  // Prompt to start investigation for Sev 1 & 2 incidents (new records only)
+  if(!editId && (rec.sev===1||rec.sev===2)){
+    const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
+    if(!hasInv){
+      const sevLabel={1:'Critical',2:'High'};
+      setTimeout(()=>{
+        if(confirm(`⚠️ Severity ${rec.sev} (${sevLabel[rec.sev]}) incident logged — ${rec.id}\n\nA formal Root Cause Analysis (RCA) investigation is required for all Severity 1 & 2 events.\n\nStart an investigation now?`)){
+          openAddInvestigation(rec.id);
+        }
+      },300);
+    }
+  }
 }
 function deleteInc(id){const d=getData()||getDefaultData();const i=(d.incidents||[]).find(x=>x.id===id);if(!confirm('Delete incident '+id+(i?': '+truncate(i.desc,50):'')+'\nThis cannot be undone.'))return;d.incidents=(d.incidents||[]).filter(x=>x.id!==id);saveData(d);renderIncidents(incPage);}
 function editInc(id){
@@ -4488,10 +4540,11 @@ function renderIncidents(page=1){
       <td data-label="Person">${i.person}</td>
       <td data-label="Status">${statusPill(i.status)}</td>
       <td data-label="CAPA">${capaBadge(i.capaRef,d)}</td>
+      <td data-label="Investigation">${invBadge(i.id,d)||`<span style="color:var(--muted);font-size:11px">${i.sev<=2?'<span style="color:var(--red)">Required</span>':'—'}</span>`}</td>
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('inc','${i.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editInc('${i.id}')">Edit</button>
-        <button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${i.id}')" title="Start RCA investigation for this incident">🔍 RCA</button>
+        ${!invBadge(i.id,d)?`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${i.id}')" title="Start RCA investigation">🔍 RCA</button>`:''}
         <button class="btn btn-sm btn-danger" onclick="deleteInc('${i.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -5728,11 +5781,27 @@ function openAddInvestigation(incidentRef){
   build5WhyRows(null);
   buildFishboneGrid(null);
   refreshFishboneSVG();
-  // Auto-fill title from incident description
+  // Auto-fill from linked source record (incident, near miss, or observation)
   if(incidentRef){
     const d=getData()||getDefaultData();
     const inc=(d.incidents||[]).find(x=>x.id===incidentRef);
-    if(inc){document.getElementById('inv-f-title').value='Investigation: '+truncate(inc.desc,60);}
+    const nm=(d.nearMisses||[]).find(x=>x.id===incidentRef);
+    const obs=(d.observations||[]).find(x=>x.id===incidentRef);
+    const aud=(d.audits||[]).find(x=>x.id===incidentRef);
+    const src=inc||nm||obs||aud;
+    if(src){
+      const desc=src.desc||src.outcome||src.title||'';
+      document.getElementById('inv-f-title').value='Investigation: '+truncate(desc,60);
+      document.getElementById('inv-f-fb-effect').value=truncate(desc,80);
+      // Pre-populate first why from existing root cause if available
+      if(inc&&inc.rootCause&&inc.rootCause.trim()&&inc.rootCause.trim()!=='Under investigation.'){
+        const why0=document.getElementById('inv-why-0');
+        if(why0){why0.value=inc.rootCause;update5WhyContext(0);}
+      }
+      // Set recommended method based on severity
+      if(inc&&(inc.sev===1||inc.sev===2)){setInvMethod('both');}
+      else if(nm&&nm.hipo==1){setInvMethod('both');}
+    }
   }
   openModal('inv-modal');
 }
@@ -5880,10 +5949,18 @@ function renderInvestigations(page=1){
   items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const complete=items.filter(x=>x.status==='Complete').length;
   const open=items.filter(x=>x.status==='Open'||x.status==='In Progress').length;
+  const noCapa=items.filter(x=>x.status==='Complete'&&!(x.capaRefs||[]).length).length;
   document.getElementById('inv-stats').innerHTML=`
     <span class="stat-chip">Total: ${items.length}</span>
     <span class="stat-chip" style="color:#16a34a">✓ Complete: ${complete}</span>
-    <span class="stat-chip" style="color:#2563eb">⟳ Open/In Progress: ${open}</span>`;
+    <span class="stat-chip" style="color:#2563eb">⟳ Open/In Progress: ${open}</span>
+    ${noCapa?`<span class="stat-chip" style="color:#dc2626">⚠ No CAPA: ${noCapa}</span>`:''}`;
+  // Build source record lookup (incidents + near misses + observations + audits)
+  const srcMap={};
+  (d.incidents||[]).forEach(x=>{srcMap[x.id]={type:'INC',sev:x.sev,desc:x.desc};});
+  (d.nearMisses||[]).forEach(x=>{srcMap[x.id]={type:'NM',hipo:x.hipo,sev:x.sev,desc:x.desc||x.outcome};});
+  (d.observations||[]).forEach(x=>{srcMap[x.id]={type:'OBS',obsType:x.type,desc:x.desc};});
+  (d.audits||[]).forEach(x=>{srcMap[x.id]={type:'AUD',sev:null,desc:x.title};});
   const{items:rows,total}=paginate(items,page);
   const methodBadge=m=>({
     '5why':'<span class="pill pill-blue" style="font-size:10px">5-Why</span>',
@@ -5891,22 +5968,26 @@ function renderInvestigations(page=1){
     both:'<span class="pill pill-blue" style="font-size:10px">5-Why</span> <span class="pill pill-teal" style="font-size:10px">Fishbone</span>'
   }[m]||m);
   const stPill=s=>s==='Complete'?'<span class="pill pill-green">Complete</span>':s==='In Progress'?'<span class="pill pill-yellow">In Progress</span>':'<span class="pill pill-orange">Open</span>';
-  document.getElementById('inv-tbody').innerHTML=rows.map(x=>`<tr>
-    <td><strong>${x.id}</strong></td>
-    <td><span class="pill pill-orange" style="font-size:10px">${x.incidentRef||'—'}</span></td>
-    <td title="${escapeHtml(x.title||'')}">${truncate(x.title||'',38)}</td>
-    <td>${x.investigator||'—'}</td>
-    <td>${fmtDate(x.date)}</td>
-    <td>${methodBadge(x.method)}</td>
-    <td style="max-width:200px;font-size:12px">${truncate((x.rootCause5why||x.rootCauseFishbone||'—'),55)}</td>
-    <td>${(x.capaRefs||[]).length?`<span class="pill pill-orange" style="font-size:10px">${(x.capaRefs||[]).length} CAPA${(x.capaRefs||[]).length>1?'s':''}</span>`:'—'}</td>
-    <td>${stPill(x.status)}</td>
-    <td style="white-space:nowrap">
-      <button class="btn btn-sm btn-ghost" onclick="viewInvestigationReport('${x.id}')" title="View full report">Report</button>
-      <button class="btn btn-sm btn-ghost" onclick="editInvestigation('${x.id}')">Edit</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteInvestigation('${x.id}')">Del</button>
-    </td>
-  </tr>`).join('');
+  document.getElementById('inv-tbody').innerHTML=rows.map(x=>{
+    const src=srcMap[x.incidentRef]||null;
+    const srcLabel=src?`<span class="pill ${src.type==='INC'?'pill-red':src.type==='NM'?'pill-orange':'pill-blue'}" style="font-size:10px">${src.type}</span>${src.sev?` Sev ${src.sev}`:''}${src.hipo?' 🔴HiPo':''}`:'';
+    return`<tr>
+      <td><strong>${x.id}</strong></td>
+      <td><span class="pill pill-orange" style="font-size:10px;cursor:pointer" onclick="openView('${src?.type?.toLowerCase()||'inc'}','${x.incidentRef||''}')" title="${escapeHtml((src?.desc||'').substring(0,80))}">${x.incidentRef||'—'}</span><br><small style="color:var(--muted)">${srcLabel}</small></td>
+      <td title="${escapeHtml(x.title||'')}">${truncate(x.title||'',36)}</td>
+      <td>${x.investigator||'—'}</td>
+      <td>${fmtDate(x.date)}</td>
+      <td>${methodBadge(x.method)}</td>
+      <td style="max-width:200px;font-size:12px">${truncate((x.rootCause5why||x.rootCauseFishbone||'—'),55)}</td>
+      <td>${(x.capaRefs||[]).length?`<span class="pill pill-orange" style="font-size:10px">${(x.capaRefs||[]).length} CAPA${(x.capaRefs||[]).length>1?'s':''}</span>`:'<span style="color:var(--muted);font-size:11px">None</span>'}</td>
+      <td>${stPill(x.status)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-ghost" onclick="viewInvestigationReport('${x.id}')" title="View full report">Report</button>
+        <button class="btn btn-sm btn-ghost" onclick="editInvestigation('${x.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteInvestigation('${x.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
   renderPagination('inv-pagination',total,page,renderInvestigations);
 }
 document.getElementById('inv-search').addEventListener('input',()=>renderInvestigations(1));
@@ -6285,6 +6366,8 @@ function renderAudits(page=1){
       <td style="white-space:nowrap">
         <button class="btn btn-sm btn-ghost" onclick="viewAuditReport('${a.id}')" title="View full report">Report</button>
         <button class="btn btn-sm btn-ghost" onclick="editAudit('${a.id}')">Edit</button>
+        ${(a.critFails||0)>0&&!invBadge(a.id,d)?`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${a.id}')" title="Start RCA for critical findings">🔍 RCA</button>`:''}
+        ${invBadge(a.id,d)}
         <button class="btn btn-sm btn-danger" onclick="deleteAudit('${a.id}')">Del</button>
       </td>
     </tr>`;
