@@ -8,6 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     /* ============================================================
        GOOGLE FONTS
@@ -1908,7 +1909,7 @@
     <span id="topbar-date"></span>
     <span id="sync-status" class="loading">⬤ Loading…</span>
     <span id="topbar-user" style="font-size:.78rem;color:var(--muted);display:none"></span>
-    <button class="btn btn-ghost btn-sm" id="settings-btn-top" onclick="openModal('settings-modal')">⚙️</button>
+    <button class="btn btn-ghost btn-sm" id="settings-btn-top" onclick="loadNotifSettings();openModal('settings-modal')">⚙️</button>
     <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="logOut()" title="Sign out" style="display:none">⏏ Sign Out</button>
   </div>
 
@@ -2282,6 +2283,37 @@
       <button class="btn btn-danger btn-sm" onclick="resetData()">🗑 Reset All Data</button>
     </div>
     <div id="import-result" style="margin-top:8px;font-size:12px"></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
+    <div class="card-title">📧 Email Notifications</div>
+    <div class="api-warning" style="margin-bottom:var(--sp-2)">Uses <strong>EmailJS</strong> (free — 200 emails/month). <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent)">Create a free account →</a> then add a service, create a template, and paste your credentials below.<br><br>
+    <strong>Template variables to use in your EmailJS template:</strong><br>
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{to_email}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{subject}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{module}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{record_id}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{reporter}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{date}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{location}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{description}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{priority}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{logged_by}}</code> &nbsp;
+    <code style="font-size:11px;background:var(--card2);padding:2px 6px;border-radius:4px">{{message_html}}</code>
+    </div>
+    <div class="form-group"><label>EmailJS Public Key</label><input type="text" id="notif-pubkey" placeholder="e.g. AbCdEfGhIjKlMnOpQ"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Service ID</label><input type="text" id="notif-service" placeholder="service_xxxxxxx"></div>
+      <div class="form-group"><label>Template ID</label><input type="text" id="notif-template" placeholder="template_xxxxxxx"></div>
+    </div>
+    <div class="form-group"><label>SHEQ Team Emails <span style="font-weight:400;color:var(--muted)">(comma-separated)</span></label><input type="text" id="notif-sheq-emails" placeholder="sheq@company.com, safety@company.com"></div>
+    <div class="form-group">
+      <label>Personnel Directory <span style="font-weight:400;color:var(--muted)">— one per line: <code style="background:var(--card2);padding:1px 5px;border-radius:3px">Full Name | supervisor@email.com</code></span></label>
+      <textarea id="notif-personnel" rows="6" placeholder="M. Sitoe | manager@company.com&#10;J. Machava | supervisor@company.com&#10;Carlos Tembe | ops.manager@company.com"></textarea>
+    </div>
+    <div style="display:flex;gap:var(--sp-1);flex-wrap:wrap;margin-bottom:var(--sp-1)">
+      <button class="btn btn-primary btn-sm" onclick="saveNotifSettings()">💾 Save Notification Settings</button>
+      <button class="btn btn-ghost btn-sm" onclick="testNotifEmail()">📤 Send Test Email</button>
+    </div>
+    <div id="notif-result" style="font-size:12px;margin-bottom:var(--sp-2)"></div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('settings-modal')">Close</button></div>
   </div>
 </div>
@@ -3298,6 +3330,7 @@ document.getElementById('toggle-btn').addEventListener('click',()=>document.getE
 document.getElementById('settings-btn').addEventListener('click',()=>{
   const k=sessionStorage.getItem('sheqai_apikey');
   if(k)document.getElementById('api-key-input').value=k;
+  loadNotifSettings();
   openModal('settings-modal');
 });
 document.getElementById('topbar-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
@@ -3521,6 +3554,7 @@ function saveObservation(){
     const idx=d.observations.findIndex(x=>x.id===editId);
     if(idx>=0){rec.capaRef=d.observations[idx].capaRef||'';d.observations[idx]=rec;}
   } else {
+    sendNotificationEmail('Job Observation', rec, rec.observer, rec.type?`Type: ${rec.type}${rec.action?` | Action: ${rec.action}`:''}`:'' );
     if(capaReq){
       rec.capaRef=autoCreateCapa(d,'JO',rec.id,
         rec.rcaWhat,rec.rcaWho,rec.rcaWhen,rec.rcaHow,rec.priority
@@ -3606,6 +3640,7 @@ function saveNearMiss(){
   };
   if(editId){const idx=d.nearMisses.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.nearMisses[idx].capaRef||'';d.nearMisses[idx]=rec;}}
   else{
+    sendNotificationEmail('Near Miss', rec, rec.reporter, rec.outcome?`Potential Outcome: ${rec.outcome}${rec.hipo?' | ⚠ HiPo Event':''}`:'' );
     if(capaReq){rec.capaRef=autoCreateCapa(d,'NM',rec.id,rec.rcaWhat,rec.rcaWho,rec.rcaWhen,'',rec.priority);}
     d.nearMisses.push(rec);
   }
@@ -3706,6 +3741,8 @@ function saveIncident(){
   };
   if(editId){const idx=d.incidents.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.incidents[idx].capaRef||'';d.incidents[idx]=rec;}}
   else{
+    const sevLabel={1:'Critical',2:'High',3:'Medium',4:'Low'};
+    sendNotificationEmail('Incident', rec, rec.person, `Type: ${rec.type} | Severity: ${sevLabel[rec.sev]||rec.sev}${rec.rootCause?` | Root Cause: ${rec.rootCause}`:''}`);
     if(capaWhat){rec.capaRef=autoCreateCapa(d,'INC',rec.id,rec.capaWhat,rec.capaWho,rec.capaWhen,rec.capaHow,rec.priority);}
     d.incidents.push(rec);
   }
@@ -3836,6 +3873,7 @@ function savePermit(){
       if(rec.capa==='Y'&&!rec.capaRef){rec.capaRef=autoCreateCapa(d,'PTW',rec.id,rec.rcaWhat||'Review PTW controls and implement corrective actions.',rec.rcaWho||'SHEQ Officer',rec.rcaWhen||'','PTW audit and sign-off.',rec.priority);d.permits[idx]=rec;}
     }
   } else{
+    sendNotificationEmail('Permit to Work (PTW)', rec, rec.requestor, `Type: ${rec.type} | Activity: ${rec.activity} | Valid: ${rec.from} to ${rec.to}`);
     if(rec.capa==='Y'){rec.capaRef=autoCreateCapa(d,'PTW',rec.id,rec.rcaWhat||'Review PTW controls and implement corrective actions.',rec.rcaWho||'SHEQ Officer',rec.rcaWhen||'','PTW audit and sign-off.',rec.priority);}
     d.permits.push(rec);
   }
@@ -3980,6 +4018,7 @@ function saveRisk(){
       if(rec.capa==='Y'&&!rec.capaRef){rec.capaRef=autoCreateCapa(d,'RISK',rec.id,rec.rcaWhat||'Implement additional controls to reduce residual risk.',rec.rcaWho||rec.owner,rec.rcaWhen||rec.reviewDate,'Risk review and sign-off by SHEQ Manager.','Medium');d.risks[idx]=rec;}
     }
   } else{
+    sendNotificationEmail('Risk Register', rec, rec.owner, `Hazard: ${rec.hazard} | Inherent Rating: ${rec.iRating} | Residual Rating: ${rec.rRating} | Review Date: ${rec.reviewDate||'—'}`);
     if(rec.capa==='Y'){rec.capaRef=autoCreateCapa(d,'RISK',rec.id,rec.rcaWhat||'Implement additional controls to reduce residual risk.',rec.rcaWho||rec.owner,rec.rcaWhen||rec.reviewDate,'Risk review and sign-off by SHEQ Manager.','Medium');}
     d.risks.push(rec);
   }
@@ -4407,6 +4446,139 @@ function generateReport(){
 })();
 
 // ============================================================
+// EMAIL NOTIFICATIONS
+// ============================================================
+const NOTIF_KEY = 'sheqai_notif_settings';
+
+function saveNotifSettings(){
+  const cfg = {
+    pubkey:   (document.getElementById('notif-pubkey').value||'').trim(),
+    service:  (document.getElementById('notif-service').value||'').trim(),
+    template: (document.getElementById('notif-template').value||'').trim(),
+    sheqEmails:(document.getElementById('notif-sheq-emails').value||'').trim(),
+    personnel: (document.getElementById('notif-personnel').value||'').trim()
+  };
+  localStorage.setItem(NOTIF_KEY, JSON.stringify(cfg));
+  if(cfg.pubkey) emailjs.init(cfg.pubkey);
+  const el=document.getElementById('notif-result');
+  el.style.color='#16a34a'; el.textContent='✓ Notification settings saved.';
+  setTimeout(()=>el.textContent='',3000);
+}
+
+function loadNotifSettings(){
+  try{
+    const cfg=JSON.parse(localStorage.getItem(NOTIF_KEY)||'{}');
+    if(document.getElementById('notif-pubkey')){
+      document.getElementById('notif-pubkey').value=cfg.pubkey||'';
+      document.getElementById('notif-service').value=cfg.service||'';
+      document.getElementById('notif-template').value=cfg.template||'';
+      document.getElementById('notif-sheq-emails').value=cfg.sheqEmails||'';
+      document.getElementById('notif-personnel').value=cfg.personnel||'';
+    }
+    if(cfg.pubkey) emailjs.init(cfg.pubkey);
+    return cfg;
+  }catch(e){return {};}
+}
+
+function lookupSupervisorEmail(personName){
+  const cfg=JSON.parse(localStorage.getItem(NOTIF_KEY)||'{}');
+  if(!cfg.personnel||!personName) return '';
+  const name=(personName||'').toLowerCase().trim();
+  const lines=(cfg.personnel||'').split('\n');
+  for(const line of lines){
+    const parts=line.split('|');
+    if(parts.length>=2){
+      const n=(parts[0]||'').toLowerCase().trim();
+      const email=(parts[1]||'').trim();
+      // match if the line name is contained in the person name or vice-versa
+      if(n&&email&&(name.includes(n)||n.includes(name))) return email;
+    }
+  }
+  return '';
+}
+
+async function sendNotificationEmail(moduleName, rec, reporter, extraDetails){
+  try{
+    const cfg=JSON.parse(localStorage.getItem(NOTIF_KEY)||'{}');
+    if(!cfg.pubkey||!cfg.service||!cfg.template) return; // not configured
+    emailjs.init(cfg.pubkey);
+
+    const supervisorEmail = lookupSupervisorEmail(reporter);
+    const sheqEmails = (cfg.sheqEmails||'').split(',').map(e=>e.trim()).filter(Boolean);
+    const toList = [...new Set([supervisorEmail,...sheqEmails].filter(Boolean))];
+    if(!toList.length) return;
+
+    const subject = `[SHEQ-AI] New ${moduleName} Logged — ${rec.id}`;
+    const sevLabel = {1:'Critical',2:'High',3:'Medium',4:'Low'};
+    const msgHtml = `
+      <table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px;width:100%;max-width:600px">
+        <tr style="background:#1e3a5f;color:#fff"><td colspan="2" style="padding:14px 18px;font-size:16px;font-weight:700">🛡 SHEQ-AI — New ${moduleName} Logged</td></tr>
+        <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc;width:35%">Record ID</td><td style="padding:8px 18px">${rec.id}</td></tr>
+        <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Reported By</td><td style="padding:8px 18px">${reporter||'—'}</td></tr>
+        <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Date</td><td style="padding:8px 18px">${rec.date||rec.from||today()}</td></tr>
+        <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Location</td><td style="padding:8px 18px">${rec.location||'—'}</td></tr>
+        <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Description</td><td style="padding:8px 18px">${rec.desc||rec.hazard||rec.activity||'—'}</td></tr>
+        <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Priority</td><td style="padding:8px 18px">${rec.priority||sevLabel[rec.sev]||'—'}</td></tr>
+        ${extraDetails?`<tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Details</td><td style="padding:8px 18px">${extraDetails}</td></tr>`:''}
+        <tr style="background:#f8fafc"><td colspan="2" style="padding:8px 18px;font-size:11px;color:#666">Logged by ${currentUser?.email||'System'} on ${new Date().toLocaleString()}. This is an automated notification from SHEQ-AI.</td></tr>
+      </table>`;
+
+    for(const toEmail of toList){
+      await emailjs.send(cfg.service, cfg.template, {
+        to_email:   toEmail,
+        subject,
+        module:     moduleName,
+        record_id:  rec.id,
+        reporter:   reporter||'—',
+        date:       rec.date||rec.from||today(),
+        location:   rec.location||'—',
+        description:rec.desc||rec.hazard||rec.activity||'—',
+        priority:   rec.priority||sevLabel[rec.sev]||'—',
+        logged_by:  currentUser?.email||'System',
+        message_html: msgHtml
+      });
+    }
+  }catch(e){
+    console.warn('SHEQ-AI email notification failed:',e?.text||e?.message||e);
+  }
+}
+
+async function testNotifEmail(){
+  const el=document.getElementById('notif-result');
+  el.style.color='#374151'; el.textContent='Sending test email…';
+  const cfg={
+    pubkey:   (document.getElementById('notif-pubkey').value||'').trim(),
+    service:  (document.getElementById('notif-service').value||'').trim(),
+    template: (document.getElementById('notif-template').value||'').trim(),
+    sheqEmails:(document.getElementById('notif-sheq-emails').value||'').trim()
+  };
+  if(!cfg.pubkey||!cfg.service||!cfg.template){
+    el.style.color='#dc2626'; el.textContent='⚠ Please fill in Public Key, Service ID and Template ID first.'; return;
+  }
+  const sheqEmails=cfg.sheqEmails.split(',').map(e=>e.trim()).filter(Boolean);
+  if(!sheqEmails.length){el.style.color='#dc2626';el.textContent='⚠ Add at least one SHEQ Team Email to test.';return;}
+  try{
+    emailjs.init(cfg.pubkey);
+    await emailjs.send(cfg.service, cfg.template, {
+      to_email:    sheqEmails[0],
+      subject:     '[SHEQ-AI] Test Notification Email',
+      module:      'Test',
+      record_id:   'TEST-001',
+      reporter:    'Test User',
+      date:        today(),
+      location:    'Test Location',
+      description: 'This is a test notification from SHEQ-AI to verify your email configuration is working correctly.',
+      priority:    'Medium',
+      logged_by:   currentUser?.email||'System',
+      message_html:'<p>Test email from <strong>SHEQ-AI</strong>. Your email notifications are configured correctly!</p>'
+    });
+    el.style.color='#16a34a'; el.textContent='✓ Test email sent to '+sheqEmails[0]+'! Check your inbox.';
+  }catch(e){
+    el.style.color='#dc2626'; el.textContent='✗ Failed: '+(e?.text||e?.message||JSON.stringify(e));
+  }
+}
+
+// ============================================================
 // SETTINGS
 // ============================================================
 function saveApiKey(){
@@ -4514,6 +4686,9 @@ function exportCSV(module){
 // INIT
 // ============================================================
 window.addEventListener('DOMContentLoaded',()=>{
+  // Initialise EmailJS with saved public key (if configured)
+  try{const cfg=JSON.parse(localStorage.getItem(NOTIF_KEY)||'{}');if(cfg.pubkey)emailjs.init(cfg.pubkey);}catch(e){}
+
   const overlay=document.getElementById('login-overlay');
   const syncEl=document.getElementById('sync-status');
   syncEl.className='loading';syncEl.textContent='⬤ Connecting…';
