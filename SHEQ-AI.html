@@ -970,11 +970,11 @@
       background: var(--card);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-lg);
-      width: 92vw;
-      max-width: 1100px;
-      max-height: 92vh;
+      width: 96vw;
+      max-width: 1400px;
+      max-height: 94vh;
       overflow-y: auto;
-      padding: var(--sp-4);
+      padding: var(--sp-3) var(--sp-4);
       position: relative;
       transform: translateY(12px);
       transition: transform 0.2s;
@@ -985,7 +985,7 @@
     }
 
     .modal-wide {
-      max-width: 1100px;
+      max-width: 1400px;
     }
 
     .modal-title {
@@ -1736,9 +1736,9 @@
       .modal {
         width: 100%;
         max-width: 100%;
-        max-height: 95vh;
+        max-height: 98vh;
         border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-        padding: var(--sp-3);
+        padding: var(--sp-2) var(--sp-3);
       }
 
       #topbar {
@@ -3080,7 +3080,7 @@
 
 <!-- INVESTIGATION / RCA MODAL -->
 <div class="modal-overlay" id="inv-modal">
-  <div class="modal" style="max-width:96vw;width:980px;max-height:92vh;overflow-y:auto">
+  <div class="modal">
     <div class="modal-title" id="inv-modal-title">New Incident Investigation <button class="modal-close" onclick="closeModal('inv-modal')">✕</button></div>
 
     <!-- Basic info -->
@@ -3150,7 +3150,7 @@
 
 <!-- AUDIT / INSPECTION MODAL -->
 <div class="modal-overlay" id="audit-modal">
-  <div class="modal" style="max-width:95vw;width:960px;max-height:92vh;overflow-y:auto">
+  <div class="modal">
     <div class="modal-title" id="audit-modal-title">New Audit / Inspection <button class="modal-close" onclick="closeModal('audit-modal')">✕</button></div>
     <div class="form-row">
       <div class="form-group">
