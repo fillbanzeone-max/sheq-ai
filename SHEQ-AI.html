@@ -1890,6 +1890,7 @@
     <li class="nav-item"><div class="nav-link" data-page="inductions"><span class="nav-icon">🪪</span><span class="nav-label">Inductions</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="emergency"><span class="nav-icon">🚑</span><span class="nav-label">Emergency Contacts</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -1923,6 +1924,11 @@
 
 <!-- ======= DASHBOARD ======= -->
 <div id="page-dashboard" class="page active">
+  <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:var(--sp-2);gap:var(--sp-1)">
+    <span style="font-size:var(--fs-xs);color:var(--muted);font-weight:600">VIEW:</span>
+    <button id="dash-toggle-all" class="btn btn-primary btn-sm" onclick="setDashPeriod('all')">All Time</button>
+    <button id="dash-toggle-30" class="btn btn-ghost btn-sm" onclick="setDashPeriod('30')">Last 30 Days</button>
+  </div>
   <div class="kpi-grid" id="dash-kpi-row"></div>
   <div class="charts-row">
     <div class="card"><div class="card-title">Incident Trend (Monthly)</div><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
@@ -1930,7 +1936,7 @@
     <div class="card"><div class="card-title">Risk Register by Rating</div><div class="chart-wrap"><canvas id="chart-risk"></canvas></div></div>
   </div>
   <div class="card" style="margin-top:var(--sp-2)">
-    <div class="card-title">Module Activity Overview</div>
+    <div class="card-title" id="dash-module-title">Module Activity Overview</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Module</th><th>Total</th><th>Open / Active</th><th>Overdue / Expired</th><th>Closed / Completed</th><th>Status</th></tr></thead>
@@ -2330,6 +2336,32 @@
   <div id="emg-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-2);margin-top:var(--sp-2)"></div>
 </div>
 
+<!-- ======= ASSET INSPECTIONS ======= -->
+<div id="page-assets" class="page">
+  <div class="section-header">
+    <span class="section-title">Equipment &amp; Asset Inspection Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('assets')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="openAddAsset()">+ Add Asset</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="asset-search" placeholder="Search assets…">
+    <select id="asset-filter-cat"><option value="">All Categories</option><option value="Fire Safety">Fire Safety</option><option value="Lifting Equipment">Lifting Equipment</option><option value="Electrical">Electrical</option><option value="Pressure Vessel">Pressure Vessel</option><option value="PPE">PPE</option><option value="Emergency Equipment">Emergency Equipment</option><option value="Mechanical">Mechanical</option><option value="Environmental">Environmental</option><option value="Other">Other</option></select>
+    <select id="asset-filter-status"><option value="">All Statuses</option><option value="Pass">Pass</option><option value="Due Soon">Due Soon</option><option value="Overdue">Overdue</option><option value="Fail">Fail</option><option value="Out of Service">Out of Service</option></select>
+  </div>
+  <div class="stats-row" id="asset-stats"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Asset ID</th><th>Asset Name</th><th>Category</th><th>Location</th><th>Last Inspected</th><th>Next Due</th><th>Inspector</th><th>Result</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="asset-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="asset-pagination"></div>
+  </div>
+</div>
+
 <!-- ======= MANAGEMENT OF CHANGE ======= -->
 <div id="page-moc" class="page">
   <div class="section-header">
@@ -2454,6 +2486,50 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('emg-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEmergencyContact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSET INSPECTION MODAL -->
+<div class="modal-overlay" id="asset-modal">
+  <div class="modal">
+    <div class="modal-title" id="asset-modal-title">Add Asset <button class="modal-close" onclick="closeModal('asset-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Asset Name</label><input type="text" id="asset-f-name" placeholder="e.g. Fire Extinguisher — Turbine Hall A"></div>
+      <div class="form-group"><label>Category</label>
+        <select id="asset-f-cat"><option value="Fire Safety">Fire Safety</option><option value="Lifting Equipment">Lifting Equipment</option><option value="Electrical">Electrical</option><option value="Pressure Vessel">Pressure Vessel</option><option value="PPE">PPE</option><option value="Emergency Equipment">Emergency Equipment</option><option value="Mechanical">Mechanical</option><option value="Environmental">Environmental</option><option value="Other">Other</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Asset / Serial Number</label><input type="text" id="asset-f-serial" placeholder="Manufacturer serial or tag number"></div>
+      <div class="form-group"><label>Location / Area</label><input type="text" id="asset-f-location" placeholder="e.g. Turbine Hall, Gate House"></div>
+    </div>
+    <div class="form-group"><label>Description / Specification</label><input type="text" id="asset-f-desc" placeholder="Brief description or spec"></div>
+    <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;margin:var(--sp-2) 0 var(--sp-1)">Inspection Record</div>
+    <div class="form-row">
+      <div class="form-group"><label>Last Inspection Date</label><input type="date" id="asset-f-last-date"></div>
+      <div class="form-group"><label>Next Due Date</label><input type="date" id="asset-f-next-date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Inspector Name</label><input type="text" id="asset-f-inspector" placeholder="Name / Role"></div>
+      <div class="form-group"><label>Inspection Frequency</label>
+        <select id="asset-f-freq"><option value="Monthly">Monthly</option><option value="Quarterly">Quarterly</option><option value="6-Monthly">6-Monthly</option><option value="Annual">Annual</option><option value="2-Yearly">2-Yearly</option><option value="5-Yearly">5-Yearly</option><option value="As Required">As Required</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Inspection Result</label>
+        <select id="asset-f-result"><option value="Pass">Pass</option><option value="Pass with Observations">Pass with Observations</option><option value="Fail">Fail</option><option value="Not Inspected">Not Inspected</option></select>
+      </div>
+      <div class="form-group"><label>Condition</label>
+        <select id="asset-f-condition"><option value="Good">Good</option><option value="Fair">Fair</option><option value="Poor">Poor</option><option value="Out of Service">Out of Service</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Inspection Notes / Findings</label><textarea id="asset-f-notes" placeholder="Findings, defects noted, actions required…"></textarea></div>
+    <div class="form-group"><label>Regulatory / Standard Reference</label><input type="text" id="asset-f-standard" placeholder="e.g. SANS 1475, OHS Act Reg 9.2"></div>
+    <input type="hidden" id="asset-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('asset-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAsset()">Save</button>
     </div>
   </div>
 </div>
@@ -3259,6 +3335,16 @@ function getDefaultData() {
         {id:'EMG-008',name:'EDM Grid Control Centre',role:'National Grid Emergency — Electrical Isolation',category:'Utilities',priority:'Primary',phone:'+258 21 350 000',email:'',hours:'24/7',notes:'For major electrical fault requiring grid disconnection.'},
         {id:'EMG-009',name:'Environmental Incident Hotline',role:'MITADER Environmental Spill Notification',category:'Environmental',priority:'Primary',phone:'+258 21 466 000',email:'environment@mitader.gov.mz',hours:'Business hours',notes:'Mandatory notification for any environmental incident within 4 hours.'}
       ],
+    assets: [
+      {id:'AST-001',name:'CO2 Fire Extinguisher — Turbine Hall A',category:'Fire Safety',serial:'FE-TH-001',location:'Turbine Hall',desc:'5kg CO2 extinguisher, wall-mounted.',lastDate:'2026-02-15',nextDate:'2026-08-15',inspector:'SHEQ Officer',freq:'6-Monthly',result:'Pass',condition:'Good',notes:'Pressure gauge in green. Tag updated.',standard:'SANS 1475-1',status:'Pass'},
+      {id:'AST-002',name:'CO2 Fire Extinguisher — Control Room',category:'Fire Safety',serial:'FE-CR-001',location:'Control Room',desc:'5kg CO2 extinguisher, wall-mounted.',lastDate:'2026-02-15',nextDate:'2026-08-15',inspector:'SHEQ Officer',freq:'6-Monthly',result:'Pass',condition:'Good',notes:'No defects found.',standard:'SANS 1475-1',status:'Pass'},
+      {id:'AST-003',name:'5-Ton Overhead Crane — Maintenance Workshop',category:'Lifting Equipment',serial:'CR-MW-001',location:'Maintenance Workshop',desc:'5-ton overhead travelling crane, SWL 5000kg.',lastDate:'2025-12-10',nextDate:'2026-06-10',inspector:'Certified Crane Inspector',freq:'6-Monthly',result:'Pass with Observations',condition:'Fair',notes:'Minor wear on hook latch spring — replacement recommended within 3 months.',standard:'SANS 10142 / OHS Act Reg 18',status:'Due Soon'},
+      {id:'AST-004',name:'Safety Harnesses — Working at Height Kit (x6)',category:'PPE',serial:'WH-PPE-001',location:'SHEQ Store',desc:'Full body harnesses, set of 6, used for WAH work.',lastDate:'2026-01-20',nextDate:'2026-07-20',inspector:'SHEQ Officer',freq:'6-Monthly',result:'Pass',condition:'Good',notes:'All harnesses inspected. No fraying or damage. Tags updated.',standard:'SANS 50361',status:'Pass'},
+      {id:'AST-005',name:'Cooling Tower Pressure Vessel — CT-01',category:'Pressure Vessel',serial:'PV-CT-001',location:'Cooling Tower No. 1',desc:'Design pressure 15 bar. Volume 2.5m³.',lastDate:'2025-03-01',nextDate:'2026-03-01',inspector:'Authorised Inspection Authority',freq:'Annual',result:'Pass',condition:'Good',notes:'Annual statutory inspection completed. Certificate of fitness issued. Valid until 2026-03-01.',standard:'PER 2009 / SANS 347',status:'Overdue'},
+      {id:'AST-006',name:'Emergency Eyewash Station — Chemical Store',category:'Emergency Equipment',serial:'EW-CS-001',location:'Chemical Store',desc:'Plumbed eyewash station with tepid water.',lastDate:'2026-03-10',nextDate:'2026-04-10',inspector:'Safety Officer',freq:'Monthly',result:'Pass',condition:'Good',notes:'Flow tested. Water temperature adequate. Signage clear.',standard:'SANS 1475-3',status:'Pass'},
+      {id:'AST-007',name:'HV Switchgear Panel — MCC-01',category:'Electrical',serial:'HV-MCC-001',location:'HV Switchgear Room',desc:'11kV incoming switchgear, main incomer.',lastDate:'2025-09-15',nextDate:'2026-09-15',inspector:'Registered Electrician',freq:'Annual',result:'Pass',condition:'Good',notes:'Thermographic scan — no hotspots detected. Insulation resistance satisfactory.',standard:'OHS Act Reg 9 / SANS 10142',status:'Pass'},
+      {id:'AST-008',name:'Portable Gas Detector — Multigas (x3)',category:'Emergency Equipment',serial:'GD-001/002/003',location:'SHEQ Store',desc:'4-gas detector: O2, H2S, CO, LEL. Qty 3.',lastDate:'2026-03-01',nextDate:'2026-04-01',inspector:'SHEQ Officer',freq:'Monthly',result:'Fail',condition:'Poor',notes:'Unit GD-003 bump test failed on CO sensor. Sent for calibration and repair. GD-001 and GD-002 passed.',standard:'ISA 12.13.02',status:'Fail'}
+    ],
     mocs: [
       {id:'MOC-2026-001',title:'Replace Cooling Water Pump with Variable Speed Drive Model',type:'Equipment',initiator:'Maintenance Supervisor',dept:'Maintenance',date:'2026-02-10',target:'2026-04-30',desc:'Existing fixed-speed cooling water pump (CWP-01) to be replaced with a variable speed drive (VSD) model to improve energy efficiency and reduce maintenance costs.',reason:'Current pump is end-of-life. VSD will reduce energy consumption by ~30% and allow flow control without throttling valves.',hazards:'Electrical work during installation; VSD control panel introduces new software interface; risk of reverse rotation if phasing incorrect.',controls:'PTW to be issued for all electrical work. LOTO protocol. Vendor commissioning engineer on site. Pre-start checklist signed off by SHEQ.',riskLevel:'High',status:'Approved',approver:'Plant Manager',approvedDate:'2026-02-18',training:'Yes',trainingNotes:'Operations team to receive 2-hour VSD operation and fault response training prior to handover.',reviewNotes:'',createdBy:''},
       {id:'MOC-2026-002',title:'Update Confined Space Entry Procedure — Add Continuous Gas Monitoring Requirement',type:'Procedure',initiator:'SHEQ Officer',dept:'SHEQ',date:'2026-02-20',target:'2026-03-15',desc:'Revise SOP-CS-004 to mandate continuous multi-gas monitoring (O2, H2S, CO, LEL) throughout any confined space entry, replacing the current pre-entry-only monitoring requirement.',reason:'Near miss NM-001 investigation identified that pre-entry gas test alone is insufficient. Gas conditions can change during work.',hazards:'None from the procedure change itself. Addresses existing hazards of gas build-up during confined space work.',controls:'New gas monitors to be procured. Operatives trained on alarm response. Procedure reviewed by SHEQ committee.',riskLevel:'Medium',status:'Completed',approver:'SHEQ Manager',approvedDate:'2026-02-25',training:'Yes',trainingNotes:'All confined space entry team members trained on new procedure. Sign-off sheets in SHEQ records.',reviewNotes:'Procedure implemented successfully. Gas monitors purchased and calibrated. No issues during first 3 entries under new procedure.',createdBy:''},
@@ -3611,7 +3697,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',chat:'SHEQ-AI Chat'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',chat:'SHEQ-AI Chat'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -3634,6 +3720,7 @@ function navigateTo(page){
   else if(page==='inductions')renderInductions();
   else if(page==='emergency')renderEmergencyContacts();
   else if(page==='moc')renderMoc();
+  else if(page==='assets')renderAssets();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>navigateTo(l.dataset.page)));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -3649,34 +3736,50 @@ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString
 // DASHBOARD
 // ============================================================
 let trendChart,ratioChart,riskChart;
+let dashPeriod='all';
+function setDashPeriod(p){
+  dashPeriod=p;
+  document.getElementById('dash-toggle-all').className='btn btn-sm '+(p==='all'?'btn-primary':'btn-ghost');
+  document.getElementById('dash-toggle-30').className='btn btn-sm '+(p==='30'?'btn-primary':'btn-ghost');
+  renderDashboard();
+}
 function renderDashboard(){
   const d=getData()||getDefaultData();
   const now=new Date();
 
+  // Period filter — cutoff date for Last 30 Days mode
+  const cutoff=dashPeriod==='30'?new Date(now.getFullYear(),now.getMonth(),now.getDate()-30).toISOString().substring(0,10):null;
+  const inPeriod=date=>!cutoff||!date||(date>=cutoff);
+  const periodLabel=cutoff?'Last 30 Days':'All Time';
+
   // --- Observations ---
-  const obs=d.observations||[];
+  const obsAll=d.observations||[];
+  const obs=obsAll.filter(o=>inPeriod(o.date));
   const obsSafe=obs.filter(o=>o.type==='SAFE').length;
   const obsRisk=obs.filter(o=>o.type==='AT-RISK').length;
   const obsImpr=obs.filter(o=>o.type==='IMPROVEMENT').length;
 
   // --- Near Misses ---
-  const nms=d.nearMisses||[];
+  const nmsAll=d.nearMisses||[];
+  const nms=nmsAll.filter(n=>inPeriod(n.date));
   const nmOpen=nms.filter(n=>n.status!=='Closed'&&n.status!=='Overdue').length;
   const nmOverdue=nms.filter(n=>n.status==='Overdue').length;
   const nmClosed=nms.filter(n=>n.status==='Closed').length;
 
   // --- Incidents ---
-  const incs=d.incidents||[];
+  const incsAll=d.incidents||[];
+  const incs=incsAll.filter(i=>inPeriod(i.date));
   const incOpen=incs.filter(i=>i.status!=='Closed').length;
   const incClosed=incs.filter(i=>i.status==='Closed').length;
 
   // --- Permits (PTW) ---
-  const permits=d.permits||[];
+  const permitsAll=d.permits||[];
+  const permits=permitsAll.filter(p=>inPeriod((p.from||'').substring(0,10)));
   const ptwActive=permits.filter(p=>p.status==='ACTIVE').length;
   const ptwExpired=permits.filter(p=>p.status==='EXPIRED').length;
   const ptwClosed=permits.filter(p=>p.status==='CLOSED').length;
 
-  // --- Risk Register ---
+  // --- Risk Register (not date-filtered — risks are evergreen) ---
   const risks=d.risks||[];
   const rExt=risks.filter(r=>r.rRating==='CRITICAL').length;
   const rHigh=risks.filter(r=>r.rRating==='HIGH').length;
@@ -3684,7 +3787,8 @@ function renderDashboard(){
   const rLow=risks.filter(r=>r.rRating==='LOW').length;
 
   // --- CAPAs ---
-  const capas=d.capas||[];
+  const capasAll=d.capas||[];
+  const capas=capasAll.filter(c=>inPeriod(c.created));
   const capaOpen=capas.filter(c=>c.status==='Open'||c.status==='In Progress').length;
   const capaOverdue=capas.filter(c=>c.status==='Overdue').length;
   const capaClosed=capas.filter(c=>c.status==='Closed').length;
@@ -3771,21 +3875,30 @@ function renderDashboard(){
   const ptwOpen=permits.filter(p=>p.status==='ACTIVE'||p.status==='PENDING').length;
 
   // Toolbox Talks
-  const toolbox=d.toolboxTalks||[];
+  const toolbox=(d.toolboxTalks||[]).filter(t=>inPeriod(t.date));
   const tbtCompleted=toolbox.filter(t=>t.status==='Completed').length;
   const tbtPlanned=toolbox.filter(t=>t.status==='Planned').length;
 
-  // Inductions
+  // Inductions (not date-filtered — status is about currency, not submission date)
   const inductions=(d.inductions||[]).map(i=>({...i,status:getInductionStatus(i.expiry)}));
   const indValid=inductions.filter(i=>i.status==='Valid').length;
   const indExpiring=inductions.filter(i=>i.status==='Expiring Soon').length;
   const indExpired=inductions.filter(i=>i.status==='Expired').length;
 
   // MoC
-  const mocs=d.mocs||[];
+  const mocs=(d.mocs||[]).filter(m=>inPeriod(m.date));
   const mocOpen=mocs.filter(m=>!['Completed','Rejected','Cancelled'].includes(m.status)).length;
   const mocPending=mocs.filter(m=>m.status==='Pending Approval').length;
   const mocCompleted=mocs.filter(m=>m.status==='Completed').length;
+
+  // Assets (not date-filtered — status is about currency of inspection)
+  const assets=(d.assets||[]).map(a=>({...a,status:getAssetStatus(a.nextDate,a.result,a.condition)}));
+  const assetPass=assets.filter(a=>a.status==='Pass').length;
+  const assetDue=assets.filter(a=>a.status==='Due Soon').length;
+  const assetOverdue=assets.filter(a=>a.status==='Overdue'||a.status==='Fail').length;
+
+  // Update section title to show active period
+  document.getElementById('dash-module-title').textContent=`Module Activity Overview — ${periodLabel}`;
 
   function moduleStatus(overdue, open, total){
     if(overdue>0) return '<span class="pill pill-red">Overdue</span>';
@@ -3803,6 +3916,7 @@ function renderDashboard(){
     {name:'Toolbox Talks',      icon:'🗣️', page:'toolbox',      total:toolbox.length,    open:tbtPlanned,       overdue:0,           closed:tbtCompleted},
     {name:'Inductions',         icon:'🪪',  page:'inductions',   total:inductions.length, open:indExpiring,      overdue:indExpired,  closed:indValid},
     {name:'Management of Change',icon:'🔄', page:'moc',          total:mocs.length,       open:mocOpen,          overdue:mocPending,  closed:mocCompleted},
+    {name:'Asset Inspections',   icon:'🔧', page:'assets',       total:assets.length,     open:assetDue,         overdue:assetOverdue,closed:assetPass},
   ];
 
   document.getElementById('dash-module-tbody').innerHTML=moduleRows.map(r=>`
@@ -5092,6 +5206,133 @@ document.getElementById('moc-filter-status').addEventListener('change',()=>rende
 document.getElementById('moc-filter-risk').addEventListener('change',()=>renderMoc(1));
 
 // ============================================================
+// EQUIPMENT & ASSET INSPECTIONS
+// ============================================================
+let assetPage=1;
+
+function getAssetStatus(nextDate, result, condition){
+  if(condition==='Out of Service'||result==='Fail') return 'Fail';
+  if(!nextDate) return 'Pass';
+  const days=getDaysUntil(nextDate);
+  if(days<0) return 'Overdue';
+  if(days<=14) return 'Due Soon';
+  return 'Pass';
+}
+function openAddAsset(){
+  document.getElementById('asset-modal-title').textContent='Add Asset';
+  document.getElementById('asset-f-edit-id').value='';
+  document.getElementById('asset-f-name').value='';
+  document.getElementById('asset-f-cat').value='Fire Safety';
+  document.getElementById('asset-f-serial').value='';
+  document.getElementById('asset-f-location').value='';
+  document.getElementById('asset-f-desc').value='';
+  document.getElementById('asset-f-last-date').value=today();
+  document.getElementById('asset-f-next-date').value='';
+  document.getElementById('asset-f-inspector').value='';
+  document.getElementById('asset-f-freq').value='Annual';
+  document.getElementById('asset-f-result').value='Pass';
+  document.getElementById('asset-f-condition').value='Good';
+  document.getElementById('asset-f-notes').value='';
+  document.getElementById('asset-f-standard').value='';
+  openModal('asset-modal');
+}
+function editAsset(id){
+  const d=getData()||getDefaultData();const a=(d.assets||[]).find(x=>x.id===id);if(!a)return;
+  document.getElementById('asset-modal-title').textContent='Edit Asset';
+  document.getElementById('asset-f-edit-id').value=id;
+  document.getElementById('asset-f-name').value=a.name||'';
+  document.getElementById('asset-f-cat').value=a.category||'Fire Safety';
+  document.getElementById('asset-f-serial').value=a.serial||'';
+  document.getElementById('asset-f-location').value=a.location||'';
+  document.getElementById('asset-f-desc').value=a.desc||'';
+  document.getElementById('asset-f-last-date').value=a.lastDate||'';
+  document.getElementById('asset-f-next-date').value=a.nextDate||'';
+  document.getElementById('asset-f-inspector').value=a.inspector||'';
+  document.getElementById('asset-f-freq').value=a.freq||'Annual';
+  document.getElementById('asset-f-result').value=a.result||'Pass';
+  document.getElementById('asset-f-condition').value=a.condition||'Good';
+  document.getElementById('asset-f-notes').value=a.notes||'';
+  document.getElementById('asset-f-standard').value=a.standard||'';
+  openModal('asset-modal');
+}
+function saveAsset(){
+  if(!validateRequired([['asset-f-name','Asset Name']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.assets=d.assets||[];
+  const editId=document.getElementById('asset-f-edit-id').value;
+  const nextDate=document.getElementById('asset-f-next-date').value||'';
+  const result=document.getElementById('asset-f-result').value;
+  const condition=document.getElementById('asset-f-condition').value;
+  const rec={
+    id:editId||genId('AST',d.assets),
+    name:document.getElementById('asset-f-name').value||'',
+    category:document.getElementById('asset-f-cat').value,
+    serial:document.getElementById('asset-f-serial').value||'',
+    location:document.getElementById('asset-f-location').value||'',
+    desc:document.getElementById('asset-f-desc').value||'',
+    lastDate:document.getElementById('asset-f-last-date').value||'',
+    nextDate,
+    inspector:document.getElementById('asset-f-inspector').value||'',
+    freq:document.getElementById('asset-f-freq').value,
+    result, condition,
+    notes:document.getElementById('asset-f-notes').value||'',
+    standard:document.getElementById('asset-f-standard').value||'',
+    status:getAssetStatus(nextDate,result,condition)
+  };
+  if(editId){const idx=d.assets.findIndex(x=>x.id===editId);if(idx>=0)d.assets[idx]=rec;}
+  else d.assets.push(rec);
+  saveData(d);closeModal('asset-modal');renderAssets(1);
+  showToast('Asset saved — '+rec.id,'success');
+}
+function deleteAsset(id){
+  const d=getData()||getDefaultData();if(!confirm('Delete asset '+id+'?\nThis cannot be undone.'))return;
+  d.assets=(d.assets||[]).filter(x=>x.id!==id);saveData(d);renderAssets(assetPage);
+}
+function renderAssets(page=1){
+  assetPage=page;const d=getData()||getDefaultData();
+  // Refresh statuses
+  (d.assets||[]).forEach(a=>{a.status=getAssetStatus(a.nextDate,a.result,a.condition);});
+  const search=(document.getElementById('asset-search').value||'').toLowerCase();
+  const cf=document.getElementById('asset-filter-cat').value;
+  const sf=document.getElementById('asset-filter-status').value;
+  let items=(d.assets||[]).filter(a=>{
+    const ms=!search||[a.id,a.name,a.category,a.location,a.serial,a.inspector].some(v=>(v||'').toLowerCase().includes(search));
+    const mc=!cf||a.category===cf;const msf=!sf||a.status===sf;return ms&&mc&&msf;
+  });
+  const statusOrder={Fail:0,Overdue:1,'Due Soon':2,'Out of Service':3,Pass:4};
+  items.sort((a,b)=>(statusOrder[a.status]??9)-(statusOrder[b.status]??9));
+  const pass=items.filter(a=>a.status==='Pass').length;
+  const dueSoon=items.filter(a=>a.status==='Due Soon').length;
+  const overdue=items.filter(a=>a.status==='Overdue').length;
+  const fail=items.filter(a=>a.status==='Fail').length;
+  document.getElementById('asset-stats').innerHTML=`<span class="stat-chip">Total: ${items.length}</span><span class="stat-chip" style="color:#16a34a">✓ Pass: ${pass}</span><span class="stat-chip" style="color:#ca8a04">⏰ Due Soon: ${dueSoon}</span><span class="stat-chip" style="color:#dc2626">Overdue: ${overdue}</span><span class="stat-chip" style="color:#dc2626">✗ Fail: ${fail}</span>`;
+  const {items:rows,total}=paginate(items,page);
+  const assetStatusPill=s=>({Pass:'<span class="pill pill-green">Pass</span>','Due Soon':'<span class="pill pill-yellow">Due Soon</span>',Overdue:'<span class="pill pill-red">Overdue</span>',Fail:'<span class="pill pill-red">Fail</span>','Out of Service':'<span class="pill pill-gray">Out of Service</span>'}[s]||`<span class="pill pill-gray">${s}</span>`);
+  const daysLabel=nextDate=>{if(!nextDate)return'—';const d=getDaysUntil(nextDate);if(d<0)return`<span style="color:var(--red);font-weight:700">${Math.abs(d)}d overdue</span>`;if(d===0)return`<span style="color:var(--red)">Today</span>`;if(d<=14)return`<span style="color:var(--yellow)">${d}d</span>`;return fmtDate(nextDate);};
+  document.getElementById('asset-tbody').innerHTML=rows.map(a=>{
+    const rowCls=a.status==='Fail'||a.status==='Overdue'?'row-red':a.status==='Due Soon'?'row-amber':'';
+    return`<tr class="${rowCls}">
+      <td><strong>${a.id}</strong></td>
+      <td title="${escapeHtml(a.desc||'')}">${truncate(a.name,38)}</td>
+      <td><span class="pill pill-blue" style="font-size:10px">${a.category}</span></td>
+      <td>${a.location||'—'}</td>
+      <td>${fmtDate(a.lastDate)||'—'}</td>
+      <td>${daysLabel(a.nextDate)}</td>
+      <td>${a.inspector||'—'}</td>
+      <td>${a.result==='Pass'?'<span class="pill pill-green">Pass</span>':a.result==='Fail'?'<span class="pill pill-red">Fail</span>':`<span class="pill pill-yellow">${a.result}</span>`}</td>
+      <td>${assetStatusPill(a.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editAsset('${a.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteAsset('${a.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+  renderPagination('asset-pagination',total,page,renderAssets);
+}
+document.getElementById('asset-search').addEventListener('input',()=>renderAssets(1));
+document.getElementById('asset-filter-cat').addEventListener('change',()=>renderAssets(1));
+document.getElementById('asset-filter-status').addEventListener('change',()=>renderAssets(1));
+
+// ============================================================
 // MONTHLY REPORT
 // ============================================================
 function generateReport(){
@@ -5463,6 +5704,9 @@ function exportCSV(module){
   } else if(module==='moc'){
     cols=['MoC ID','Title','Type','Initiated By','Dept','Date','Target Date','Risk Level','Status','Approver','Approval Date','Training','Description','Reason','Hazards','Controls','Review Notes'];
     rows=(d.mocs||[]).map(m=>[m.id,m.title,m.type,m.initiator,m.dept,m.date,m.target,m.riskLevel,m.status,m.approver,m.approvedDate,m.training,m.desc,m.reason,m.hazards,m.controls,m.reviewNotes]);
+  } else if(module==='assets'){
+    cols=['Asset ID','Name','Category','Serial No','Location','Description','Last Inspected','Next Due','Frequency','Inspector','Result','Condition','Status','Notes','Standard'];
+    rows=(d.assets||[]).map(a=>[a.id,a.name,a.category,a.serial,a.location,a.desc,a.lastDate,a.nextDate,a.freq,a.inspector,a.result,a.condition,a.status,a.notes,a.standard]);
   }
   const csv=[cols,...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
