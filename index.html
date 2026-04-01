@@ -1888,6 +1888,7 @@
     <li class="nav-item"><div class="nav-link" data-page="toolbox"><span class="nav-icon">🗣️</span><span class="nav-label">Toolbox Talks</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="inductions"><span class="nav-icon">🪪</span><span class="nav-label">Inductions</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="emergency"><span class="nav-icon">🚑</span><span class="nav-label">Emergency Contacts</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -2290,7 +2291,7 @@
 <!-- ======= INDUCTION LOG ======= -->
 <div id="page-inductions" class="page">
   <div class="section-header">
-    <span class="section-title">Contractor &amp; Visitor Induction Log</span>
+    <span class="section-title">Contractor, Visitor &amp; Employee Induction Log</span>
     <div class="section-header-right">
       <button class="btn btn-ghost btn-sm" onclick="exportCSV('inductions')">⬇ CSV</button>
       <button class="btn btn-primary" onclick="openAddInduction()">+ Add Induction</button>
@@ -2298,7 +2299,7 @@
   </div>
   <div class="toolbar">
     <input type="text" id="ind-search" placeholder="Search inductions…">
-    <select id="ind-filter-type"><option value="">All Types</option><option value="Contractor">Contractor</option><option value="Visitor">Visitor</option></select>
+    <select id="ind-filter-type"><option value="">All Types</option><option value="Employee">Employee</option><option value="Contractor">Contractor</option><option value="Visitor">Visitor</option></select>
     <select id="ind-filter-status"><option value="">All Statuses</option><option value="Valid">Valid</option><option value="Expiring Soon">Expiring Soon</option><option value="Expired">Expired</option></select>
   </div>
   <div class="stats-row" id="ind-stats"></div>
@@ -2326,6 +2327,33 @@
     <select id="emg-filter-cat"><option value="">All Categories</option><option value="Medical">Medical</option><option value="Fire">Fire</option><option value="Security">Security</option><option value="Utilities">Utilities</option><option value="Management">Management</option><option value="Environmental">Environmental</option><option value="Other">Other</option></select>
   </div>
   <div id="emg-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-2);margin-top:var(--sp-2)"></div>
+</div>
+
+<!-- ======= MANAGEMENT OF CHANGE ======= -->
+<div id="page-moc" class="page">
+  <div class="section-header">
+    <span class="section-title">Management of Change</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('moc')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="openAddMoc()">+ New Change Request</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="moc-search" placeholder="Search change requests…">
+    <select id="moc-filter-type"><option value="">All Types</option><option value="Process">Process</option><option value="Equipment">Equipment</option><option value="Procedure">Procedure</option><option value="Personnel">Personnel</option><option value="Chemical">Chemical</option><option value="Structural">Structural</option><option value="IT/Software">IT/Software</option></select>
+    <select id="moc-filter-status"><option value="">All Statuses</option><option value="Draft">Draft</option><option value="Pending Approval">Pending Approval</option><option value="Approved">Approved</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option><option value="Rejected">Rejected</option><option value="Cancelled">Cancelled</option></select>
+    <select id="moc-filter-risk"><option value="">All Risk Levels</option><option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+  </div>
+  <div class="stats-row" id="moc-stats"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>MoC ID</th><th>Title</th><th>Type</th><th>Initiated By</th><th>Date</th><th>Risk Level</th><th>Status</th><th>Approver</th><th>Target Date</th><th>Actions</th></tr></thead>
+        <tbody id="moc-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="moc-pagination"></div>
+  </div>
 </div>
 
   </div><!-- end #content -->
@@ -2372,7 +2400,7 @@
     </div>
     <div class="form-row">
       <div class="form-group"><label>Type</label>
-        <select id="ind-f-type"><option value="Contractor">Contractor</option><option value="Visitor">Visitor</option></select>
+        <select id="ind-f-type"><option value="Employee">Employee</option><option value="Contractor">Contractor</option><option value="Visitor">Visitor</option></select>
       </div>
       <div class="form-group"><label>ID / Badge Number</label><input type="text" id="ind-f-badge" placeholder="e.g. C-0042"></div>
     </div>
@@ -2425,6 +2453,53 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('emg-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEmergencyContact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOC MODAL -->
+<div class="modal-overlay" id="moc-modal">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-title" id="moc-modal-title">New Change Request <button class="modal-close" onclick="closeModal('moc-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Change Title</label><input type="text" id="moc-f-title" placeholder="Brief description of the change"></div>
+      <div class="form-group"><label>Change Type</label>
+        <select id="moc-f-type"><option value="Process">Process</option><option value="Equipment">Equipment</option><option value="Procedure">Procedure</option><option value="Personnel">Personnel</option><option value="Chemical">Chemical</option><option value="Structural">Structural</option><option value="IT/Software">IT/Software</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Initiated By</label><input type="text" id="moc-f-initiator" placeholder="Name / Role"></div>
+      <div class="form-group"><label>Department / Area</label><input type="text" id="moc-f-dept" placeholder="e.g. Operations, Maintenance"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Request Date</label><input type="date" id="moc-f-date"></div>
+      <div class="form-group"><label>Target Implementation Date</label><input type="date" id="moc-f-target"></div>
+    </div>
+    <div class="form-group"><label>Description of Change</label><textarea id="moc-f-desc" placeholder="Describe what is being changed and why…"></textarea></div>
+    <div class="form-group"><label>Reason / Justification</label><textarea id="moc-f-reason" placeholder="Business or safety reason for the change…"></textarea></div>
+    <div class="form-group"><label>Hazards &amp; Risks Introduced</label><textarea id="moc-f-hazards" placeholder="What new hazards or risks could this change introduce?"></textarea></div>
+    <div class="form-group"><label>Mitigation / Controls</label><textarea id="moc-f-controls" placeholder="What controls are in place to manage the risks?"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Risk Level</label>
+        <select id="moc-f-risk"><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option><option value="Critical">Critical</option></select>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select id="moc-f-status"><option value="Draft">Draft</option><option value="Pending Approval">Pending Approval</option><option value="Approved">Approved</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option><option value="Rejected">Rejected</option><option value="Cancelled">Cancelled</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Approver</label><input type="text" id="moc-f-approver" placeholder="Name / Role of approving authority"></div>
+      <div class="form-group"><label>Approval Date</label><input type="date" id="moc-f-approved-date"></div>
+    </div>
+    <div class="form-group"><label>Training Required?</label>
+      <select id="moc-f-training"><option value="No">No</option><option value="Yes">Yes</option></select>
+    </div>
+    <div class="form-group"><label>Training Details / Affected Parties</label><textarea id="moc-f-training-notes" placeholder="Who needs to be trained and on what?"></textarea></div>
+    <div class="form-group"><label>Post-Implementation Review Notes</label><textarea id="moc-f-review-notes" placeholder="Notes after implementation — did change go as planned?"></textarea></div>
+    <input type="hidden" id="moc-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('moc-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMoc()">Save</button>
     </div>
   </div>
 </div>
@@ -3179,6 +3254,13 @@ function getDefaultData() {
         {id:'EMG-008',name:'EDM Grid Control Centre',role:'National Grid Emergency — Electrical Isolation',category:'Utilities',priority:'Primary',phone:'+258 21 350 000',email:'',hours:'24/7',notes:'For major electrical fault requiring grid disconnection.'},
         {id:'EMG-009',name:'Environmental Incident Hotline',role:'MITADER Environmental Spill Notification',category:'Environmental',priority:'Primary',phone:'+258 21 466 000',email:'environment@mitader.gov.mz',hours:'Business hours',notes:'Mandatory notification for any environmental incident within 4 hours.'}
       ],
+    mocs: [
+      {id:'MOC-2026-001',title:'Replace Cooling Water Pump with Variable Speed Drive Model',type:'Equipment',initiator:'Maintenance Supervisor',dept:'Maintenance',date:'2026-02-10',target:'2026-04-30',desc:'Existing fixed-speed cooling water pump (CWP-01) to be replaced with a variable speed drive (VSD) model to improve energy efficiency and reduce maintenance costs.',reason:'Current pump is end-of-life. VSD will reduce energy consumption by ~30% and allow flow control without throttling valves.',hazards:'Electrical work during installation; VSD control panel introduces new software interface; risk of reverse rotation if phasing incorrect.',controls:'PTW to be issued for all electrical work. LOTO protocol. Vendor commissioning engineer on site. Pre-start checklist signed off by SHEQ.',riskLevel:'High',status:'Approved',approver:'Plant Manager',approvedDate:'2026-02-18',training:'Yes',trainingNotes:'Operations team to receive 2-hour VSD operation and fault response training prior to handover.',reviewNotes:'',createdBy:''},
+      {id:'MOC-2026-002',title:'Update Confined Space Entry Procedure — Add Continuous Gas Monitoring Requirement',type:'Procedure',initiator:'SHEQ Officer',dept:'SHEQ',date:'2026-02-20',target:'2026-03-15',desc:'Revise SOP-CS-004 to mandate continuous multi-gas monitoring (O2, H2S, CO, LEL) throughout any confined space entry, replacing the current pre-entry-only monitoring requirement.',reason:'Near miss NM-001 investigation identified that pre-entry gas test alone is insufficient. Gas conditions can change during work.',hazards:'None from the procedure change itself. Addresses existing hazards of gas build-up during confined space work.',controls:'New gas monitors to be procured. Operatives trained on alarm response. Procedure reviewed by SHEQ committee.',riskLevel:'Medium',status:'Completed',approver:'SHEQ Manager',approvedDate:'2026-02-25',training:'Yes',trainingNotes:'All confined space entry team members trained on new procedure. Sign-off sheets in SHEQ records.',reviewNotes:'Procedure implemented successfully. Gas monitors purchased and calibrated. No issues during first 3 entries under new procedure.',createdBy:''},
+      {id:'MOC-2026-003',title:'Introduction of New Corrosion Inhibitor Chemical — CorroPro X50',type:'Chemical',initiator:'Environmental Officer',dept:'Operations',date:'2026-03-05',target:'2026-03-30',desc:'Replace current corrosion inhibitor (ChemGuard 200) with CorroPro X50 across cooling tower chemical dosing system. New product offers better performance at lower concentration.',reason:'Supplier discontinuing ChemGuard 200. CorroPro X50 is approved equivalent with improved environmental profile.',hazards:'New chemical — different SDS, PPE requirements, spill response procedure. Risk of incorrect dosing during transition.',controls:'Full SDS review completed. Chemical store labelling updated. Spill kit verified. Toolbox talk conducted with dosing team.',riskLevel:'Medium',status:'In Progress',approver:'Operations Manager',approvedDate:'2026-03-10',training:'Yes',trainingNotes:'Dosing team trained on CorroPro X50 SDS, PPE, and dosing rates.',reviewNotes:'',createdBy:''},
+      {id:'MOC-2026-004',title:'Night Shift Supervision Structure Change — Remove Shift Supervisor Role',type:'Personnel',initiator:'Operations Manager',dept:'Operations',date:'2026-03-12',target:'2026-05-01',desc:'Proposal to remove dedicated Shift Supervisor role on night shifts and replace with a senior operator lead model, reducing headcount by 1 FTE per shift.',reason:'Cost reduction initiative. Senior operators currently perform most supervisory tasks during nights.',hazards:'Reduced supervisory oversight during critical operations. Slower incident response command. Risk of duty of care gap.',controls:'SHEQ impact assessment required. Minimum competency levels for senior operator lead to be defined. Trial period of 60 days with weekly SHEQ review.',riskLevel:'High',status:'Pending Approval',approver:'Plant Manager',approvedDate:'',training:'Yes',trainingNotes:'Senior operators to receive leadership and incident response training if approved.',reviewNotes:'',createdBy:''},
+      {id:'MOC-2026-005',title:'Install CCTV Cameras at Fuel Gas Pipeline Entry Points',type:'Structural',initiator:'Security Manager',dept:'Security',date:'2026-03-18',target:'2026-06-30',desc:'Installation of 4 CCTV cameras at fuel gas pipeline entry/isolation points to improve security monitoring and support incident investigation.',reason:'Recent security review identified blind spots at critical infrastructure. Aligns with insurance requirements.',hazards:'Civil works required for conduit installation near live pipelines. Electrical installation in potentially hazardous area.',controls:'PTW required for any civil works near pipelines. All electrical work in Zone 1 area requires EX-rated equipment and specialist installer.',riskLevel:'Medium',status:'Draft',approver:'Plant Manager',approvedDate:'',training:'No',trainingNotes:'',reviewNotes:'',createdBy:''}
+    ],
     calendar: buildDefaultCalendar()
   };
 }
@@ -3445,6 +3527,11 @@ function openView(module,id){
     const r=(d.capas||[]).find(x=>x.id===id);if(!r)return;
     title='CAPA: '+escapeHtml(r.id);
     body=viewTable([['CAPA ID',escapeHtml(r.id)],['Source Module',escapeHtml(r.source_module||'')],['Source Ref',escapeHtml(r.source_ref||'')],['WHAT',escapeHtml(r.what||'')],['WHO',escapeHtml(r.who||'')],['WHEN',fmtDate(r.when)||'—'],['HOW',escapeHtml(r.how||'')],['Priority',priorityPill(r.priority)],['Status',statusPill(r.status)],['Created',fmtDate(r.created)],['Closed Date',fmtDate(r.closed_date)||'—'],['Evidence',escapeHtml(r.evidence||'')]]);
+  } else if(module==='moc'){
+    const r=(d.mocs||[]).find(x=>x.id===id);if(!r)return;
+    title='Change Request: '+escapeHtml(r.id);
+    const mocStatusPill=s=>{const m={Draft:'pill-gray','Pending Approval':'pill-yellow',Approved:'pill-blue','In Progress':'pill-teal',Completed:'pill-green',Rejected:'pill-red',Cancelled:'pill-gray'};return`<span class="pill ${m[s]||'pill-gray'}">${s}</span>`;};
+    body=viewTable([['MoC ID',escapeHtml(r.id)],['Title',`<strong>${escapeHtml(r.title||'')}</strong>`],['Type',`<span class="pill pill-blue">${escapeHtml(r.type||'')}</span>`],['Initiated By',escapeHtml(r.initiator||'')],['Department',escapeHtml(r.dept||'')],['Request Date',fmtDate(r.date)||'—'],['Target Date',fmtDate(r.target)||'—'],['Risk Level',priorityPill(r.riskLevel)],['Status',mocStatusPill(r.status)],['Approver',escapeHtml(r.approver||'—')],['Approval Date',fmtDate(r.approvedDate)||'—'],['Description',escapeHtml(r.desc||'')],['Reason / Justification',escapeHtml(r.reason||'')],['Hazards Introduced',escapeHtml(r.hazards||'')],['Mitigation / Controls',escapeHtml(r.controls||'')],['Training Required',r.training==='Yes'?'<span class="pill pill-orange">Yes</span>':'No'],['Training Details',escapeHtml(r.trainingNotes||'—')],['Post-Implementation Review',escapeHtml(r.reviewNotes||'—')]]);
   }
   document.getElementById('view-modal-title').textContent=title;
   document.getElementById('view-modal-body').innerHTML=body;
@@ -3513,7 +3600,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor & Visitor Inductions',emergency:'Emergency Contact Directory',chat:'SHEQ-AI Chat'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',chat:'SHEQ-AI Chat'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -3535,6 +3622,7 @@ function navigateTo(page){
   else if(page==='toolbox')renderToolbox();
   else if(page==='inductions')renderInductions();
   else if(page==='emergency')renderEmergencyContacts();
+  else if(page==='moc')renderMoc();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>navigateTo(l.dataset.page)));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -4707,7 +4795,7 @@ function renderInductions(page=1){
       <td><strong>${i.id}</strong></td>
       <td>${i.name}</td>
       <td>${i.company||'—'}</td>
-      <td><span class="pill ${i.type==='Contractor'?'pill-blue':'pill-teal'}">${i.type}</span></td>
+      <td><span class="pill ${i.type==='Contractor'?'pill-blue':i.type==='Employee'?'pill-green':'pill-teal'}">${i.type}</span></td>
       <td>${i.inductedBy||'—'}</td>
       <td>${fmtDate(i.date)}</td>
       <td>${fmtDate(i.expiry)||'—'}</td>
@@ -4819,6 +4907,145 @@ function renderEmergencyContacts(){
 }
 document.getElementById('emg-search').addEventListener('input',()=>renderEmergencyContacts());
 document.getElementById('emg-filter-cat').addEventListener('change',()=>renderEmergencyContacts());
+
+// ============================================================
+// MANAGEMENT OF CHANGE (MoC)
+// ============================================================
+let mocPage=1;
+
+function openAddMoc(){
+  document.getElementById('moc-modal-title').textContent='New Change Request';
+  document.getElementById('moc-f-edit-id').value='';
+  document.getElementById('moc-f-title').value='';
+  document.getElementById('moc-f-type').value='Process';
+  document.getElementById('moc-f-initiator').value='';
+  document.getElementById('moc-f-dept').value='';
+  document.getElementById('moc-f-date').value=today();
+  document.getElementById('moc-f-target').value='';
+  document.getElementById('moc-f-desc').value='';
+  document.getElementById('moc-f-reason').value='';
+  document.getElementById('moc-f-hazards').value='';
+  document.getElementById('moc-f-controls').value='';
+  document.getElementById('moc-f-risk').value='Medium';
+  document.getElementById('moc-f-status').value='Draft';
+  document.getElementById('moc-f-approver').value='';
+  document.getElementById('moc-f-approved-date').value='';
+  document.getElementById('moc-f-training').value='No';
+  document.getElementById('moc-f-training-notes').value='';
+  document.getElementById('moc-f-review-notes').value='';
+  openModal('moc-modal');
+}
+
+function editMoc(id){
+  const d=getData()||getDefaultData();const m=(d.mocs||[]).find(x=>x.id===id);if(!m)return;
+  document.getElementById('moc-modal-title').textContent='Edit Change Request';
+  document.getElementById('moc-f-edit-id').value=id;
+  document.getElementById('moc-f-title').value=m.title||'';
+  document.getElementById('moc-f-type').value=m.type||'Process';
+  document.getElementById('moc-f-initiator').value=m.initiator||'';
+  document.getElementById('moc-f-dept').value=m.dept||'';
+  document.getElementById('moc-f-date').value=m.date||'';
+  document.getElementById('moc-f-target').value=m.target||'';
+  document.getElementById('moc-f-desc').value=m.desc||'';
+  document.getElementById('moc-f-reason').value=m.reason||'';
+  document.getElementById('moc-f-hazards').value=m.hazards||'';
+  document.getElementById('moc-f-controls').value=m.controls||'';
+  document.getElementById('moc-f-risk').value=m.riskLevel||'Medium';
+  document.getElementById('moc-f-status').value=m.status||'Draft';
+  document.getElementById('moc-f-approver').value=m.approver||'';
+  document.getElementById('moc-f-approved-date').value=m.approvedDate||'';
+  document.getElementById('moc-f-training').value=m.training||'No';
+  document.getElementById('moc-f-training-notes').value=m.trainingNotes||'';
+  document.getElementById('moc-f-review-notes').value=m.reviewNotes||'';
+  openModal('moc-modal');
+}
+
+function saveMoc(){
+  if(!validateRequired([['moc-f-title','Change Title'],['moc-f-initiator','Initiated By']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.mocs=d.mocs||[];
+  const editId=document.getElementById('moc-f-edit-id').value;
+  const y=new Date().getFullYear();
+  const existing=(d.mocs||[]).filter(m=>m.id&&m.id.startsWith('MOC-'+y+'-'));
+  const nums=existing.map(m=>parseInt((m.id||'').split('-')[2])||0);
+  const newId='MOC-'+y+'-'+(( Math.max(0,...nums)+1 ).toString().padStart(3,'0'));
+  const rec={
+    id:editId||newId,
+    title:document.getElementById('moc-f-title').value||'',
+    type:document.getElementById('moc-f-type').value,
+    initiator:document.getElementById('moc-f-initiator').value||'',
+    dept:document.getElementById('moc-f-dept').value||'',
+    date:document.getElementById('moc-f-date').value||today(),
+    target:document.getElementById('moc-f-target').value||'',
+    desc:document.getElementById('moc-f-desc').value||'',
+    reason:document.getElementById('moc-f-reason').value||'',
+    hazards:document.getElementById('moc-f-hazards').value||'',
+    controls:document.getElementById('moc-f-controls').value||'',
+    riskLevel:document.getElementById('moc-f-risk').value,
+    status:document.getElementById('moc-f-status').value,
+    approver:document.getElementById('moc-f-approver').value||'',
+    approvedDate:document.getElementById('moc-f-approved-date').value||'',
+    training:document.getElementById('moc-f-training').value,
+    trainingNotes:document.getElementById('moc-f-training-notes').value||'',
+    reviewNotes:document.getElementById('moc-f-review-notes').value||'',
+    createdBy:currentUser?.email||''
+  };
+  if(editId){const idx=d.mocs.findIndex(x=>x.id===editId);if(idx>=0)d.mocs[idx]=rec;}
+  else d.mocs.push(rec);
+  saveData(d);closeModal('moc-modal');renderMoc(1);
+  showToast('Change request saved — '+rec.id,'success');
+}
+
+function deleteMoc(id){
+  const d=getData()||getDefaultData();const m=(d.mocs||[]).find(x=>x.id===id);
+  if(!confirm('Delete change request '+id+(m?' — '+truncate(m.title,50):'')+'\nThis cannot be undone.'))return;
+  d.mocs=(d.mocs||[]).filter(x=>x.id!==id);saveData(d);renderMoc(mocPage);
+}
+
+function renderMoc(page=1){
+  mocPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('moc-search').value||'').toLowerCase();
+  const tf=document.getElementById('moc-filter-type').value;
+  const sf=document.getElementById('moc-filter-status').value;
+  const rf=document.getElementById('moc-filter-risk').value;
+  let items=(d.mocs||[]).slice().reverse().filter(m=>{
+    const ms=!search||[m.id,m.title,m.type,m.initiator,m.dept,m.approver].some(v=>(v||'').toLowerCase().includes(search));
+    const mt=!tf||m.type===tf;const msf=!sf||m.status===sf;const mr=!rf||m.riskLevel===rf;
+    return ms&&mt&&msf&&mr;
+  });
+  const statusOrder={Draft:0,'Pending Approval':1,'Approved':2,'In Progress':3,'Completed':4,'Rejected':5,'Cancelled':6};
+  items.sort((a,b)=>(statusOrder[a.status]??9)-(statusOrder[b.status]??9));
+  const open=items.filter(m=>!['Completed','Rejected','Cancelled'].includes(m.status)).length;
+  const completed=items.filter(m=>m.status==='Completed').length;
+  const pending=items.filter(m=>m.status==='Pending Approval').length;
+  const critical=items.filter(m=>m.riskLevel==='Critical'||m.riskLevel==='High').length;
+  document.getElementById('moc-stats').innerHTML=`<span class="stat-chip">Total: ${items.length}</span><span class="stat-chip" style="color:#ea580c">Open: ${open}</span><span class="stat-chip" style="color:#ca8a04">Pending Approval: ${pending}</span><span class="stat-chip" style="color:#dc2626">High/Critical Risk: ${critical}</span><span class="stat-chip" style="color:#16a34a">Completed: ${completed}</span>`;
+  const {items:rows,total}=paginate(items,page);
+  const mocStatusPill=s=>{const m={Draft:'pill-gray','Pending Approval':'pill-yellow',Approved:'pill-blue','In Progress':'pill-teal',Completed:'pill-green',Rejected:'pill-red',Cancelled:'pill-gray'};return`<span class="pill ${m[s]||'pill-gray'}">${s}</span>`;};
+  document.getElementById('moc-tbody').innerHTML=rows.map(m=>{
+    const rowCls=m.riskLevel==='Critical'?'row-red':m.riskLevel==='High'?'row-amber':'';
+    return`<tr class="${rowCls}">
+      <td><strong>${m.id}</strong></td>
+      <td title="${escapeHtml(m.desc||'')}">${truncate(m.title,40)}</td>
+      <td><span class="pill pill-blue" style="font-size:10px">${m.type}</span></td>
+      <td>${m.initiator||'—'}</td>
+      <td>${fmtDate(m.date)}</td>
+      <td>${priorityPill(m.riskLevel)}</td>
+      <td>${mocStatusPill(m.status)}</td>
+      <td>${m.approver||'—'}</td>
+      <td>${fmtDate(m.target)||'—'}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="openView('moc','${m.id}')">View</button>
+        <button class="btn btn-sm btn-ghost" onclick="editMoc('${m.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMoc('${m.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+  renderPagination('moc-pagination',total,page,renderMoc);
+}
+document.getElementById('moc-search').addEventListener('input',()=>renderMoc(1));
+document.getElementById('moc-filter-type').addEventListener('change',()=>renderMoc(1));
+document.getElementById('moc-filter-status').addEventListener('change',()=>renderMoc(1));
+document.getElementById('moc-filter-risk').addEventListener('change',()=>renderMoc(1));
 
 // ============================================================
 // MONTHLY REPORT
@@ -5189,6 +5416,9 @@ function exportCSV(module){
   } else if(module==='inductions'){
     cols=['ID','Name','Company','Type','Badge','Inducted By','Date','Expiry','Topics','Notes','Status'];
     rows=(d.inductions||[]).map(i=>[i.id,i.name,i.company,i.type,i.badge,i.inductedBy,i.date,i.expiry,i.topics,i.notes,i.status]);
+  } else if(module==='moc'){
+    cols=['MoC ID','Title','Type','Initiated By','Dept','Date','Target Date','Risk Level','Status','Approver','Approval Date','Training','Description','Reason','Hazards','Controls','Review Notes'];
+    rows=(d.mocs||[]).map(m=>[m.id,m.title,m.type,m.initiator,m.dept,m.date,m.target,m.riskLevel,m.status,m.approver,m.approvedDate,m.training,m.desc,m.reason,m.hazards,m.controls,m.reviewNotes]);
   }
   const csv=[cols,...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
