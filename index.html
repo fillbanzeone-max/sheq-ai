@@ -1899,7 +1899,6 @@
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="audits"><span class="nav-icon">📝</span><span class="nav-label">Audits &amp; Inspections</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="investigation"><span class="nav-icon">🔍</span><span class="nav-label">Investigations (RCA)</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -2398,42 +2397,6 @@
   </div>
 </div>
 
-<!-- ======= INCIDENT INVESTIGATIONS (RCA) ======= -->
-<div id="page-investigation" class="page">
-  <div class="section-header">
-    <span class="section-title">Incident Investigations — Root Cause Analysis</span>
-    <div class="section-header-right">
-      <button class="btn btn-ghost btn-sm" onclick="exportCSV('investigation')">⬇ CSV</button>
-      <button class="btn btn-primary" onclick="openAddInvestigation()">+ New Investigation</button>
-    </div>
-  </div>
-  <div class="toolbar">
-    <input type="text" id="inv-search" placeholder="Search investigations…">
-    <select id="inv-filter-method">
-      <option value="">All Methods</option>
-      <option value="5why">5-Why</option>
-      <option value="fishbone">Fishbone</option>
-      <option value="both">Both</option>
-    </select>
-    <select id="inv-filter-status">
-      <option value="">All Statuses</option>
-      <option>Open</option>
-      <option>In Progress</option>
-      <option>Complete</option>
-    </select>
-  </div>
-  <div class="stats-row" id="inv-stats"></div>
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Inv. ID</th><th>Incident Ref</th><th>Title</th><th>Investigator</th><th>Date</th><th>Method</th><th>Root Cause (summary)</th><th>CAPAs</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="inv-tbody"></tbody>
-      </table>
-    </div>
-    <div class="pagination" id="inv-pagination"></div>
-  </div>
-</div>
-
 <!-- ======= AUDITS & INSPECTIONS ======= -->
 <div id="page-audits" class="page">
   <div class="section-header">
@@ -2755,8 +2718,11 @@
     </div>
     <div id="obs-capa-fields" style="display:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2);background:var(--card2)">
       <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-1)">RCA & Corrective Action</div>
-      <div class="form-group"><label>RCA Details</label><textarea id="obs-f-rca" placeholder="Root cause analysis findings…"></textarea></div>
-      <div class="form-group"><label>Corrective Actions</label><textarea id="obs-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#92400e">
+        🔍 <strong>An RCA Investigation will open automatically after saving</strong> — use it to complete a full 5-Why or Fishbone analysis.
+      </div>
+      <div class="form-group"><label>Initial Findings / Contributing Factors</label><textarea id="obs-f-rca" placeholder="Brief initial findings — the full RCA will be completed in the Investigation form after saving…"></textarea></div>
+      <div class="form-group"><label>Immediate Corrective Actions (WHAT)</label><textarea id="obs-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
       <div class="form-row">
         <div class="form-group"><label>WHO – Responsible</label><input type="text" id="obs-f-capa-who" placeholder="Name / Role"></div>
         <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="obs-f-capa-when"></div>
@@ -2806,8 +2772,11 @@
     </div>
     <div id="nm-capa-fields" style="display:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2);background:var(--card2)">
       <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-1)">RCA & Corrective Action</div>
-      <div class="form-group"><label>RCA Details</label><textarea id="nm-f-rca" placeholder="Root cause analysis findings…"></textarea></div>
-      <div class="form-group"><label>Corrective Actions</label><textarea id="nm-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#92400e">
+        🔍 <strong>An RCA Investigation will open automatically after saving</strong> — use it to complete a full 5-Why or Fishbone analysis.
+      </div>
+      <div class="form-group"><label>Initial Findings / Contributing Factors</label><textarea id="nm-f-rca" placeholder="Brief initial findings — the full RCA will be completed in the Investigation form after saving…"></textarea></div>
+      <div class="form-group"><label>Immediate Corrective Actions (WHAT)</label><textarea id="nm-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
       <div class="form-row">
         <div class="form-group"><label>WHO – Responsible</label><input type="text" id="nm-f-capa-who" placeholder="Name / Role"></div>
         <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="nm-f-capa-when"></div>
@@ -2844,7 +2813,10 @@
         <select id="inc-f-status"><option value="Open">Open</option><option value="Under Investigation">Under Investigation</option><option value="CAPA Issued">CAPA Issued</option><option value="Closed">Closed</option></select>
       </div>
     </div>
-    <div class="form-group"><label>RCA Details</label><textarea id="inc-f-rootcause" placeholder="Root cause analysis findings…"></textarea></div>
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#92400e">
+      🔍 <strong>Selecting "Under Investigation" status or Severity 1–2 will automatically open the RCA Investigation form after saving.</strong>
+    </div>
+    <div class="form-group"><label>Initial Root Cause / Findings</label><textarea id="inc-f-rootcause" placeholder="Brief initial findings — a full 5-Why / Fishbone investigation will open after saving if status is Under Investigation or Severity 1–2…"></textarea></div>
     <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin:var(--sp-1) 0">Corrective Actions (WHAT / WHO / WHEN / HOW)</div>
     <div class="form-group"><label>WHAT – Corrective Actions</label><textarea id="inc-f-capa-what" placeholder="What corrective actions must be taken?"></textarea></div>
     <div class="form-row">
@@ -3956,7 +3928,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',investigation:'Incident Investigations (RCA)',chat:'SHEQ-AI Chat'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'SHEQ-AI Chat'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -3981,7 +3953,6 @@ function navigateTo(page){
   else if(page==='moc')renderMoc();
   else if(page==='assets')renderAssets();
   else if(page==='audits')renderAudits();
-  else if(page==='investigation')renderInvestigations();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>navigateTo(l.dataset.page)));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -4158,12 +4129,6 @@ function renderDashboard(){
   const assetDue=assets.filter(a=>a.status==='Due Soon').length;
   const assetOverdue=assets.filter(a=>a.status==='Overdue'||a.status==='Fail').length;
 
-  // Investigations
-  const investigations=(d.investigations||[]).filter(i=>inPeriod(i.date));
-  const invComplete=investigations.filter(i=>i.status==='Complete').length;
-  const invOpen=investigations.filter(i=>i.status==='Open'||i.status==='In Progress').length;
-  const invNoCapa=investigations.filter(i=>i.status==='Complete'&&!(i.capaRefs||[]).length).length;
-
   // Audits
   const audits=(d.audits||[]).filter(a=>inPeriod(a.date));
   const auditComplete=audits.filter(a=>a.status==='Complete').length;
@@ -4191,7 +4156,6 @@ function renderDashboard(){
     {name:'Management of Change',icon:'🔄', page:'moc',          total:mocs.length,       open:mocOpen,          overdue:mocPending,  closed:mocCompleted},
     {name:'Asset Inspections',   icon:'🔧', page:'assets',       total:assets.length,     open:assetDue,         overdue:assetOverdue,closed:assetPass},
     {name:'Audits & Inspections',icon:'📝', page:'audits',       total:audits.length,     open:auditInProg,      overdue:auditCritFails,closed:auditComplete},
-    {name:'Investigations (RCA)',icon:'🔍', page:'investigation', total:investigations.length, open:invOpen,      overdue:invNoCapa,     closed:invComplete},
   ];
 
   document.getElementById('dash-module-tbody').innerHTML=moduleRows.map(r=>`
@@ -4288,6 +4252,11 @@ function saveObservation(){
     d.observations.push(rec);
   }
   saveData(d);closeModal('obs-modal');renderObservations(1);
+  // Auto-open RCA investigation when RCA is required on a new observation
+  if(!editId && capaReq){
+    const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
+    if(!hasInv) setTimeout(()=>openAddInvestigation(rec.id), 250);
+  }
 }
 function deleteObs(id){const d=getData()||getDefaultData();const o=(d.observations||[]).find(x=>x.id===id);if(!confirm('Delete observation '+id+(o?': '+truncate(o.desc,50):'')+'\nThis cannot be undone.'))return;d.observations=(d.observations||[]).filter(x=>x.id!==id);saveData(d);renderObservations(obsPage);}
 function renderObservations(page=1){
@@ -4310,11 +4279,11 @@ function renderObservations(page=1){
       <td data-label="Location">${o.location}</td>
       <td data-label="Type">${typePill(o.type)}</td>
       <td data-label="Description">${truncate(o.desc,45)}</td>
-      <td data-label="CAPA">${capaBadge(o.capaRef,d)} ${invBadge(o.id,d)}</td>
+      <td data-label="CAPA">${capaBadge(o.capaRef,d)}</td>
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('obs','${o.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editObs('${o.id}')">Edit</button>
-        ${o.capa==='Y'&&!invBadge(o.id,d)?`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${o.id}')" title="Start RCA">🔍 RCA</button>`:''}
+        ${o.capa==='Y'?(invBadge(o.id,d)||`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${o.id}')" title="Start RCA investigation">🔍 RCA</button>`):''}
         <button class="btn btn-sm btn-danger" onclick="deleteObs('${o.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -4371,16 +4340,10 @@ function saveNearMiss(){
     d.nearMisses.push(rec);
   }
   saveData(d);closeModal('nm-modal');renderNearMiss(1);
-  // Prompt to investigate HiPo near misses (new records only)
-  if(!editId && rec.hipo==1){
+  // Auto-open RCA investigation when RCA is required on a new near miss
+  if(!editId && capaReq){
     const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
-    if(!hasInv){
-      setTimeout(()=>{
-        if(confirm(`🔴 High Potential (HiPo) near miss logged — ${rec.id}\n\nHiPo events require a Root Cause Analysis to prevent future harm.\n\nStart an investigation now?`)){
-          openAddInvestigation(rec.id);
-        }
-      },300);
-    }
+    if(!hasInv) setTimeout(()=>openAddInvestigation(rec.id), 250);
   }
 }
 function deleteNM(id){const d=getData()||getDefaultData();const n=(d.nearMisses||[]).find(x=>x.id===id);if(!confirm('Delete near miss '+id+(n?': '+truncate(n.outcome||n.desc,50):'')+'\nThis cannot be undone.'))return;d.nearMisses=(d.nearMisses||[]).filter(x=>x.id!==id);saveData(d);renderNearMiss(nmPage);}
@@ -4404,11 +4367,10 @@ function renderNearMiss(page=1){
       <td data-label="HiPo" class="ctr">${n.hipo?'🔴':'⚪'}</td>
       <td data-label="Severity">${sevPill(n.sev)}</td>
       <td data-label="Status">${statusPill(n.status)}</td>
-      <td data-label="Investigation">${invBadge(n.id,d)||'—'}</td>
+      <td data-label="Investigation">${invBadge(n.id,d)||(n.capa==='Y'?`<button class="btn btn-sm btn-ghost" style="color:var(--accent);font-size:11px" onclick="openAddInvestigation('${n.id}')">🔍 Start RCA</button>`:'—')}</td>
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('nm','${n.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editNM('${n.id}')">Edit</button>
-        ${!invBadge(n.id,d)?`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${n.id}')" title="Start RCA investigation">🔍 RCA</button>`:''}
         <button class="btn btn-sm btn-danger" onclick="deleteNM('${n.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -4486,16 +4448,11 @@ function saveIncident(){
     d.incidents.push(rec);
   }
   saveData(d);closeModal('inc-modal');renderIncidents(1);
-  // Prompt to start investigation for Sev 1 & 2 incidents (new records only)
-  if(!editId && (rec.sev===1||rec.sev===2)){
+  // Auto-open RCA investigation for new incidents when status is Under Investigation or Sev 1-2
+  if(!editId){
     const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
-    if(!hasInv){
-      const sevLabel={1:'Critical',2:'High'};
-      setTimeout(()=>{
-        if(confirm(`⚠️ Severity ${rec.sev} (${sevLabel[rec.sev]}) incident logged — ${rec.id}\n\nA formal Root Cause Analysis (RCA) investigation is required for all Severity 1 & 2 events.\n\nStart an investigation now?`)){
-          openAddInvestigation(rec.id);
-        }
-      },300);
+    if(!hasInv && (rec.status==='Under Investigation'||rec.sev<=2)){
+      setTimeout(()=>openAddInvestigation(rec.id), 250);
     }
   }
 }
@@ -4540,11 +4497,10 @@ function renderIncidents(page=1){
       <td data-label="Person">${i.person}</td>
       <td data-label="Status">${statusPill(i.status)}</td>
       <td data-label="CAPA">${capaBadge(i.capaRef,d)}</td>
-      <td data-label="Investigation">${invBadge(i.id,d)||`<span style="color:var(--muted);font-size:11px">${i.sev<=2?'<span style="color:var(--red)">Required</span>':'—'}</span>`}</td>
+      <td data-label="Investigation">${invBadge(i.id,d)||(i.sev<=2||i.status==='Under Investigation'?`<button class="btn btn-sm btn-ghost" style="color:var(--accent);font-size:11px" onclick="openAddInvestigation('${i.id}')">🔍 Start RCA</button>`:'—')}</td>
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('inc','${i.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editInc('${i.id}')">Edit</button>
-        ${!invBadge(i.id,d)?`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${i.id}')" title="Start RCA investigation">🔍 RCA</button>`:''}
         <button class="btn btn-sm btn-danger" onclick="deleteInc('${i.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -5638,7 +5594,6 @@ document.getElementById('asset-filter-status').addEventListener('change',()=>ren
 // ============================================================
 // INCIDENT INVESTIGATIONS — RCA (5-WHY & FISHBONE)
 // ============================================================
-let invPage=1;
 const FB_CATS=['People','Process','Equipment','Environment','Materials','Management'];
 
 function genInvId(arr){
@@ -5874,7 +5829,15 @@ function saveInvestigation(){
   }
   if(editId){const idx=d.investigations.findIndex(x=>x.id===editId);if(idx>=0)d.investigations[idx]=rec;}
   else d.investigations.push(rec);
-  saveData(d);closeModal('inv-modal');renderInvestigations(1);
+  saveData(d);closeModal('inv-modal');
+  // Re-render whichever source module is currently active
+  const srcType=(getData().incidents||[]).find(x=>x.id===rec.incidentRef)?'inc':
+                (getData().nearMisses||[]).find(x=>x.id===rec.incidentRef)?'nm':
+                (getData().observations||[]).find(x=>x.id===rec.incidentRef)?'obs':null;
+  if(srcType==='inc')renderIncidents(incPage);
+  else if(srcType==='nm')renderNearMiss(nmPage);
+  else if(srcType==='obs')renderObservations(obsPage);
+  else if(currentPage==='audits')renderAudits(auditPage);
   showToast('Investigation saved — '+rec.id,'success');
   sendNotificationEmail('Incident Investigation',{id:rec.id,date:rec.date,location:'',desc:rec.title},rec.investigator,`Method: ${rec.method} | Root cause: ${rootCause.substring(0,120)}`);
 }
@@ -5934,65 +5897,16 @@ function viewInvestigationReport(id){
 function deleteInvestigation(id){
   const d=getData()||getDefaultData();
   if(!confirm('Delete investigation '+id+'?\nThis cannot be undone.'))return;
-  d.investigations=(d.investigations||[]).filter(x=>x.id!==id);saveData(d);renderInvestigations(invPage);
+  const inv=(d.investigations||[]).find(x=>x.id===id);
+  const srcRef=inv?.incidentRef||'';
+  d.investigations=(d.investigations||[]).filter(x=>x.id!==id);saveData(d);
+  // Re-render the source module so badges update
+  if((d.incidents||[]).find(x=>x.id===srcRef))renderIncidents(incPage);
+  else if((d.nearMisses||[]).find(x=>x.id===srcRef))renderNearMiss(nmPage);
+  else if((d.observations||[]).find(x=>x.id===srcRef))renderObservations(obsPage);
+  else if(currentPage==='audits')renderAudits(auditPage);
 }
 
-function renderInvestigations(page=1){
-  invPage=page;const d=getData()||getDefaultData();
-  const search=(document.getElementById('inv-search').value||'').toLowerCase();
-  const mf=document.getElementById('inv-filter-method').value;
-  const sf=document.getElementById('inv-filter-status').value;
-  let items=(d.investigations||[]).filter(x=>{
-    const ms=!search||[x.id,x.incidentRef,x.title,x.investigator,x.rootCause5why,x.rootCauseFishbone].some(v=>(v||'').toLowerCase().includes(search));
-    return ms&&(!mf||x.method===mf)&&(!sf||x.status===sf);
-  });
-  items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  const complete=items.filter(x=>x.status==='Complete').length;
-  const open=items.filter(x=>x.status==='Open'||x.status==='In Progress').length;
-  const noCapa=items.filter(x=>x.status==='Complete'&&!(x.capaRefs||[]).length).length;
-  document.getElementById('inv-stats').innerHTML=`
-    <span class="stat-chip">Total: ${items.length}</span>
-    <span class="stat-chip" style="color:#16a34a">✓ Complete: ${complete}</span>
-    <span class="stat-chip" style="color:#2563eb">⟳ Open/In Progress: ${open}</span>
-    ${noCapa?`<span class="stat-chip" style="color:#dc2626">⚠ No CAPA: ${noCapa}</span>`:''}`;
-  // Build source record lookup (incidents + near misses + observations + audits)
-  const srcMap={};
-  (d.incidents||[]).forEach(x=>{srcMap[x.id]={type:'INC',sev:x.sev,desc:x.desc};});
-  (d.nearMisses||[]).forEach(x=>{srcMap[x.id]={type:'NM',hipo:x.hipo,sev:x.sev,desc:x.desc||x.outcome};});
-  (d.observations||[]).forEach(x=>{srcMap[x.id]={type:'OBS',obsType:x.type,desc:x.desc};});
-  (d.audits||[]).forEach(x=>{srcMap[x.id]={type:'AUD',sev:null,desc:x.title};});
-  const{items:rows,total}=paginate(items,page);
-  const methodBadge=m=>({
-    '5why':'<span class="pill pill-blue" style="font-size:10px">5-Why</span>',
-    fishbone:'<span class="pill pill-teal" style="font-size:10px">Fishbone</span>',
-    both:'<span class="pill pill-blue" style="font-size:10px">5-Why</span> <span class="pill pill-teal" style="font-size:10px">Fishbone</span>'
-  }[m]||m);
-  const stPill=s=>s==='Complete'?'<span class="pill pill-green">Complete</span>':s==='In Progress'?'<span class="pill pill-yellow">In Progress</span>':'<span class="pill pill-orange">Open</span>';
-  document.getElementById('inv-tbody').innerHTML=rows.map(x=>{
-    const src=srcMap[x.incidentRef]||null;
-    const srcLabel=src?`<span class="pill ${src.type==='INC'?'pill-red':src.type==='NM'?'pill-orange':'pill-blue'}" style="font-size:10px">${src.type}</span>${src.sev?` Sev ${src.sev}`:''}${src.hipo?' 🔴HiPo':''}`:'';
-    return`<tr>
-      <td><strong>${x.id}</strong></td>
-      <td><span class="pill pill-orange" style="font-size:10px;cursor:pointer" onclick="openView('${src?.type?.toLowerCase()||'inc'}','${x.incidentRef||''}')" title="${escapeHtml((src?.desc||'').substring(0,80))}">${x.incidentRef||'—'}</span><br><small style="color:var(--muted)">${srcLabel}</small></td>
-      <td title="${escapeHtml(x.title||'')}">${truncate(x.title||'',36)}</td>
-      <td>${x.investigator||'—'}</td>
-      <td>${fmtDate(x.date)}</td>
-      <td>${methodBadge(x.method)}</td>
-      <td style="max-width:200px;font-size:12px">${truncate((x.rootCause5why||x.rootCauseFishbone||'—'),55)}</td>
-      <td>${(x.capaRefs||[]).length?`<span class="pill pill-orange" style="font-size:10px">${(x.capaRefs||[]).length} CAPA${(x.capaRefs||[]).length>1?'s':''}</span>`:'<span style="color:var(--muted);font-size:11px">None</span>'}</td>
-      <td>${stPill(x.status)}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-ghost" onclick="viewInvestigationReport('${x.id}')" title="View full report">Report</button>
-        <button class="btn btn-sm btn-ghost" onclick="editInvestigation('${x.id}')">Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteInvestigation('${x.id}')">Del</button>
-      </td>
-    </tr>`;
-  }).join('');
-  renderPagination('inv-pagination',total,page,renderInvestigations);
-}
-document.getElementById('inv-search').addEventListener('input',()=>renderInvestigations(1));
-document.getElementById('inv-filter-method').addEventListener('change',()=>renderInvestigations(1));
-document.getElementById('inv-filter-status').addEventListener('change',()=>renderInvestigations(1));
 
 // ============================================================
 // AUDITS & INSPECTIONS
@@ -6756,9 +6670,6 @@ function exportCSV(module){
   } else if(module==='audits'){
     cols=['Audit ID','Type','Title','Auditor','Date','Location','Score %','Passes','Fails','Critical Fails','CAPAs Raised','Status','Notes'];
     rows=(d.audits||[]).map(a=>[a.id,a.template,a.title,a.auditor,a.date,a.location,a.score,a.passes,a.fails,a.critFails,(a.capaRefs||[]).join('; '),a.status,a.notes]);
-  } else if(module==='investigation'){
-    cols=['Inv. ID','Incident Ref','Title','Investigator','Date','Method','Root Cause (5-Why)','Root Cause (Fishbone)','Findings','Recommendations','CAPAs','Status'];
-    rows=(d.investigations||[]).map(i=>[i.id,i.incidentRef,i.title,i.investigator,i.date,i.method,i.rootCause5why,i.rootCauseFishbone,i.findings,i.recommendations,(i.capaRefs||[]).join('; '),i.status]);
   }
   const csv=[cols,...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
