@@ -1885,6 +1885,9 @@
     <li class="nav-item"><div class="nav-link" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">SHEQ Calendar</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📄</span><span class="nav-label">Monthly Report</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="toolbox"><span class="nav-icon">🗣️</span><span class="nav-label">Toolbox Talks</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="inductions"><span class="nav-icon">🪪</span><span class="nav-label">Inductions</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="emergency"><span class="nav-icon">🚑</span><span class="nav-label">Emergency Contacts</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -1909,6 +1912,7 @@
     <span id="topbar-date"></span>
     <span id="sync-status" class="loading">⬤ Loading…</span>
     <span id="topbar-user" style="font-size:.78rem;color:var(--muted);display:none"></span>
+    <button class="btn btn-ghost btn-sm" onclick="navigateTo('emergency')" title="Emergency Contacts" style="color:#dc2626;font-size:1.1rem">🚑</button>
     <button class="btn btn-ghost btn-sm" id="settings-btn-top" onclick="loadNotifSettings();openModal('settings-modal')">⚙️</button>
     <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="logOut()" title="Sign out" style="display:none">⏏ Sign Out</button>
   </div>
@@ -2258,10 +2262,172 @@
   </div>
 </div>
 
+<!-- ======= TOOLBOX TALKS ======= -->
+<div id="page-toolbox" class="page">
+  <div class="section-header">
+    <span class="section-title">Toolbox Talk Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('toolbox')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="openAddToolbox()">+ Add Talk</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="toolbox-search" placeholder="Search talks…">
+    <select id="toolbox-filter-status"><option value="">All Statuses</option><option value="Completed">Completed</option><option value="Planned">Planned</option></select>
+  </div>
+  <div class="stats-row" id="toolbox-stats"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Date</th><th>Topic</th><th>Facilitator</th><th>Location</th><th>Attendees</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="toolbox-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="toolbox-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= INDUCTION LOG ======= -->
+<div id="page-inductions" class="page">
+  <div class="section-header">
+    <span class="section-title">Contractor &amp; Visitor Induction Log</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('inductions')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="openAddInduction()">+ Add Induction</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="ind-search" placeholder="Search inductions…">
+    <select id="ind-filter-type"><option value="">All Types</option><option value="Contractor">Contractor</option><option value="Visitor">Visitor</option></select>
+    <select id="ind-filter-status"><option value="">All Statuses</option><option value="Valid">Valid</option><option value="Expiring Soon">Expiring Soon</option><option value="Expired">Expired</option></select>
+  </div>
+  <div class="stats-row" id="ind-stats"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Company</th><th>Type</th><th>Inducted By</th><th>Date</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="ind-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="ind-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= EMERGENCY CONTACTS ======= -->
+<div id="page-emergency" class="page">
+  <div class="section-header">
+    <span class="section-title">Emergency Contact Directory</span>
+    <div class="section-header-right">
+      <button class="btn btn-primary" onclick="openAddEmergency()">+ Add Contact</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="emg-search" placeholder="Search contacts…">
+    <select id="emg-filter-cat"><option value="">All Categories</option><option value="Medical">Medical</option><option value="Fire">Fire</option><option value="Security">Security</option><option value="Utilities">Utilities</option><option value="Management">Management</option><option value="Environmental">Environmental</option><option value="Other">Other</option></select>
+  </div>
+  <div id="emg-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-2);margin-top:var(--sp-2)"></div>
+</div>
+
   </div><!-- end #content -->
 </div><!-- end #main -->
 
 <!-- =================== MODALS =================== -->
+
+<!-- TOOLBOX TALK MODAL -->
+<div class="modal-overlay" id="toolbox-modal">
+  <div class="modal">
+    <div class="modal-title" id="toolbox-modal-title">Add Toolbox Talk <button class="modal-close" onclick="closeModal('toolbox-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="tb-f-date"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="tb-f-status"><option value="Planned">Planned</option><option value="Completed">Completed</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Topic</label><input type="text" id="tb-f-topic" placeholder="e.g. Working at Height Safety"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Facilitator</label><input type="text" id="tb-f-facilitator" placeholder="Name / Role"></div>
+      <div class="form-group"><label>Location / Area</label><input type="text" id="tb-f-location" placeholder="e.g. Turbine Hall"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Number of Attendees</label><input type="number" id="tb-f-attendee-count" min="0" placeholder="0"></div>
+      <div class="form-group"><label>Duration (minutes)</label><input type="number" id="tb-f-duration" min="0" placeholder="15"></div>
+    </div>
+    <div class="form-group"><label>Attendee Names <span style="font-weight:400;color:var(--muted)">(comma-separated)</span></label><textarea id="tb-f-attendees" placeholder="J. Machava, M. Sitoe, C. Tembe…"></textarea></div>
+    <div class="form-group"><label>Key Points Covered</label><textarea id="tb-f-notes" placeholder="Main safety messages, hazards discussed, actions agreed…"></textarea></div>
+    <input type="hidden" id="tb-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('toolbox-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveToolbox()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- INDUCTION MODAL -->
+<div class="modal-overlay" id="ind-modal">
+  <div class="modal">
+    <div class="modal-title" id="ind-modal-title">Add Induction <button class="modal-close" onclick="closeModal('ind-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Full Name</label><input type="text" id="ind-f-name" placeholder="Full name"></div>
+      <div class="form-group"><label>Company / Organisation</label><input type="text" id="ind-f-company" placeholder="Company name"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Type</label>
+        <select id="ind-f-type"><option value="Contractor">Contractor</option><option value="Visitor">Visitor</option></select>
+      </div>
+      <div class="form-group"><label>ID / Badge Number</label><input type="text" id="ind-f-badge" placeholder="e.g. C-0042"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Inducted By</label><input type="text" id="ind-f-inducted-by" placeholder="SHEQ Officer name"></div>
+      <div class="form-group"><label>Induction Date</label><input type="date" id="ind-f-date"></div>
+    </div>
+    <div class="form-group"><label>Expiry Date</label><input type="date" id="ind-f-expiry"></div>
+    <div class="form-group"><label>Topics Covered</label><textarea id="ind-f-topics" placeholder="Site rules, emergency procedures, PPE requirements, hazards…"></textarea></div>
+    <div class="form-group"><label>Notes</label><textarea id="ind-f-notes" placeholder="Any additional notes…"></textarea></div>
+    <input type="hidden" id="ind-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('ind-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInduction()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMERGENCY CONTACT MODAL -->
+<div class="modal-overlay" id="emg-modal">
+  <div class="modal">
+    <div class="modal-title" id="emg-modal-title">Add Emergency Contact <button class="modal-close" onclick="closeModal('emg-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Name / Service</label><input type="text" id="emg-f-name" placeholder="e.g. Site Medic / Maputo Fire Dept"></div>
+      <div class="form-group"><label>Role / Description</label><input type="text" id="emg-f-role" placeholder="e.g. Primary First Aider"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label>
+        <select id="emg-f-cat">
+          <option value="Medical">Medical</option>
+          <option value="Fire">Fire</option>
+          <option value="Security">Security</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Management">Management</option>
+          <option value="Environmental">Environmental</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Priority</label>
+        <select id="emg-f-priority"><option value="Primary">Primary</option><option value="Secondary">Secondary</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Phone / Radio</label><input type="text" id="emg-f-phone" placeholder="+258 xx xxx xxxx"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="emg-f-email" placeholder="contact@company.com"></div>
+    </div>
+    <div class="form-group"><label>Available Hours</label><input type="text" id="emg-f-hours" placeholder="e.g. 24/7 or 07:00–17:00"></div>
+    <div class="form-group"><label>Notes</label><input type="text" id="emg-f-notes" placeholder="Additional info, alternative number…"></div>
+    <input type="hidden" id="emg-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('emg-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEmergencyContact()">Save</button>
+    </div>
+  </div>
+</div>
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settings-modal">
@@ -2988,6 +3154,31 @@ function getDefaultData() {
       {id:'CAPA-2026-009',source_module:'PTW',source_ref:'PTW-001',what:'Review all hot work permits and verify fire watch procedures are documented and communicated.',who:'SHEQ Officer',when:'2026-04-15',how:'PTW audit checklist sign-off.',priority:'High',status:'Open',created:'2026-03-10',closed_date:'',evidence:''},
       {id:'CAPA-2026-010',source_module:'RISK',source_ref:'RSK-001',what:'Implement additional fall protection controls and update risk assessment for working at heights.',who:'Safety Manager',when:'2026-04-30',how:'Risk review and sign-off by SHEQ Manager.',priority:'Critical',status:'Open',created:'2026-03-15',closed_date:'',evidence:''}
     ],
+    toolboxTalks: [
+        {id:'TBT-001',date:'2026-03-03',topic:'Working at Height — Harness Inspection & Pre-Use Checks',facilitator:'SHEQ Officer',location:'Turbine Hall',attendeeCount:12,attendees:'C. Tembe, J. Machava, P. Mabunda, A. Cossa, M. Sitoe, R. Guambe, L. Bila, F. Nuvunga, A. Muchanga, T. Nhantumbo, N. Dlamini, B. Chissano',duration:20,notes:'Covered harness inspection checklist, anchor point selection, and fall arrest systems. All attendees signed register.',status:'Completed'},
+        {id:'TBT-002',date:'2026-03-10',topic:'Permit to Work — Roles and Responsibilities',facilitator:'Operations Manager',location:'Control Room',attendeeCount:8,attendees:'J. Machava, R. Guambe, A. Muchanga, P. Mabunda, C. Tembe, L. Bila, T. Nhantumbo, M. Sitoe',duration:30,notes:'Reviewed PTW procedure, issuer/receiver responsibilities, and consequences of non-compliance. Quiz conducted.',status:'Completed'},
+        {id:'TBT-003',date:'2026-03-17',topic:'Emergency Response — Muster Points and Evacuation Routes',facilitator:'SHEQ Officer',location:'Main Gate',attendeeCount:25,attendees:'All shift personnel',duration:15,notes:'Updated muster point locations communicated. Timed evacuation drill — 4 min 22 sec. Minor improvements noted for warehouse exits.',status:'Completed'},
+        {id:'TBT-004',date:'2026-03-24',topic:'Chemical Safety — SDS Review for New Water Treatment Chemicals',facilitator:'Environmental Officer',location:'Chemical Store',attendeeCount:6,attendees:'F. Nuvunga, A. Muchanga, P. Mabunda, B. Chissano, N. Dlamini, C. Tembe',duration:25,notes:'New SDS reviewed for Sodium Hypochlorite and Ferric Sulphate. Spill response and PPE requirements confirmed.',status:'Completed'},
+        {id:'TBT-005',date:'2026-04-07',topic:'Electrical Safety — Lock Out Tag Out Refresher',facilitator:'Electrical Supervisor',location:'HV Switchgear Room',attendeeCount:0,attendees:'',duration:30,notes:'',status:'Planned'}
+      ],
+      inductions: [
+        {id:'IND-001',name:'Marco Sithole',company:'TechServ Engineering',type:'Contractor',badge:'C-001',inductedBy:'SHEQ Officer',date:'2026-03-01',expiry:'2026-08-31',topics:'Site rules, emergency procedures, PPE requirements, PTW system, hazard communication, muster points.',notes:'Contractor performing turbine maintenance works.',status:'Valid'},
+        {id:'IND-002',name:'Beatrice Moiane',company:'CleanPro Services',type:'Contractor',badge:'C-002',inductedBy:'SHEQ Officer',date:'2026-03-05',expiry:'2026-09-04',topics:'Site rules, emergency procedures, chemical handling, housekeeping standards.',notes:'Cleaning contractor — access to all non-restricted areas.',status:'Valid'},
+        {id:'IND-003',name:'Dr. Paulo Ferrão',company:'EDM Head Office',type:'Visitor',badge:'V-001',inductedBy:'Operations Manager',date:'2026-03-15',expiry:'2026-03-15',topics:'Emergency procedures, restricted areas, PPE for plant tour.',notes:'Board inspection visit. Escorted at all times.',status:'Expired'},
+        {id:'IND-004',name:'Simão Nguenha',company:'Petroflex Ltd',type:'Contractor',badge:'C-003',inductedBy:'SHEQ Officer',date:'2026-03-20',expiry:'2026-04-10',topics:'Site rules, emergency procedures, PTW, confined space awareness, gas detection.',notes:'Specialist contractor for fuel gas filter maintenance.',status:'Expiring Soon'},
+        {id:'IND-005',name:'Ana Paula Langa',company:'Ministry of Labour',type:'Visitor',badge:'V-002',inductedBy:'SHEQ Manager',date:'2026-03-28',expiry:'2026-03-28',topics:'Emergency procedures, escorted visit protocol.',notes:'Regulatory inspection visit.',status:'Expired'}
+      ],
+      emergencyContacts: [
+        {id:'EMG-001',name:'Site Medic / First Aid Room',role:'Primary First Aider & Medical Response',category:'Medical',priority:'Primary',phone:'Ext. 111 / +258 84 111 0001',email:'medic@plantsite.co.mz',hours:'24/7',notes:'Located at Main Gate building, Room 4.'},
+        {id:'EMG-002',name:'Maputo Central Hospital — Emergency',role:'Nearest Hospital Emergency Department',category:'Medical',priority:'Secondary',phone:'+258 21 320 000',email:'',hours:'24/7',notes:'~12 km from site. Ambulance response ~20 min.'},
+        {id:'EMG-003',name:'Site Fire Team — Control Room',role:'Internal Fire Response Team',category:'Fire',priority:'Primary',phone:'Ext. 112 / +258 84 112 0001',email:'firecontrol@plantsite.co.mz',hours:'24/7',notes:'Activate site PA + call. Team assembles at Fire Station within 3 min.'},
+        {id:'EMG-004',name:'Maputo Fire Brigade',role:'Municipal Fire & Rescue Service',category:'Fire',priority:'Secondary',phone:'+258 21 198',email:'',hours:'24/7',notes:'ETA ~25 min. Pre-notified for any site fire event.'},
+        {id:'EMG-005',name:'Site Security — Gate House',role:'Security Response & Access Control',category:'Security',priority:'Primary',phone:'Ext. 100 / +258 84 100 0001',email:'security@plantsite.co.mz',hours:'24/7',notes:'Lockdown authority. Controls all site access points.'},
+        {id:'EMG-006',name:'Plant Manager — J. Ferreira',role:'Senior Management On-Call',category:'Management',priority:'Primary',phone:'+258 84 777 0001',email:'j.ferreira@plantsite.co.mz',hours:'24/7 on-call',notes:'Must be notified for any SHEQ incident severity 1 or 2.'},
+        {id:'EMG-007',name:'SHEQ Manager',role:'SHEQ Emergency Coordinator',category:'Management',priority:'Primary',phone:'+258 84 777 0002',email:'sheq@plantsite.co.mz',hours:'24/7 on-call',notes:'Incident command lead. Coordinates with all emergency services.'},
+        {id:'EMG-008',name:'EDM Grid Control Centre',role:'National Grid Emergency — Electrical Isolation',category:'Utilities',priority:'Primary',phone:'+258 21 350 000',email:'',hours:'24/7',notes:'For major electrical fault requiring grid disconnection.'},
+        {id:'EMG-009',name:'Environmental Incident Hotline',role:'MITADER Environmental Spill Notification',category:'Environmental',priority:'Primary',phone:'+258 21 466 000',email:'environment@mitader.gov.mz',hours:'Business hours',notes:'Mandatory notification for any environmental incident within 4 hours.'}
+      ],
     calendar: buildDefaultCalendar()
   };
 }
@@ -3077,11 +3268,28 @@ function autoCreateCapa(d, sourceModule, sourceRef, what, who, when, how, priori
 }
 
 function autoMarkOverdue(d) {
-  const today = new Date().toISOString().substring(0,10);
+  const todayStr = new Date().toISOString().substring(0,10);
+  const priorityOrder = ['Low','Medium','High','Critical'];
   let changed = false;
   (d.capas||[]).forEach(c => {
-    if(c.status !== 'Closed' && c.when && c.when < today) {
-      c.status = 'Overdue'; changed = true;
+    if(c.status === 'Closed') return;
+    if(c.when && c.when < todayStr) {
+      c.status = 'Overdue';
+      // Escalation: promote priority based on days overdue
+      const daysLate = Math.floor((new Date(todayStr) - new Date(c.when)) / (1000*60*60*24));
+      const curIdx = priorityOrder.indexOf(c.priority||'Medium');
+      let newIdx = curIdx;
+      if(daysLate >= 14 && curIdx < 3) newIdx = Math.min(curIdx + 2, 3);
+      else if(daysLate >= 7 && curIdx < 3) newIdx = Math.min(curIdx + 1, 3);
+      if(newIdx > curIdx){
+        c.priority = priorityOrder[newIdx];
+        // Flag for email re-notification
+        if(!c._escalatedAt || c._escalatedAt < todayStr){
+          c._escalatedAt = todayStr;
+          c._escalationNote = `Priority auto-escalated to ${c.priority} — ${daysLate} days overdue.`;
+        }
+      }
+      changed = true;
     }
   });
   if(changed) saveData(d);
@@ -3305,7 +3513,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',chat:'SHEQ-AI Chat'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor & Visitor Inductions',emergency:'Emergency Contact Directory',chat:'SHEQ-AI Chat'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -3324,6 +3532,9 @@ function navigateTo(page){
   else if(page==='legal')renderLegal();
   else if(page==='calendar')renderCalendar();
   else if(page==='capa')renderCapas();
+  else if(page==='toolbox')renderToolbox();
+  else if(page==='inductions')renderInductions();
+  else if(page==='emergency')renderEmergencyContacts();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>navigateTo(l.dataset.page)));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -4197,6 +4408,7 @@ function toggleCal(act,month){
 // CAPA TRACKER
 // ============================================================
 let capaPage=1;
+let toolboxPage=1,inductionPage=1;
 let highlightCapaId=null;
 function highlightCapa(id){navigateTo('capa');highlightCapaId=id;renderCapas();}
 function highlightSource(mod,ref){
@@ -4317,6 +4529,296 @@ document.getElementById('capa-search').addEventListener('input',()=>renderCapas(
 document.getElementById('capa-filter-source').addEventListener('change',()=>renderCapas(1));
 document.getElementById('capa-filter-status').addEventListener('change',()=>renderCapas(1));
 document.getElementById('capa-filter-priority').addEventListener('change',()=>renderCapas(1));
+
+// ============================================================
+// TOOLBOX TALKS
+// ============================================================
+function openAddToolbox(){
+  document.getElementById('toolbox-modal-title').textContent='Add Toolbox Talk';
+  document.getElementById('tb-f-edit-id').value='';
+  document.getElementById('tb-f-date').value=today();
+  document.getElementById('tb-f-status').value='Completed';
+  document.getElementById('tb-f-topic').value='';
+  document.getElementById('tb-f-facilitator').value='';
+  document.getElementById('tb-f-location').value='';
+  document.getElementById('tb-f-attendee-count').value='';
+  document.getElementById('tb-f-duration').value='';
+  document.getElementById('tb-f-attendees').value='';
+  document.getElementById('tb-f-notes').value='';
+  openModal('toolbox-modal');
+}
+function editToolbox(id){
+  const d=getData()||getDefaultData();const t=(d.toolboxTalks||[]).find(x=>x.id===id);if(!t)return;
+  document.getElementById('toolbox-modal-title').textContent='Edit Toolbox Talk';
+  document.getElementById('tb-f-edit-id').value=id;
+  document.getElementById('tb-f-date').value=t.date||'';
+  document.getElementById('tb-f-status').value=t.status||'Completed';
+  document.getElementById('tb-f-topic').value=t.topic||'';
+  document.getElementById('tb-f-facilitator').value=t.facilitator||'';
+  document.getElementById('tb-f-location').value=t.location||'';
+  document.getElementById('tb-f-attendee-count').value=t.attendeeCount||'';
+  document.getElementById('tb-f-duration').value=t.duration||'';
+  document.getElementById('tb-f-attendees').value=t.attendees||'';
+  document.getElementById('tb-f-notes').value=t.notes||'';
+  openModal('toolbox-modal');
+}
+function saveToolbox(){
+  if(!validateRequired([['tb-f-topic','Topic'],['tb-f-date','Date'],['tb-f-facilitator','Facilitator']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.toolboxTalks=d.toolboxTalks||[];
+  const editId=document.getElementById('tb-f-edit-id').value;
+  const rec={
+    id:editId||genId('TBT',d.toolboxTalks),
+    date:document.getElementById('tb-f-date').value||today(),
+    topic:document.getElementById('tb-f-topic').value||'',
+    facilitator:document.getElementById('tb-f-facilitator').value||'',
+    location:document.getElementById('tb-f-location').value||'',
+    attendeeCount:parseInt(document.getElementById('tb-f-attendee-count').value)||0,
+    duration:parseInt(document.getElementById('tb-f-duration').value)||0,
+    attendees:document.getElementById('tb-f-attendees').value||'',
+    notes:document.getElementById('tb-f-notes').value||'',
+    status:document.getElementById('tb-f-status').value
+  };
+  if(editId){const idx=d.toolboxTalks.findIndex(x=>x.id===editId);if(idx>=0)d.toolboxTalks[idx]=rec;}
+  else d.toolboxTalks.push(rec);
+  saveData(d);closeModal('toolbox-modal');renderToolbox(1);
+  showToast('Toolbox talk saved — '+rec.id,'success');
+}
+function deleteToolbox(id){
+  const d=getData()||getDefaultData();if(!confirm('Delete toolbox talk '+id+'?\nThis cannot be undone.'))return;
+  d.toolboxTalks=(d.toolboxTalks||[]).filter(x=>x.id!==id);saveData(d);renderToolbox(toolboxPage);
+}
+function renderToolbox(page=1){
+  toolboxPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('toolbox-search').value||'').toLowerCase();
+  const sf=document.getElementById('toolbox-filter-status').value;
+  let items=(d.toolboxTalks||[]).slice().reverse().filter(t=>{
+    const ms=!search||[t.topic,t.facilitator,t.location,t.id,t.attendees].some(v=>(v||'').toLowerCase().includes(search));
+    const msf=!sf||t.status===sf;return ms&&msf;
+  });
+  const completed=items.filter(t=>t.status==='Completed').length;
+  const planned=items.filter(t=>t.status==='Planned').length;
+  const totalAttendees=items.filter(t=>t.status==='Completed').reduce((s,t)=>s+(t.attendeeCount||0),0);
+  document.getElementById('toolbox-stats').innerHTML=`<span class="stat-chip">Total: ${items.length}</span><span class="stat-chip" style="color:#16a34a">✓ Completed: ${completed}</span><span class="stat-chip" style="color:#0e7490">Planned: ${planned}</span><span class="stat-chip" style="color:#374151">👥 Total Attendees: ${totalAttendees}</span>`;
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('toolbox-tbody').innerHTML=rows.map(t=>`
+    <tr>
+      <td><strong>${t.id}</strong></td>
+      <td>${fmtDate(t.date)}</td>
+      <td title="${escapeHtml(t.topic)}">${truncate(t.topic,45)}</td>
+      <td>${t.facilitator}</td>
+      <td>${t.location||'—'}</td>
+      <td class="num">${t.attendeeCount||0}${t.duration?` <span style="color:var(--muted);font-size:11px">(${t.duration}min)</span>`:''}</td>
+      <td>${statusPill(t.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editToolbox('${t.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteToolbox('${t.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('toolbox-pagination',total,page,renderToolbox);
+}
+document.getElementById('toolbox-search').addEventListener('input',()=>renderToolbox(1));
+document.getElementById('toolbox-filter-status').addEventListener('change',()=>renderToolbox(1));
+
+// ============================================================
+// INDUCTION LOG
+// ============================================================
+function getInductionStatus(expiry){
+  if(!expiry)return'Valid';
+  const days=getDaysUntil(expiry);
+  if(days<0)return'Expired';
+  if(days<=14)return'Expiring Soon';
+  return'Valid';
+}
+function openAddInduction(){
+  document.getElementById('ind-modal-title').textContent='Add Induction';
+  document.getElementById('ind-f-edit-id').value='';
+  document.getElementById('ind-f-name').value='';
+  document.getElementById('ind-f-company').value='';
+  document.getElementById('ind-f-type').value='Contractor';
+  document.getElementById('ind-f-badge').value='';
+  document.getElementById('ind-f-inducted-by').value='';
+  document.getElementById('ind-f-date').value=today();
+  document.getElementById('ind-f-expiry').value='';
+  document.getElementById('ind-f-topics').value='';
+  document.getElementById('ind-f-notes').value='';
+  openModal('ind-modal');
+}
+function editInduction(id){
+  const d=getData()||getDefaultData();const i=(d.inductions||[]).find(x=>x.id===id);if(!i)return;
+  document.getElementById('ind-modal-title').textContent='Edit Induction';
+  document.getElementById('ind-f-edit-id').value=id;
+  document.getElementById('ind-f-name').value=i.name||'';
+  document.getElementById('ind-f-company').value=i.company||'';
+  document.getElementById('ind-f-type').value=i.type||'Contractor';
+  document.getElementById('ind-f-badge').value=i.badge||'';
+  document.getElementById('ind-f-inducted-by').value=i.inductedBy||'';
+  document.getElementById('ind-f-date').value=i.date||'';
+  document.getElementById('ind-f-expiry').value=i.expiry||'';
+  document.getElementById('ind-f-topics').value=i.topics||'';
+  document.getElementById('ind-f-notes').value=i.notes||'';
+  openModal('ind-modal');
+}
+function saveInduction(){
+  if(!validateRequired([['ind-f-name','Name'],['ind-f-date','Date']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.inductions=d.inductions||[];
+  const editId=document.getElementById('ind-f-edit-id').value;
+  const expiry=document.getElementById('ind-f-expiry').value||'';
+  const rec={
+    id:editId||genId('IND',d.inductions),
+    name:document.getElementById('ind-f-name').value||'',
+    company:document.getElementById('ind-f-company').value||'',
+    type:document.getElementById('ind-f-type').value,
+    badge:document.getElementById('ind-f-badge').value||'',
+    inductedBy:document.getElementById('ind-f-inducted-by').value||'',
+    date:document.getElementById('ind-f-date').value||today(),
+    expiry,
+    topics:document.getElementById('ind-f-topics').value||'',
+    notes:document.getElementById('ind-f-notes').value||'',
+    status:getInductionStatus(expiry)
+  };
+  if(editId){const idx=d.inductions.findIndex(x=>x.id===editId);if(idx>=0)d.inductions[idx]=rec;}
+  else d.inductions.push(rec);
+  saveData(d);closeModal('ind-modal');renderInductions(1);
+  showToast('Induction saved — '+rec.id,'success');
+}
+function deleteInduction(id){
+  const d=getData()||getDefaultData();if(!confirm('Delete induction '+id+'?\nThis cannot be undone.'))return;
+  d.inductions=(d.inductions||[]).filter(x=>x.id!==id);saveData(d);renderInductions(inductionPage);
+}
+function renderInductions(page=1){
+  inductionPage=page;const d=getData()||getDefaultData();
+  // Refresh statuses based on current date
+  (d.inductions||[]).forEach(i=>{i.status=getInductionStatus(i.expiry);});
+  const search=(document.getElementById('ind-search').value||'').toLowerCase();
+  const tf=document.getElementById('ind-filter-type').value;
+  const sf=document.getElementById('ind-filter-status').value;
+  let items=(d.inductions||[]).slice().reverse().filter(i=>{
+    const ms=!search||[i.name,i.company,i.id,i.badge,i.inductedBy].some(v=>(v||'').toLowerCase().includes(search));
+    const mt=!tf||i.type===tf;const msf=!sf||i.status===sf;return ms&&mt&&msf;
+  });
+  const valid=items.filter(i=>i.status==='Valid').length;
+  const expiring=items.filter(i=>i.status==='Expiring Soon').length;
+  const expired=items.filter(i=>i.status==='Expired').length;
+  document.getElementById('ind-stats').innerHTML=`<span class="stat-chip">Total: ${items.length}</span><span class="stat-chip" style="color:#16a34a">✓ Valid: ${valid}</span><span class="stat-chip" style="color:#ea580c">⚠ Expiring Soon: ${expiring}</span><span class="stat-chip" style="color:#dc2626">✗ Expired: ${expired}</span>`;
+  const {items:rows,total}=paginate(items,page);
+  const indStatus=s=>s==='Valid'?'<span class="pill pill-green">Valid</span>':s==='Expiring Soon'?'<span class="pill pill-orange">Expiring Soon</span>':'<span class="pill pill-red">Expired</span>';
+  document.getElementById('ind-tbody').innerHTML=rows.map(i=>`
+    <tr class="${i.status==='Expired'?'row-red':i.status==='Expiring Soon'?'row-amber':''}">
+      <td><strong>${i.id}</strong></td>
+      <td>${i.name}</td>
+      <td>${i.company||'—'}</td>
+      <td><span class="pill ${i.type==='Contractor'?'pill-blue':'pill-teal'}">${i.type}</span></td>
+      <td>${i.inductedBy||'—'}</td>
+      <td>${fmtDate(i.date)}</td>
+      <td>${fmtDate(i.expiry)||'—'}</td>
+      <td>${indStatus(i.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editInduction('${i.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteInduction('${i.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('ind-pagination',total,page,renderInductions);
+}
+document.getElementById('ind-search').addEventListener('input',()=>renderInductions(1));
+document.getElementById('ind-filter-type').addEventListener('change',()=>renderInductions(1));
+document.getElementById('ind-filter-status').addEventListener('change',()=>renderInductions(1));
+
+// ============================================================
+// EMERGENCY CONTACTS
+// ============================================================
+function openAddEmergency(){
+  document.getElementById('emg-modal-title').textContent='Add Emergency Contact';
+  document.getElementById('emg-f-edit-id').value='';
+  document.getElementById('emg-f-name').value='';
+  document.getElementById('emg-f-role').value='';
+  document.getElementById('emg-f-cat').value='Medical';
+  document.getElementById('emg-f-priority').value='Primary';
+  document.getElementById('emg-f-phone').value='';
+  document.getElementById('emg-f-email').value='';
+  document.getElementById('emg-f-hours').value='';
+  document.getElementById('emg-f-notes').value='';
+  openModal('emg-modal');
+}
+function editEmergency(id){
+  const d=getData()||getDefaultData();const e=(d.emergencyContacts||[]).find(x=>x.id===id);if(!e)return;
+  document.getElementById('emg-modal-title').textContent='Edit Emergency Contact';
+  document.getElementById('emg-f-edit-id').value=id;
+  document.getElementById('emg-f-name').value=e.name||'';
+  document.getElementById('emg-f-role').value=e.role||'';
+  document.getElementById('emg-f-cat').value=e.category||'Medical';
+  document.getElementById('emg-f-priority').value=e.priority||'Primary';
+  document.getElementById('emg-f-phone').value=e.phone||'';
+  document.getElementById('emg-f-email').value=e.email||'';
+  document.getElementById('emg-f-hours').value=e.hours||'';
+  document.getElementById('emg-f-notes').value=e.notes||'';
+  openModal('emg-modal');
+}
+function saveEmergencyContact(){
+  if(!validateRequired([['emg-f-name','Name'],['emg-f-phone','Phone']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.emergencyContacts=d.emergencyContacts||[];
+  const editId=document.getElementById('emg-f-edit-id').value;
+  const rec={
+    id:editId||genId('EMG',d.emergencyContacts),
+    name:document.getElementById('emg-f-name').value||'',
+    role:document.getElementById('emg-f-role').value||'',
+    category:document.getElementById('emg-f-cat').value,
+    priority:document.getElementById('emg-f-priority').value,
+    phone:document.getElementById('emg-f-phone').value||'',
+    email:document.getElementById('emg-f-email').value||'',
+    hours:document.getElementById('emg-f-hours').value||'',
+    notes:document.getElementById('emg-f-notes').value||''
+  };
+  if(editId){const idx=d.emergencyContacts.findIndex(x=>x.id===editId);if(idx>=0)d.emergencyContacts[idx]=rec;}
+  else d.emergencyContacts.push(rec);
+  saveData(d);closeModal('emg-modal');renderEmergencyContacts();
+  showToast('Contact saved — '+rec.name,'success');
+}
+function deleteEmergency(id){
+  const d=getData()||getDefaultData();const e=(d.emergencyContacts||[]).find(x=>x.id===id);
+  if(!confirm('Delete contact '+(e?.name||id)+'?\nThis cannot be undone.'))return;
+  d.emergencyContacts=(d.emergencyContacts||[]).filter(x=>x.id!==id);saveData(d);renderEmergencyContacts();
+}
+function renderEmergencyContacts(){
+  const d=getData()||getDefaultData();
+  const search=(document.getElementById('emg-search').value||'').toLowerCase();
+  const cf=document.getElementById('emg-filter-cat').value;
+  let items=(d.emergencyContacts||[]).filter(e=>{
+    const ms=!search||[e.name,e.role,e.phone,e.email,e.category].some(v=>(v||'').toLowerCase().includes(search));
+    const mc=!cf||e.category===cf;return ms&&mc;
+  });
+  // Group by category for display
+  const catOrder=['Medical','Fire','Security','Utilities','Management','Environmental','Other'];
+  const catIcons={Medical:'🏥',Fire:'🔥',Security:'🛡️',Utilities:'⚡',Management:'👔',Environmental:'🌿',Other:'📞'};
+  const catColors={Medical:'#dc2626',Fire:'#ea580c',Security:'#1d4ed8',Utilities:'#ca8a04',Management:'#7c3aed',Environmental:'#16a34a',Other:'#374151'};
+  const groups={};
+  items.forEach(e=>{if(!groups[e.category])groups[e.category]=[];groups[e.category].push(e);});
+  const html=catOrder.filter(c=>groups[c]?.length).map(cat=>`
+    <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:var(--sp-1);border-bottom:2px solid ${catColors[cat]}22;padding-bottom:4px">
+      <span style="font-size:1.2rem">${catIcons[cat]}</span>
+      <span style="font-weight:700;font-size:var(--fs-sm);color:${catColors[cat]}">${cat}</span>
+    </div>
+    ${groups[cat].map(e=>`
+    <div class="card" style="border-left:4px solid ${catColors[e.category]};padding:var(--sp-2)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:var(--fs-sm);margin-bottom:2px">${e.name}</div>
+          <div style="font-size:var(--fs-xs);color:var(--muted);margin-bottom:var(--sp-1)">${e.role||''}</div>
+          <div style="font-size:1.3rem;font-weight:800;color:${catColors[e.category]};letter-spacing:.02em;margin-bottom:4px">📞 ${e.phone}</div>
+          ${e.email?`<div style="font-size:var(--fs-xs);color:var(--accent)">✉ ${e.email}</div>`:''}
+          ${e.hours?`<div style="font-size:var(--fs-xs);color:var(--muted);margin-top:2px">🕐 ${e.hours}</div>`:''}
+          ${e.notes?`<div style="font-size:var(--fs-xs);color:var(--muted);margin-top:4px;border-top:1px solid var(--border);padding-top:4px">${e.notes}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <span class="pill ${e.priority==='Primary'?'pill-red':'pill-gray'}" style="font-size:10px">${e.priority}</span>
+          <button class="btn btn-sm btn-ghost" onclick="editEmergency('${e.id}')" style="font-size:11px">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteEmergency('${e.id}')" style="font-size:11px">Del</button>
+        </div>
+      </div>
+    </div>`).join('')}`).join('');
+  document.getElementById('emg-cards').innerHTML=html||'<div style="color:var(--muted);padding:var(--sp-3)">No contacts found.</div>';
+}
+document.getElementById('emg-search').addEventListener('input',()=>renderEmergencyContacts());
+document.getElementById('emg-filter-cat').addEventListener('change',()=>renderEmergencyContacts());
 
 // ============================================================
 // MONTHLY REPORT
@@ -4681,6 +5183,12 @@ function exportCSV(module){
   } else if(module==='capa'){
     cols=['CAPA ID','Source Module','Source Ref','WHAT','WHO','WHEN','HOW','Priority','Status','Created','Closed Date','Evidence'];
     rows=(d.capas||[]).map(c=>[c.id,c.source_module,c.source_ref,c.what,c.who,c.when,c.how,c.priority,c.status,c.created,c.closed_date,c.evidence]);
+  } else if(module==='toolbox'){
+    cols=['ID','Date','Topic','Facilitator','Location','Attendees #','Duration (min)','Attendees','Notes','Status'];
+    rows=(d.toolboxTalks||[]).map(t=>[t.id,t.date,t.topic,t.facilitator,t.location,t.attendeeCount,t.duration,t.attendees,t.notes,t.status]);
+  } else if(module==='inductions'){
+    cols=['ID','Name','Company','Type','Badge','Inducted By','Date','Expiry','Topics','Notes','Status'];
+    rows=(d.inductions||[]).map(i=>[i.id,i.name,i.company,i.type,i.badge,i.inductedBy,i.date,i.expiry,i.topics,i.notes,i.status]);
   }
   const csv=[cols,...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
