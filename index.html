@@ -9,6 +9,13 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1e3a5f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SHEQ-AI">
   <style>
     /* ============================================================
        GOOGLE FONTS
@@ -1891,6 +1898,7 @@
     <li class="nav-item"><div class="nav-link" data-page="emergency"><span class="nav-icon">🚑</span><span class="nav-label">Emergency Contacts</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="audits"><span class="nav-icon">📝</span><span class="nav-label">Audits &amp; Inspections</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -2389,6 +2397,44 @@
   </div>
 </div>
 
+<!-- ======= AUDITS & INSPECTIONS ======= -->
+<div id="page-audits" class="page">
+  <div class="section-header">
+    <span class="section-title">Audit &amp; Inspection Checklists</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('audits')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="openAddAudit()">+ New Audit</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="audit-search" placeholder="Search audits…">
+    <select id="audit-filter-type">
+      <option value="">All Types</option>
+      <option>Housekeeping</option>
+      <option>Fire Safety</option>
+      <option>Electrical Safety</option>
+      <option>PTW Compliance</option>
+      <option>Working at Height</option>
+      <option>Environmental</option>
+    </select>
+    <select id="audit-filter-status">
+      <option value="">All Statuses</option>
+      <option>Complete</option>
+      <option>In Progress</option>
+    </select>
+  </div>
+  <div class="stats-row" id="audit-stats"></div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Audit ID</th><th>Type</th><th>Title</th><th>Auditor</th><th>Date</th><th>Location</th><th>Score</th><th>Findings</th><th>CAPAs</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="audit-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="audit-pagination"></div>
+  </div>
+</div>
+
   </div><!-- end #content -->
 </div><!-- end #main -->
 
@@ -2632,6 +2678,13 @@
       <button class="btn btn-ghost btn-sm" onclick="testNotifEmail()">📤 Send Test Email</button>
     </div>
     <div id="notif-result" style="font-size:12px;margin-bottom:var(--sp-2)"></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
+    <div class="card-title">📱 Install App (PWA / Offline Mode)</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px">Install SHEQ-AI on your device for offline access. Once installed, the app will work without an internet connection and sync to Firebase when connectivity is restored.</p>
+    <div style="display:flex;gap:var(--sp-1);flex-wrap:wrap;margin-bottom:var(--sp-1)">
+      <button class="btn btn-primary btn-sm" id="pwa-install-btn" style="display:none" onclick="installPwa()">📲 Install App on This Device</button>
+      <span style="font-size:12px;color:var(--muted);align-self:center" id="pwa-install-hint">If the Install button is not visible, open this app in Chrome / Edge and look for the install icon in the address bar.</span>
+    </div>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('settings-modal')">Close</button></div>
   </div>
 </div>
@@ -3016,6 +3069,46 @@
   </div>
 </div>
 
+<!-- AUDIT / INSPECTION MODAL -->
+<div class="modal-overlay" id="audit-modal">
+  <div class="modal" style="max-width:95vw;width:960px;max-height:92vh;overflow-y:auto">
+    <div class="modal-title" id="audit-modal-title">New Audit / Inspection <button class="modal-close" onclick="closeModal('audit-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Checklist Type</label>
+        <select id="audit-f-type" onchange="loadAuditTemplate()">
+          <option>Housekeeping</option>
+          <option>Fire Safety</option>
+          <option>Electrical Safety</option>
+          <option>PTW Compliance</option>
+          <option>Working at Height</option>
+          <option>Environmental</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date</label><input type="date" id="audit-f-date"></div>
+    </div>
+    <div class="form-group"><label>Audit Title / Reference</label><input type="text" id="audit-f-title" placeholder="e.g. Q1 Housekeeping Audit — Turbine Hall"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Lead Auditor</label><input type="text" id="audit-f-auditor" placeholder="Name"></div>
+      <div class="form-group"><label>Location / Area</label><input type="text" id="audit-f-location" placeholder="e.g. Turbine Hall"></div>
+    </div>
+    <!-- Live score banner -->
+    <div id="audit-score-display" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin:8px 0;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div><span style="font-size:2rem;font-weight:800;color:var(--accent)" id="audit-score-pct">—</span><span style="color:var(--muted);font-size:12px"> %</span></div>
+      <div style="font-size:13px;color:var(--muted)" id="audit-score-detail">Answer the checklist items below</div>
+      <div id="audit-score-pill" style="margin-left:auto"></div>
+    </div>
+    <!-- Dynamic checklist sections -->
+    <div id="audit-checklist-body"></div>
+    <div class="form-group" style="margin-top:12px"><label>Overall Notes / Summary</label><textarea id="audit-f-notes" placeholder="General observations, key recommendations, follow-up actions…"></textarea></div>
+    <input type="hidden" id="audit-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('audit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAudit()">💾 Save Audit</button>
+    </div>
+  </div>
+</div>
+
 <!-- VIEW MODAL -->
 <div class="modal-overlay" id="view-modal">
   <div class="modal">
@@ -3351,6 +3444,14 @@ function getDefaultData() {
       {id:'MOC-2026-003',title:'Introduction of New Corrosion Inhibitor Chemical — CorroPro X50',type:'Chemical',initiator:'Environmental Officer',dept:'Operations',date:'2026-03-05',target:'2026-03-30',desc:'Replace current corrosion inhibitor (ChemGuard 200) with CorroPro X50 across cooling tower chemical dosing system. New product offers better performance at lower concentration.',reason:'Supplier discontinuing ChemGuard 200. CorroPro X50 is approved equivalent with improved environmental profile.',hazards:'New chemical — different SDS, PPE requirements, spill response procedure. Risk of incorrect dosing during transition.',controls:'Full SDS review completed. Chemical store labelling updated. Spill kit verified. Toolbox talk conducted with dosing team.',riskLevel:'Medium',status:'In Progress',approver:'Operations Manager',approvedDate:'2026-03-10',training:'Yes',trainingNotes:'Dosing team trained on CorroPro X50 SDS, PPE, and dosing rates.',reviewNotes:'',createdBy:''},
       {id:'MOC-2026-004',title:'Night Shift Supervision Structure Change — Remove Shift Supervisor Role',type:'Personnel',initiator:'Operations Manager',dept:'Operations',date:'2026-03-12',target:'2026-05-01',desc:'Proposal to remove dedicated Shift Supervisor role on night shifts and replace with a senior operator lead model, reducing headcount by 1 FTE per shift.',reason:'Cost reduction initiative. Senior operators currently perform most supervisory tasks during nights.',hazards:'Reduced supervisory oversight during critical operations. Slower incident response command. Risk of duty of care gap.',controls:'SHEQ impact assessment required. Minimum competency levels for senior operator lead to be defined. Trial period of 60 days with weekly SHEQ review.',riskLevel:'High',status:'Pending Approval',approver:'Plant Manager',approvedDate:'',training:'Yes',trainingNotes:'Senior operators to receive leadership and incident response training if approved.',reviewNotes:'',createdBy:''},
       {id:'MOC-2026-005',title:'Install CCTV Cameras at Fuel Gas Pipeline Entry Points',type:'Structural',initiator:'Security Manager',dept:'Security',date:'2026-03-18',target:'2026-06-30',desc:'Installation of 4 CCTV cameras at fuel gas pipeline entry/isolation points to improve security monitoring and support incident investigation.',reason:'Recent security review identified blind spots at critical infrastructure. Aligns with insurance requirements.',hazards:'Civil works required for conduit installation near live pipelines. Electrical installation in potentially hazardous area.',controls:'PTW required for any civil works near pipelines. All electrical work in Zone 1 area requires EX-rated equipment and specialist installer.',riskLevel:'Medium',status:'Draft',approver:'Plant Manager',approvedDate:'',training:'No',trainingNotes:'',reviewNotes:'',createdBy:''}
+    ],
+    audits: [
+      {id:'AUD-2026-001',template:'Fire Safety',title:'Monthly Fire Safety Inspection — Turbine Hall',auditor:'Maria Sitoe',date:'2026-03-03',location:'Turbine Hall',status:'Complete',score:82,passes:9,fails:2,critFails:1,capaRefs:['CAPA-2026-009'],notes:'One critical finding: extinguisher Bay B out of service date. Hot work permit log gap noted.',
+        answers:{'FS-1':{result:'Pass',notes:''},'FS-2':{result:'Pass',notes:''},'FS-3':{result:'Pass',notes:''},'FS-4':{result:'Pass',notes:''},'FS-5':{result:'Pass',notes:''},'FS-6':{result:'Fail',notes:'Extinguisher at Bay B expired Feb 2026 — CRITICAL, replaced same day.'},'FS-7':{result:'Pass',notes:''},'FS-8':{result:'Pass',notes:''},'FS-9':{result:'Pass',notes:''},'FS-10':{result:'Fail',notes:'Hot work log had 2-day gap — being updated.'},'FS-11':{result:'Pass',notes:''}}},
+      {id:'AUD-2026-002',template:'Housekeeping',title:'Warehouse Housekeeping Audit — Q1',auditor:'Ricardo Guambe',date:'2026-03-10',location:'Warehouse',status:'Complete',score:73,passes:8,fails:3,critFails:0,capaRefs:[],notes:'Good overall standard. Waste bins need attention and water provision to be reviewed.',
+        answers:{'HK-1':{result:'Pass',notes:''},'HK-2':{result:'Fail',notes:'Work bench surfaces cluttered with returned stock.'},'HK-3':{result:'Pass',notes:''},'HK-4':{result:'Fail',notes:'Two bins overflowing on south side.'},'HK-5':{result:'Pass',notes:''},'HK-6':{result:'Pass',notes:''},'HK-7':{result:'Fail',notes:'Drinking water cooler empty — not restocked.'},'HK-8':{result:'Pass',notes:''},'HK-9':{result:'Pass',notes:''},'HK-10':{result:'Pass',notes:''},'HK-11':{result:'Pass',notes:''}}},
+      {id:'AUD-2026-003',template:'PTW Compliance',title:'PTW Compliance Spot-Check — March 2026',auditor:'João Machava',date:'2026-03-17',location:'All Areas',status:'Complete',score:91,passes:10,fails:1,critFails:0,capaRefs:[],notes:'Strong compliance overall. Permit archiving process to be improved.',
+        answers:{'PT-1':{result:'Pass',notes:''},'PT-2':{result:'Pass',notes:''},'PT-3':{result:'Pass',notes:''},'PT-4':{result:'Pass',notes:''},'PT-5':{result:'Pass',notes:''},'PT-6':{result:'Pass',notes:''},'PT-7':{result:'Pass',notes:''},'PT-8':{result:'Pass',notes:''},'PT-9':{result:'Fail',notes:'2 expired permits not formally closed in register.'},'PT-10':{result:'Pass',notes:''},'PT-11':{result:'Pass',notes:''}}}
     ],
     calendar: buildDefaultCalendar()
   };
@@ -3697,7 +3798,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',chat:'SHEQ-AI Chat'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'SHEQ-AI Chat'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -3721,6 +3822,7 @@ function navigateTo(page){
   else if(page==='emergency')renderEmergencyContacts();
   else if(page==='moc')renderMoc();
   else if(page==='assets')renderAssets();
+  else if(page==='audits')renderAudits();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>navigateTo(l.dataset.page)));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -3897,6 +3999,12 @@ function renderDashboard(){
   const assetDue=assets.filter(a=>a.status==='Due Soon').length;
   const assetOverdue=assets.filter(a=>a.status==='Overdue'||a.status==='Fail').length;
 
+  // Audits
+  const audits=(d.audits||[]).filter(a=>inPeriod(a.date));
+  const auditComplete=audits.filter(a=>a.status==='Complete').length;
+  const auditInProg=audits.filter(a=>a.status==='In Progress').length;
+  const auditCritFails=audits.filter(a=>(a.critFails||0)>0).length;
+
   // Update section title to show active period
   document.getElementById('dash-module-title').textContent=`Module Activity Overview — ${periodLabel}`;
 
@@ -3917,6 +4025,7 @@ function renderDashboard(){
     {name:'Inductions',         icon:'🪪',  page:'inductions',   total:inductions.length, open:indExpiring,      overdue:indExpired,  closed:indValid},
     {name:'Management of Change',icon:'🔄', page:'moc',          total:mocs.length,       open:mocOpen,          overdue:mocPending,  closed:mocCompleted},
     {name:'Asset Inspections',   icon:'🔧', page:'assets',       total:assets.length,     open:assetDue,         overdue:assetOverdue,closed:assetPass},
+    {name:'Audits & Inspections',icon:'📝', page:'audits',       total:audits.length,     open:auditInProg,      overdue:auditCritFails,closed:auditComplete},
   ];
 
   document.getElementById('dash-module-tbody').innerHTML=moduleRows.map(r=>`
@@ -5333,6 +5442,388 @@ document.getElementById('asset-filter-cat').addEventListener('change',()=>render
 document.getElementById('asset-filter-status').addEventListener('change',()=>renderAssets(1));
 
 // ============================================================
+// AUDITS & INSPECTIONS
+// ============================================================
+let auditPage=1;
+let _auditAnswers={};
+
+const AUDIT_TEMPLATES={
+  'Housekeeping':{sections:[
+    {title:'Work Areas',items:[
+      {id:'HK-1',text:'Walkways and aisles clear of obstructions',critical:true},
+      {id:'HK-2',text:'Work surfaces clean and orderly',critical:false},
+      {id:'HK-3',text:'Materials stored safely and correctly labelled',critical:false},
+      {id:'HK-4',text:'Waste bins available and not overflowing',critical:false},
+      {id:'HK-5',text:'Spill kits in place and accessible',critical:true}
+    ]},
+    {title:'Sanitation & Welfare',items:[
+      {id:'HK-6',text:'Toilets clean and functional',critical:false},
+      {id:'HK-7',text:'Drinking water available',critical:false},
+      {id:'HK-8',text:'First aid box stocked and accessible',critical:true}
+    ]},
+    {title:'Emergency Preparedness',items:[
+      {id:'HK-9',text:'Emergency exits clearly marked and unobstructed',critical:true},
+      {id:'HK-10',text:'Muster point signage visible',critical:true},
+      {id:'HK-11',text:'Fire extinguishers in place and within service date',critical:true}
+    ]}
+  ]},
+  'Fire Safety':{sections:[
+    {title:'Fire Detection & Suppression',items:[
+      {id:'FS-1',text:'Smoke/heat detectors functional and tested',critical:true},
+      {id:'FS-2',text:'Sprinkler heads free from obstruction',critical:true},
+      {id:'FS-3',text:'Fire alarm manual call points accessible',critical:true},
+      {id:'FS-4',text:'Fire alarm panel showing normal (no faults)',critical:true}
+    ]},
+    {title:'Fire Extinguishers',items:[
+      {id:'FS-5',text:'Correct type of extinguisher for hazard area',critical:true},
+      {id:'FS-6',text:'Extinguishers within service date (annual)',critical:true},
+      {id:'FS-7',text:'Extinguishers clearly signed and accessible',critical:false}
+    ]},
+    {title:'Fire Procedures',items:[
+      {id:'FS-8',text:'Fire emergency procedure posted and visible',critical:false},
+      {id:'FS-9',text:'Last fire drill within 6 months',critical:true},
+      {id:'FS-10',text:'Hot work permit system in use for all hot work',critical:true},
+      {id:'FS-11',text:'Flammable materials stored in approved cabinets',critical:true}
+    ]}
+  ]},
+  'Electrical Safety':{sections:[
+    {title:'Distribution Boards & Panels',items:[
+      {id:'EL-1',text:'Distribution boards locked and labelled',critical:true},
+      {id:'EL-2',text:'No exposed live conductors visible',critical:true},
+      {id:'EL-3',text:'Cable entries sealed to prevent ingress',critical:false},
+      {id:'EL-4',text:'No double-adapted sockets / overloaded circuits',critical:true}
+    ]},
+    {title:'Equipment & Tools',items:[
+      {id:'EL-5',text:'Portable appliance testing (PAT) current',critical:true},
+      {id:'EL-6',text:'No damaged cables or plugs in use',critical:true},
+      {id:'EL-7',text:'RCD protection in place for portable tools',critical:true}
+    ]},
+    {title:'Isolation & LOTO',items:[
+      {id:'EL-8',text:'LOTO procedure documented and followed',critical:true},
+      {id:'EL-9',text:'Isolation points clearly labelled',critical:true},
+      {id:'EL-10',text:'LOTO lock box available and stocked',critical:false}
+    ]}
+  ]},
+  'PTW Compliance':{sections:[
+    {title:'Permit Issuance',items:[
+      {id:'PT-1',text:'All non-routine work covered by valid permit',critical:true},
+      {id:'PT-2',text:'Permits correctly completed (no blank fields)',critical:true},
+      {id:'PT-3',text:'Permits signed by authorised issuer',critical:true},
+      {id:'PT-4',text:'Isolation certificates attached where required',critical:true}
+    ]},
+    {title:'On-site Compliance',items:[
+      {id:'PT-5',text:'Permit displayed at work site',critical:false},
+      {id:'PT-6',text:'Work scope matches permit description',critical:true},
+      {id:'PT-7',text:'PPE requirements on permit being met',critical:true},
+      {id:'PT-8',text:'Permit within valid date/time window',critical:true}
+    ]},
+    {title:'Closure & Handback',items:[
+      {id:'PT-9',text:'Cancelled permits formally closed before expiry',critical:false},
+      {id:'PT-10',text:'Site reinstated and signed off on permit closure',critical:true},
+      {id:'PT-11',text:'Permit records filed and accessible for audit',critical:false}
+    ]}
+  ]},
+  'Working at Height':{sections:[
+    {title:'Planning & Risk Assessment',items:[
+      {id:'WH-1',text:'Work at height risk assessment completed',critical:true},
+      {id:'WH-2',text:'Lowest risk method of access selected',critical:true},
+      {id:'WH-3',text:'PTW issued for all work at height >2 m',critical:true}
+    ]},
+    {title:'Equipment',items:[
+      {id:'WH-4',text:'Scaffolding tagged and inspection current',critical:true},
+      {id:'WH-5',text:'Ladders inspected and secured at top and base',critical:true},
+      {id:'WH-6',text:'MEWP / cherry picker pre-use check completed',critical:true},
+      {id:'WH-7',text:'Fall arrest equipment within service date',critical:true}
+    ]},
+    {title:'Edge Protection & Exclusion Zones',items:[
+      {id:'WH-8',text:'Guardrails in place at all open edges',critical:true},
+      {id:'WH-9',text:'Exclusion zone below work area established',critical:true},
+      {id:'WH-10',text:'Toe boards fitted to prevent dropped tools',critical:false}
+    ]}
+  ]},
+  'Environmental':{sections:[
+    {title:'Waste Management',items:[
+      {id:'EN-1',text:'Waste segregated correctly (general / hazardous / recyclable)',critical:false},
+      {id:'EN-2',text:'Hazardous waste labelled and stored in bunded area',critical:true},
+      {id:'EN-3',text:'Waste transfer records maintained',critical:false},
+      {id:'EN-4',text:'No illegal dumping or burning observed',critical:true}
+    ]},
+    {title:'Chemical & Spill Management',items:[
+      {id:'EN-5',text:'All chemicals labelled with SDS on file',critical:true},
+      {id:'EN-6',text:'Chemical storage in bunded containment',critical:true},
+      {id:'EN-7',text:'Spill kits available near chemical storage',critical:true},
+      {id:'EN-8',text:'No staining / evidence of past spillage to ground',critical:true}
+    ]},
+    {title:'Compliance',items:[
+      {id:'EN-9',text:'Environmental monitoring records up to date',critical:false},
+      {id:'EN-10',text:'Relevant environmental permits on display',critical:false},
+      {id:'EN-11',text:'No water body contamination risk identified',critical:true}
+    ]}
+  ]}
+};
+
+function genAuditId(audits){
+  const y=new Date().getFullYear();
+  const existing=(audits||[]).filter(a=>a.id&&a.id.startsWith('AUD-'+y+'-'));
+  const nums=existing.map(a=>parseInt((a.id||'').split('-')[2])||0);
+  return 'AUD-'+y+'-'+(( Math.max(0,...nums)+1 ).toString().padStart(3,'0'));
+}
+
+function calcAuditScore(templateName, answers){
+  const tmpl=AUDIT_TEMPLATES[templateName];
+  if(!tmpl)return{pct:0,passes:0,fails:0,nas:0,critFails:0};
+  let passes=0,fails=0,nas=0,critFails=0;
+  tmpl.sections.forEach(sec=>sec.items.forEach(item=>{
+    const ans=answers[item.id];
+    if(!ans||!ans.result)return;
+    if(ans.result==='Pass')passes++;
+    else if(ans.result==='Fail'){fails++;if(item.critical)critFails++;}
+    else if(ans.result==='N/A')nas++;
+  }));
+  const answered=passes+fails;
+  const pct=answered>0?Math.round(passes/answered*100):0;
+  return{pct,passes,fails,nas,critFails,answered};
+}
+
+function setAuditNote(itemId,val){
+  if(!_auditAnswers[itemId])_auditAnswers[itemId]={result:'',notes:''};
+  _auditAnswers[itemId].notes=val;
+}
+
+function setAuditAnswer(itemId,result,critical){
+  const prev=_auditAnswers[itemId]||{};
+  _auditAnswers[itemId]={result,notes:prev.notes||''};
+  const row=document.getElementById('audit-row-'+itemId);
+  if(row){
+    row.style.background=result==='Fail'?'#fee2e2':result==='Pass'?'#dcfce7':'';
+    const btns=row.querySelectorAll('td:nth-child(3) button');
+    if(btns.length===3){
+      btns[0].className='btn btn-sm '+(result==='Pass'?'btn-success':'btn-ghost');
+      btns[1].className='btn btn-sm '+(result==='Fail'?'btn-danger':'btn-ghost');
+      btns[2].className='btn btn-sm '+(result==='N/A'?'btn-yellow':'btn-ghost');
+    }
+  }
+  updateAuditScore();
+}
+
+function updateAuditScore(){
+  const type=document.getElementById('audit-f-type').value;
+  const s=calcAuditScore(type,_auditAnswers);
+  document.getElementById('audit-score-pct').textContent=s.answered>0?s.pct+'%':'—';
+  document.getElementById('audit-score-detail').innerHTML=
+    s.answered>0?`<strong>${s.passes}</strong> Pass &nbsp;|&nbsp; <strong>${s.fails}</strong> Fail &nbsp;|&nbsp; <strong>${s.nas}</strong> N/A`:'Answer the checklist items below';
+  const pill=document.getElementById('audit-score-pill');
+  if(s.answered===0){pill.innerHTML='';return;}
+  if(s.critFails>0)pill.innerHTML=`<span class="pill pill-red">⚠ ${s.critFails} Critical Fail${s.critFails>1?'s':''}</span>`;
+  else if(s.pct>=90)pill.innerHTML='<span class="pill pill-green">Excellent</span>';
+  else if(s.pct>=70)pill.innerHTML='<span class="pill pill-yellow">Acceptable</span>';
+  else pill.innerHTML='<span class="pill pill-red">Poor — Action Required</span>';
+}
+
+function loadAuditTemplate(){
+  const type=document.getElementById('audit-f-type').value;
+  const tmpl=AUDIT_TEMPLATES[type];
+  if(!tmpl){document.getElementById('audit-checklist-body').innerHTML='';return;}
+  let html='';
+  tmpl.sections.forEach(sec=>{
+    html+=`<div style="margin:12px 0 4px;padding:7px 12px;background:var(--accent);color:#fff;border-radius:6px;font-weight:600;font-size:13px">${sec.title}</div>`;
+    html+='<div class="table-wrap"><table><thead><tr><th style="width:46%">Checklist Item</th><th style="width:7%;text-align:center">Crit</th><th style="text-align:center;width:27%">Result</th><th>Notes (required for Fail)</th></tr></thead><tbody>';
+    sec.items.forEach(item=>{
+      const ans=_auditAnswers[item.id]||{result:'',notes:''};
+      const rowBg=ans.result==='Fail'?'background:#fee2e2':ans.result==='Pass'?'background:#dcfce7':'';
+      const pCls='btn btn-sm '+(ans.result==='Pass'?'btn-success':'btn-ghost');
+      const fCls='btn btn-sm '+(ans.result==='Fail'?'btn-danger':'btn-ghost');
+      const nCls='btn btn-sm '+(ans.result==='N/A'?'btn-yellow':'btn-ghost');
+      html+=`<tr id="audit-row-${item.id}" style="${rowBg}">
+        <td>${escapeHtml(item.text)}</td>
+        <td style="text-align:center">${item.critical?'<span style="color:var(--red);font-weight:700" title="Critical item">★</span>':'<span style="color:var(--muted)">–</span>'}</td>
+        <td style="text-align:center;white-space:nowrap">
+          <button class="${pCls}" onclick="setAuditAnswer('${item.id}','Pass',${item.critical})">Pass</button>
+          <button class="${fCls}" onclick="setAuditAnswer('${item.id}','Fail',${item.critical})">Fail</button>
+          <button class="${nCls}" onclick="setAuditAnswer('${item.id}','N/A',${item.critical})">N/A</button>
+        </td>
+        <td><input type="text" value="${escapeHtml(ans.notes||'')}" oninput="setAuditNote('${item.id}',this.value)" placeholder="${item.critical&&ans.result==='Fail'?'Describe finding (critical)':'Optional'}"></td>
+      </tr>`;
+    });
+    html+='</tbody></table></div>';
+  });
+  document.getElementById('audit-checklist-body').innerHTML=html;
+  updateAuditScore();
+}
+
+function openAddAudit(){
+  document.getElementById('audit-modal-title').textContent='New Audit / Inspection';
+  document.getElementById('audit-f-edit-id').value='';
+  document.getElementById('audit-f-type').value='Housekeeping';
+  document.getElementById('audit-f-type').disabled=false;
+  document.getElementById('audit-f-date').value=today();
+  document.getElementById('audit-f-title').value='';
+  document.getElementById('audit-f-auditor').value='';
+  document.getElementById('audit-f-location').value='';
+  document.getElementById('audit-f-notes').value='';
+  _auditAnswers={};
+  loadAuditTemplate();
+  openModal('audit-modal');
+}
+
+function editAudit(id){
+  const d=getData()||getDefaultData();
+  const a=(d.audits||[]).find(x=>x.id===id);if(!a)return;
+  document.getElementById('audit-modal-title').textContent='Edit Audit';
+  document.getElementById('audit-f-edit-id').value=id;
+  document.getElementById('audit-f-type').value=a.template||'Housekeeping';
+  document.getElementById('audit-f-type').disabled=true;
+  document.getElementById('audit-f-date').value=a.date||'';
+  document.getElementById('audit-f-title').value=a.title||'';
+  document.getElementById('audit-f-auditor').value=a.auditor||'';
+  document.getElementById('audit-f-location').value=a.location||'';
+  document.getElementById('audit-f-notes').value=a.notes||'';
+  _auditAnswers=JSON.parse(JSON.stringify(a.answers||{}));
+  loadAuditTemplate();
+  openModal('audit-modal');
+}
+
+function saveAudit(){
+  if(!validateRequired([['audit-f-auditor','Lead Auditor'],['audit-f-date','Date'],['audit-f-location','Location']]))return;
+  // Flush any pending note edits
+  const type=document.getElementById('audit-f-type').value;
+  const tmpl=AUDIT_TEMPLATES[type];
+  if(tmpl)tmpl.sections.forEach(sec=>sec.items.forEach(item=>{
+    const el=document.getElementById('audit-note-'+item.id);
+    if(el&&_auditAnswers[item.id])_auditAnswers[item.id].notes=el.value||'';
+  }));
+  let d=getData();if(!d)d=getDefaultData();d.audits=d.audits||[];
+  const editId=document.getElementById('audit-f-edit-id').value;
+  const scores=calcAuditScore(type,_auditAnswers);
+  const rec={
+    id:editId||genAuditId(d.audits),
+    template:type,
+    title:document.getElementById('audit-f-title').value||(type+' Audit'),
+    auditor:document.getElementById('audit-f-auditor').value,
+    date:document.getElementById('audit-f-date').value,
+    location:document.getElementById('audit-f-location').value,
+    status:'Complete',
+    score:scores.pct,passes:scores.passes,fails:scores.fails,critFails:scores.critFails,
+    answers:JSON.parse(JSON.stringify(_auditAnswers)),
+    notes:document.getElementById('audit-f-notes').value||'',
+    capaRefs:editId?((d.audits.find(a=>a.id===editId)||{}).capaRefs||[]):[]
+  };
+  // Auto-generate CAPAs for critical failures (new audits only)
+  if(!editId&&scores.critFails>0&&tmpl){
+    const newCapas=[];
+    tmpl.sections.forEach(sec=>sec.items.forEach(item=>{
+      const ans=_auditAnswers[item.id];
+      if(ans&&ans.result==='Fail'&&item.critical){
+        const dueDate=new Date(new Date(rec.date).getTime()+14*864e5).toISOString().substring(0,10);
+        const cid=autoCreateCapa(d,'Audit',rec.id,
+          '[CRITICAL FINDING] '+item.text+(ans.notes?' — '+ans.notes:''),
+          rec.auditor,dueDate,
+          'Investigate and remediate critical audit finding. Provide evidence of closure.',
+          'High');
+        newCapas.push(cid);
+      }
+    }));
+    rec.capaRefs=newCapas;
+    if(newCapas.length)showToast(newCapas.length+' CAPA(s) auto-created for critical findings','warn',4500);
+  }
+  if(editId){const idx=d.audits.findIndex(x=>x.id===editId);if(idx>=0)d.audits[idx]=rec;}
+  else d.audits.push(rec);
+  saveData(d);closeModal('audit-modal');renderAudits(1);
+  showToast('Audit saved — '+rec.id+' | Score: '+scores.pct+'%','success');
+  sendNotificationEmail('Audit',{id:rec.id,date:rec.date,location:rec.location,desc:rec.title},rec.auditor,`Score: ${scores.pct}% | Fails: ${scores.fails} (${scores.critFails} critical)`);
+}
+
+function viewAuditReport(id){
+  const d=getData()||getDefaultData();
+  const a=(d.audits||[]).find(x=>x.id===id);if(!a)return;
+  const tmpl=AUDIT_TEMPLATES[a.template];
+  let html=`<div class="report-doc">
+    <h1>📋 Audit Report — ${escapeHtml(a.id)}</h1>
+    <p style="text-align:center;color:#666;font-size:12px">${escapeHtml(a.title||'')} | ${fmtDate(a.date)} | ${escapeHtml(a.location||'')}</p>
+    <hr style="border:2px solid #2563eb;margin:12px 0">
+    <table><tbody>
+      <tr><td><strong>Auditor</strong></td><td>${escapeHtml(a.auditor||'')}</td><td><strong>Date</strong></td><td>${fmtDate(a.date)}</td></tr>
+      <tr><td><strong>Type</strong></td><td>${escapeHtml(a.template||'')}</td><td><strong>Location</strong></td><td>${escapeHtml(a.location||'')}</td></tr>
+      <tr><td><strong>Score</strong></td><td style="font-weight:700;color:${(a.score||0)>=90?'#16a34a':(a.score||0)>=70?'#d97706':'#dc2626'}">${a.score}%</td><td><strong>Critical Fails</strong></td><td style="color:${(a.critFails||0)>0?'#dc2626':'#16a34a'};font-weight:700">${a.critFails||0}</td></tr>
+      <tr><td><strong>Pass</strong></td><td>${a.passes||0}</td><td><strong>Fail</strong></td><td>${a.fails||0}</td></tr>
+    </tbody></table>`;
+  if(tmpl){
+    tmpl.sections.forEach(sec=>{
+      html+=`<h3 style="margin-top:16px">${sec.title}</h3><table><thead><tr><th>Item</th><th style="text-align:center">Critical</th><th>Result</th><th>Notes</th></tr></thead><tbody>`;
+      sec.items.forEach(item=>{
+        const ans=(a.answers||{})[item.id]||{result:'—',notes:''};
+        const bg=ans.result==='Fail'?'#fee2e2':ans.result==='Pass'?'#dcfce7':'';
+        const col=ans.result==='Pass'?'#16a34a':ans.result==='Fail'?'#dc2626':'#475569';
+        html+=`<tr style="background:${bg}"><td>${escapeHtml(item.text)}</td><td style="text-align:center">${item.critical?'★':'-'}</td><td style="font-weight:600;color:${col}">${ans.result||'—'}</td><td>${escapeHtml(ans.notes||'')}</td></tr>`;
+      });
+      html+='</tbody></table>';
+    });
+  }
+  if(a.notes)html+=`<h3>Overall Notes</h3><p>${escapeHtml(a.notes)}</p>`;
+  if((a.capaRefs||[]).length)html+=`<h3>CAPAs Raised</h3><p>${a.capaRefs.join(', ')}</p>`;
+  html+=`<div style="margin-top:30px;border-top:2px solid #2563eb;padding-top:12px;font-size:11px;color:#777;text-align:center">
+    ${escapeHtml(a.id)} | ${fmtDate(a.date)} | CONFIDENTIAL<br>Prepared by ${escapeHtml(a.auditor||'SHEQ')} | GRCentral
+  </div></div>`;
+  document.getElementById('report-output').innerHTML=html;
+  navigateTo('report');
+}
+
+function deleteAudit(id){
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete audit '+id+'?\nThis cannot be undone.'))return;
+  d.audits=(d.audits||[]).filter(x=>x.id!==id);saveData(d);renderAudits(auditPage);
+}
+
+function renderAudits(page=1){
+  auditPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('audit-search').value||'').toLowerCase();
+  const tf=document.getElementById('audit-filter-type').value;
+  const sf=document.getElementById('audit-filter-status').value;
+  let items=(d.audits||[]).filter(a=>{
+    const ms=!search||[a.id,a.title,a.auditor,a.location,a.template].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!tf||a.template===tf)&&(!sf||a.status===sf);
+  });
+  items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const complete=items.filter(a=>a.status==='Complete').length;
+  const inProg=items.filter(a=>a.status==='In Progress').length;
+  const critFails=items.filter(a=>(a.critFails||0)>0).length;
+  const withScore=items.filter(a=>a.score!=null);
+  const avgScore=withScore.length?Math.round(withScore.reduce((s,a)=>s+(a.score||0),0)/withScore.length):0;
+  document.getElementById('audit-stats').innerHTML=`
+    <span class="stat-chip">Total: ${items.length}</span>
+    <span class="stat-chip" style="color:#16a34a">✓ Complete: ${complete}</span>
+    <span class="stat-chip" style="color:#2563eb">⟳ In Progress: ${inProg}</span>
+    <span class="stat-chip" style="color:#dc2626">⚠ Critical Fails: ${critFails}</span>
+    <span class="stat-chip" style="color:#d97706">Avg Score: ${avgScore}%</span>`;
+  const{items:rows,total}=paginate(items,page);
+  const scorePill=s=>{if(s==null)return'—';if(s>=90)return`<span class="pill pill-green">${s}%</span>`;if(s>=70)return`<span class="pill pill-yellow">${s}%</span>`;return`<span class="pill pill-red">${s}%</span>`;};
+  document.getElementById('audit-tbody').innerHTML=rows.map(a=>{
+    const rowCls=(a.critFails||0)>0?'row-red':(a.score!=null&&a.score<70)?'row-amber':'';
+    return`<tr class="${rowCls}">
+      <td><strong>${a.id}</strong></td>
+      <td><span class="pill pill-blue" style="font-size:10px">${a.template}</span></td>
+      <td title="${escapeHtml(a.title||'')}">${truncate(a.title||'',40)}</td>
+      <td>${a.auditor||'—'}</td>
+      <td>${fmtDate(a.date)}</td>
+      <td>${a.location||'—'}</td>
+      <td>${scorePill(a.score)}</td>
+      <td>${(a.critFails||0)>0?`<span style="color:var(--red);font-weight:700">${a.critFails} Critical</span>`:(a.fails||0)}</td>
+      <td>${(a.capaRefs||[]).length?`<span class="pill pill-orange" style="font-size:10px">${(a.capaRefs||[]).length} CAPA${(a.capaRefs||[]).length>1?'s':''}</span>`:'—'}</td>
+      <td>${a.status==='Complete'?'<span class="pill pill-green">Complete</span>':'<span class="pill pill-yellow">In Progress</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-ghost" onclick="viewAuditReport('${a.id}')" title="View full report">Report</button>
+        <button class="btn btn-sm btn-ghost" onclick="editAudit('${a.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteAudit('${a.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+  renderPagination('audit-pagination',total,page,renderAudits);
+}
+document.getElementById('audit-search').addEventListener('input',()=>renderAudits(1));
+document.getElementById('audit-filter-type').addEventListener('change',()=>renderAudits(1));
+document.getElementById('audit-filter-status').addEventListener('change',()=>renderAudits(1));
+
+// ============================================================
 // MONTHLY REPORT
 // ============================================================
 function generateReport(){
@@ -5707,11 +6198,46 @@ function exportCSV(module){
   } else if(module==='assets'){
     cols=['Asset ID','Name','Category','Serial No','Location','Description','Last Inspected','Next Due','Frequency','Inspector','Result','Condition','Status','Notes','Standard'];
     rows=(d.assets||[]).map(a=>[a.id,a.name,a.category,a.serial,a.location,a.desc,a.lastDate,a.nextDate,a.freq,a.inspector,a.result,a.condition,a.status,a.notes,a.standard]);
+  } else if(module==='audits'){
+    cols=['Audit ID','Type','Title','Auditor','Date','Location','Score %','Passes','Fails','Critical Fails','CAPAs Raised','Status','Notes'];
+    rows=(d.audits||[]).map(a=>[a.id,a.template,a.title,a.auditor,a.date,a.location,a.score,a.passes,a.fails,a.critFails,(a.capaRefs||[]).join('; '),a.status,a.notes]);
   }
   const csv=[cols,...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download=`sheqai-${module}-${today()}.csv`;a.click();URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// PWA — SERVICE WORKER REGISTRATION
+// ============================================================
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      console.log('[SHEQ-AI] Service Worker registered — scope:',reg.scope);
+    }).catch(()=>{}); // Silently fail if sw.js not present
+  });
+}
+
+// PWA install prompt handling
+let _pwaInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _pwaInstallPrompt = e;
+  const btn = document.getElementById('pwa-install-btn');
+  if(btn) btn.style.display = '';
+});
+window.addEventListener('appinstalled', () => {
+  _pwaInstallPrompt = null;
+  const btn = document.getElementById('pwa-install-btn');
+  if(btn) btn.style.display = 'none';
+  showToast('SHEQ-AI installed on your device!', 'success', 4000);
+});
+function installPwa() {
+  if(_pwaInstallPrompt) {
+    _pwaInstallPrompt.prompt();
+    _pwaInstallPrompt.userChoice.then(() => { _pwaInstallPrompt = null; });
+  }
 }
 
 // ============================================================
