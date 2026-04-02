@@ -1832,6 +1832,120 @@
         font-size: var(--fs-base);
       }
     }
+  /* ── Module Logo Header ─────────────────────────────── */
+  .module-logo-header {
+    background: linear-gradient(135deg, #001a2e 0%, #002d45 55%, #003d5c 100%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 22px;
+    margin-bottom: 22px;
+    border-radius: 12px;
+    border-bottom: 2px solid rgba(0, 229, 255, 0.55);
+    position: relative;
+    overflow: hidden;
+    min-height: 76px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.22), 0 1px 0 rgba(0,229,255,0.12) inset;
+  }
+  /* Glow spots */
+  .module-logo-header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: 60px;
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(0,229,255,.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .module-logo-header::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: 120px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(0,120,200,.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .mlh-logo {
+    height: 54px;
+    width: auto;
+    object-fit: contain;
+    object-position: center;
+    flex-shrink: 0;
+    filter: brightness(1.08) drop-shadow(0 0 8px rgba(0,229,255,0.25));
+    border-radius: 6px;
+  }
+  .mlh-divider {
+    width: 1px;
+    height: 48px;
+    background: linear-gradient(to bottom, transparent, rgba(0,229,255,0.35), transparent);
+    flex-shrink: 0;
+  }
+  .mlh-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .mlh-brand {
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(0,229,255,0.7);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .mlh-module {
+    font-size: 19px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+  }
+  .mlh-tagline {
+    font-size: 9.5px;
+    color: rgba(0,229,255,0.45);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .mlh-right {
+    text-align: right;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+  }
+  .mlh-slogan {
+    font-size: 9px;
+    color: rgba(0,229,255,0.4);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .mlh-dot-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .mlh-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(0,229,255,0.25);
+  }
+  .mlh-dot.active { background: rgba(0,229,255,0.7); }
+  /* Mobile */
+  @media (max-width: 640px) {
+    .module-logo-header { padding: 8px 14px; min-height: 60px; gap: 10px; border-radius: 8px; }
+    .mlh-logo { height: 40px; }
+    .mlh-right { display: none; }
+    .mlh-divider { height: 36px; }
+    .mlh-module { font-size: 15px; }
+    .mlh-tagline { display: none; }
+  }
+
   /* ── Evidence Upload Widget ──────────────────────────── */
   .ev-group { margin: 10px 0; }
   .ev-drop {
@@ -1955,6 +2069,27 @@
   </div>
 
   <div id="content">
+
+<!-- ======= MODULE LOGO HEADER (shared, always visible) ======= -->
+<div class="module-logo-header" id="module-logo-header">
+  <img src="./logo.png" class="mlh-logo" alt="ESG Management Systems - SHEQ" onerror="this.style.display='none'">
+  <div class="mlh-divider"></div>
+  <div class="mlh-text">
+    <div class="mlh-brand">ESG Management Systems</div>
+    <div class="mlh-module" id="mlh-module-name">Dashboard</div>
+    <div class="mlh-tagline">Safety &bull; Health &bull; Environment &bull; Quality</div>
+  </div>
+  <div class="mlh-right">
+    <div class="mlh-slogan">Intelligent Risk Management.</div>
+    <div class="mlh-dot-row">
+      <div class="mlh-dot active"></div>
+      <div class="mlh-dot active"></div>
+      <div class="mlh-dot active"></div>
+      <div class="mlh-dot"></div>
+      <div class="mlh-dot"></div>
+    </div>
+  </div>
+</div>
 
 <!-- ======= DASHBOARD ======= -->
 <div id="page-dashboard" class="page active">
@@ -4133,6 +4268,13 @@ function navigateTo(page){
   document.querySelectorAll('.nav-link,.mobile-nav-item').forEach(l=>l.classList.remove('active'));
   document.querySelectorAll(`[data-page="${page}"]`).forEach(l=>l.classList.add('active'));
   document.getElementById('topbar-title').textContent=pageTitles[page]||page;
+  const _mlh=document.getElementById('mlh-module-name');
+  if(_mlh)_mlh.textContent=pageTitles[page]||page;
+  // Animate dots to reflect "depth" of module (cosmetic only)
+  const _dots=document.querySelectorAll('#module-logo-header .mlh-dot');
+  const _depthMap={dashboard:5,incidents:4,nearmiss:4,observations:3,audits:4,capa:4,risks:3,legal:3,moc:3,assets:3,permits:3,toolbox:2,inductions:2,emergency:2,calendar:2,report:4,chat:2};
+  const _depth=_depthMap[page]||3;
+  _dots.forEach((d,i)=>{d.classList.toggle('active',i<_depth);});
   currentPage=page;
   if(page==='dashboard')renderDashboard();
   else if(page==='observations')renderObservations();
