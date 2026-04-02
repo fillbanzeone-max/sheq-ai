@@ -1832,6 +1832,32 @@
         font-size: var(--fs-base);
       }
     }
+  /* ── Evidence Upload Widget ──────────────────────────── */
+  .ev-group { margin: 10px 0; }
+  .ev-drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    background: var(--bg);
+  }
+  .ev-drop:hover { border-color: var(--accent); background: var(--card2); }
+  .ev-chip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    margin: 3px 0;
+    font-size: 12px;
+    gap: 8px;
+    word-break: break-all;
+  }
+  .ev-chip-new { border-color: var(--accent); background: #eff6ff; }
   </style>
 
 </head>
@@ -2189,7 +2215,7 @@
     <span class="section-title">Legal &amp; Compliance Register</span>
     <div class="section-header-right">
       <button class="btn btn-ghost btn-sm" onclick="exportCSV('legal')">⬇ CSV</button>
-      <button class="btn btn-primary" onclick="openModal('legal-modal')">+ Add Item</button>
+      <button class="btn btn-primary" onclick="evClear('legal');document.getElementById('legal-f-edit-id').value='';openModal('legal-modal')">+ Add Item</button>
     </div>
   </div>
   <div class="toolbar">
@@ -2572,6 +2598,14 @@
     </div>
     <div class="form-group"><label>Inspection Notes / Findings</label><textarea id="asset-f-notes" placeholder="Findings, defects noted, actions required…"></textarea></div>
     <div class="form-group"><label>Regulatory / Standard Reference</label><input type="text" id="asset-f-standard" placeholder="e.g. SANS 1475, OHS Act Reg 9.2"></div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Inspection Evidence</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-asset').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'asset')">
+        <input type="file" id="ev-input-asset" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'asset')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach inspection certificates, test reports, photos of equipment<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-asset" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
     <input type="hidden" id="asset-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('asset-modal')">Cancel</button>
@@ -2619,6 +2653,14 @@
     </div>
     <div class="form-group"><label>Training Details / Affected Parties</label><textarea id="moc-f-training-notes" placeholder="Who needs to be trained and on what?"></textarea></div>
     <div class="form-group"><label>Post-Implementation Review Notes</label><textarea id="moc-f-review-notes" placeholder="Notes after implementation — did change go as planned?"></textarea></div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Supporting Documents</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-moc').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'moc')">
+        <input type="file" id="ev-input-moc" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'moc')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach approval documents, drawings, revised procedures, risk assessments<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-moc" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
     <input type="hidden" id="moc-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('moc-modal')">Cancel</button>
@@ -2729,6 +2771,14 @@
       </div>
       <div class="form-group"><label>HOW – Verification Method</label><input type="text" id="obs-f-capa-how" placeholder="How will completion be verified?"></div>
     </div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Evidence Attachments</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-obs').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'obs')">
+        <input type="file" id="ev-input-obs" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'obs')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach photos of hazard, safe acts, or evidence of action<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-obs" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
     <input type="hidden" id="obs-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('obs-modal')">Cancel</button>
@@ -2782,6 +2832,14 @@
         <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="nm-f-capa-when"></div>
       </div>
     </div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Evidence Attachments</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-nm').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'nm')">
+        <input type="file" id="ev-input-nm" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'nm')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach photos of near miss scene, witness statements, corrective action evidence<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-nm" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
     <input type="hidden" id="nm-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('nm-modal')">Cancel</button>
@@ -2828,6 +2886,14 @@
       <div class="form-group"><label>Priority</label>
         <select id="inc-f-priority"><option value="Medium">Medium</option><option value="Low">Low</option><option value="High">High</option><option value="Critical">Critical</option></select>
       </div>
+    </div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Evidence Attachments</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-inc').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'inc')">
+        <input type="file" id="ev-input-inc" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'inc')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach photos, witness statements, incident reports, medical certificates<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-inc" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
     </div>
     <input type="hidden" id="inc-f-edit-id">
     <div class="modal-actions">
@@ -3026,6 +3092,14 @@
         <select id="legal-f-status"><option value="COMPLIANT">Compliant</option><option value="OVERDUE">Overdue</option><option value="PENDING">Pending</option><option value="SCHEDULED">Scheduled</option></select>
       </div>
     </div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Compliance Evidence</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-legal').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'legal')">
+        <input type="file" id="ev-input-legal" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'legal')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach compliance certificates, audit reports, licences, permits<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-legal" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
     <input type="hidden" id="legal-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('legal-modal')">Cancel</button>
@@ -3067,7 +3141,15 @@
     <div id="capa-close-fields" style="display:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2);background:var(--card2)">
       <div class="form-row">
         <div class="form-group"><label>Date Closed</label><input type="date" id="capa-f-closed-date"></div>
-        <div class="form-group"><label>Closure Evidence</label><input type="text" id="capa-f-evidence" placeholder="Describe evidence of completion"></div>
+        <div class="form-group"><label>Closure Notes / Evidence Description</label><input type="text" id="capa-f-evidence" placeholder="Describe the evidence of completion"></div>
+      </div>
+      <div class="ev-group">
+        <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Upload Closure Evidence</div>
+        <div class="ev-drop" onclick="document.getElementById('ev-input-capa').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'capa')">
+          <input type="file" id="ev-input-capa" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'capa')">
+          <span style="color:var(--muted);font-size:13px">📁 Click or drag &amp; drop — photos, certificates, reports, sign-off sheets<br><small>Max 5MB per file · 25MB total</small></span>
+        </div>
+        <div id="ev-list-capa" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
       </div>
     </div>
     <input type="hidden" id="capa-f-edit-id">
@@ -3140,6 +3222,14 @@
       <label for="inv-f-auto-capa" style="margin:0;font-size:13px;cursor:pointer">Auto-create a <strong>CAPA</strong> from the root cause and recommendations when saving</label>
     </div>
 
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Investigation Evidence</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-inv').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'inv')">
+        <input type="file" id="ev-input-inv" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'inv')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach evidence photos, witness statements, inspection results, CCTV stills<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-inv" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
     <input type="hidden" id="inv-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('inv-modal')">Cancel</button>
@@ -3180,6 +3270,14 @@
     <!-- Dynamic checklist sections -->
     <div id="audit-checklist-body"></div>
     <div class="form-group" style="margin-top:12px"><label>Overall Notes / Summary</label><textarea id="audit-f-notes" placeholder="General observations, key recommendations, follow-up actions…"></textarea></div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Audit Evidence &amp; Attachments</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-audit').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'audit')">
+        <input type="file" id="ev-input-audit" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'audit')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach audit photos, signed checklists, corrective action evidence, follow-up reports<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-audit" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
     <input type="hidden" id="audit-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('audit-modal')">Cancel</button>
@@ -3798,6 +3896,104 @@ function capaBadge(capaRef, d){
 }
 
 // ============================================================
+// EVIDENCE UPLOAD — shared helpers
+// ============================================================
+window._evPending={};   // {prefix:[{name,type,size,dataUrl,uploaded}]}
+window._evSaved={};     // {prefix:[...]} files already on the record being edited
+const EV_MAX_FILE_MB=5;
+const EV_MAX_TOTAL_MB=25;
+
+function evClear(prefix){
+  window._evPending[prefix]=[];
+  window._evSaved[prefix]=[];
+  const el=document.getElementById('ev-list-'+prefix);
+  if(el)el.innerHTML='<span style="color:var(--muted);font-size:12px">No attachments yet.</span>';
+}
+function evLoad(prefix,files){
+  window._evPending[prefix]=[];
+  window._evSaved[prefix]=Array.isArray(files)?[...files]:[];
+  evRefresh(prefix);
+}
+function evFilePicked(input,prefix){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  const all=(window._evSaved[prefix]||[]).concat(window._evPending[prefix]||[]);
+  let totalMB=all.reduce((s,f)=>s+(f.size||0),0)/1024/1024;
+  let queued=0;
+  files.forEach(file=>{
+    if(file.size/1024/1024>EV_MAX_FILE_MB){showToast('"'+file.name+'" exceeds '+EV_MAX_FILE_MB+'MB — skipped','warn',3500);return;}
+    totalMB+=file.size/1024/1024;
+    if(totalMB>EV_MAX_TOTAL_MB){showToast('Total attachments would exceed '+EV_MAX_TOTAL_MB+'MB — skipped','warn',3500);return;}
+    queued++;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      if(!window._evPending[prefix])window._evPending[prefix]=[];
+      window._evPending[prefix].push({name:file.name,type:file.type,size:file.size,dataUrl:e.target.result,uploaded:new Date().toISOString()});
+      evRefresh(prefix);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value='';
+}
+function evDrop(event,prefix){
+  event.preventDefault();
+  const dt=event.dataTransfer;
+  if(dt&&dt.files&&dt.files.length){evFilePicked({files:dt.files,value:''},prefix);}
+}
+function evRemovePending(prefix,idx){
+  if(window._evPending[prefix])window._evPending[prefix].splice(idx,1);
+  evRefresh(prefix);
+}
+function evRemoveSaved(prefix,idx){
+  if(window._evSaved[prefix])window._evSaved[prefix].splice(idx,1);
+  evRefresh(prefix);
+}
+function evRefresh(prefix){
+  const el=document.getElementById('ev-list-'+prefix);if(!el)return;
+  const saved=window._evSaved[prefix]||[];
+  const pending=window._evPending[prefix]||[];
+  if(!saved.length&&!pending.length){el.innerHTML='<span style="color:var(--muted);font-size:12px">No attachments yet.</span>';return;}
+  el.innerHTML=[...saved.map((f,i)=>evChipHTML(f,'evRemoveSaved(\''+prefix+'\','+i+')',false)),
+    ...pending.map((f,i)=>evChipHTML(f,'evRemovePending(\''+prefix+'\','+i+')',true))].join('');
+}
+function evChipHTML(f,removeCall,isNew){
+  const isImg=f.type&&f.type.startsWith('image/');
+  const sizeStr=f.size?(f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB'):'';
+  const icon=isImg?'🖼️':(f.type||'').includes('pdf')?'📄':(f.type||'').includes('word')?'📝':(f.type||'').includes('sheet')?'📊':'📎';
+  const dl=f.dataUrl?'<a href="'+f.dataUrl+'" target="_blank" download="'+escapeHtml(f.name)+'" style="color:var(--accent);font-size:11px;text-decoration:none" title="Download">⬇</a>':'';
+  return '<div class="ev-chip'+(isNew?' ev-chip-new':'')+'">'+
+    '<span>'+icon+' <strong>'+escapeHtml(f.name)+'</strong> <span style="color:var(--muted);font-size:11px">'+sizeStr+(isNew?' · new':'')+'</span></span>'+
+    '<span style="display:flex;gap:6px;align-items:center">'+dl+
+    '<button type="button" style="background:none;border:none;cursor:pointer;color:#dc2626;font-size:13px;padding:0 2px" onclick="'+removeCall+'" title="Remove">✕</button></span></div>';
+}
+function evCollect(prefix){
+  return [...(window._evSaved[prefix]||[]),...(window._evPending[prefix]||[])];
+}
+function evViewHTML(files){
+  if(!files||!files.length)return '<span style="color:var(--muted);font-size:12px">No attachments.</span>';
+  return files.map(f=>{
+    const isImg=f.type&&f.type.startsWith('image/');
+    const sizeStr=f.size?(f.size>1048576?(f.size/1048576).toFixed(1)+'MB':(f.size/1024).toFixed(0)+'KB'):'';
+    const icon=isImg?'🖼️':(f.type||'').includes('pdf')?'📄':(f.type||'').includes('word')?'📝':(f.type||'').includes('sheet')?'📊':'📎';
+    const link=f.dataUrl?
+      '<a href="'+f.dataUrl+'" target="_blank" download="'+escapeHtml(f.name)+'" style="color:var(--accent)">'+icon+' '+escapeHtml(f.name)+'</a>':
+      icon+' '+escapeHtml(f.name);
+    return '<div style="padding:4px 0;border-bottom:1px solid var(--border)">'+link+' <span style="color:var(--muted);font-size:11px">'+sizeStr+'</span></div>';
+  }).join('');
+}
+// Reusable static HTML block for evidence widget — call once per prefix
+function evWidgetHTML(prefix){
+  return '<div class="ev-group">'+
+    '<div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Evidence Attachments</div>'+
+    '<div class="ev-drop" onclick="document.getElementById(\'ev-input-'+prefix+'\').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,\''+prefix+'\')">'+
+      '<input type="file" id="ev-input-'+prefix+'" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,\''+prefix+'\')">'+
+      '<span style="color:var(--muted);font-size:13px">📁 Click or drag &amp; drop to attach files<br><small>Images, PDF, Word, Excel, ZIP — max '+EV_MAX_FILE_MB+'MB per file · '+EV_MAX_TOTAL_MB+'MB total</small></span>'+
+    '</div>'+
+    '<div id="ev-list-'+prefix+'" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>'+
+  '</div>';
+}
+
+// ============================================================
 // VIEW MODAL (read-only record detail)
 // ============================================================
 function viewTable(rows){
@@ -3825,15 +4021,15 @@ function openView(module,id){
   if(module==='obs'){
     const r=(d.observations||[]).find(x=>x.id===id);if(!r)return;
     title='Observation: '+escapeHtml(r.id);
-    body=viewTable([['ID',escapeHtml(r.id)],['Observer',escapeHtml(r.observer||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Activity',escapeHtml(r.activity||'')],['Type',typePill(r.type)],['Description',escapeHtml(r.desc||'')],['Immediate Action',escapeHtml(r.action||'')],['RCA Required',r.capa==='Y'?'<span class="pill pill-orange">Yes</span>':'<span class="pill pill-gray">No</span>'],r.capa==='Y'?['RCA Details',escapeHtml(r.rcaDetails||'—')]:null,['Priority',priorityPill(r.priority)],['CAPA',capaBadge(r.capaRef,d)],r.capa==='Y'?invViewRow(r.id,d):null].filter(Boolean));
+    body=viewTable([['ID',escapeHtml(r.id)],['Observer',escapeHtml(r.observer||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Activity',escapeHtml(r.activity||'')],['Type',typePill(r.type)],['Description',escapeHtml(r.desc||'')],['Immediate Action',escapeHtml(r.action||'')],['RCA Required',r.capa==='Y'?'<span class="pill pill-orange">Yes</span>':'<span class="pill pill-gray">No</span>'],r.capa==='Y'?['RCA Details',escapeHtml(r.rcaDetails||'—')]:null,['Priority',priorityPill(r.priority)],['CAPA',capaBadge(r.capaRef,d)],r.capa==='Y'?invViewRow(r.id,d):null,['Evidence',evViewHTML(r.evidenceFiles)]].filter(Boolean));
   } else if(module==='nm'){
     const r=(d.nearMisses||[]).find(x=>x.id===id);if(!r)return;
     title='Near Miss: '+escapeHtml(r.id);
-    body=viewTable([['ID',escapeHtml(r.id)],['Reporter',escapeHtml(r.reporter||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Potential Outcome',escapeHtml(r.outcome||'')],['HiPo',r.hipo?'<span class="pill pill-red">Yes</span>':'<span class="pill pill-gray">No</span>'],['Severity',sevPill(r.sev)],['Status',statusPill(r.status)],['Action Taken',escapeHtml(r.action||'')],['RCA Details',escapeHtml(r.rcaDetails||'—')],['CAPA',capaBadge(r.capaRef,d)],invViewRow(r.id,d)]);
+    body=viewTable([['ID',escapeHtml(r.id)],['Reporter',escapeHtml(r.reporter||'')],['Date',fmtDate(r.date)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Potential Outcome',escapeHtml(r.outcome||'')],['HiPo',r.hipo?'<span class="pill pill-red">Yes</span>':'<span class="pill pill-gray">No</span>'],['Severity',sevPill(r.sev)],['Status',statusPill(r.status)],['Action Taken',escapeHtml(r.action||'')],['RCA Details',escapeHtml(r.rcaDetails||'—')],['CAPA',capaBadge(r.capaRef,d)],invViewRow(r.id,d),['Evidence',evViewHTML(r.evidenceFiles)]]);
   } else if(module==='inc'){
     const r=(d.incidents||[]).find(x=>x.id===id);if(!r)return;
     title='Incident: '+escapeHtml(r.id);
-    body=viewTable([['ID',escapeHtml(r.id)],['Date',fmtDate(r.date)],['Type',escapeHtml(r.type||'')],['Severity',sevPill(r.sev)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Person Involved',escapeHtml(r.person||'')],['Root Cause',escapeHtml(r.rootCause||'')],['Status',statusPill(r.status)],['CAPA',capaBadge(r.capaRef,d)],invViewRow(r.id,d)]);
+    body=viewTable([['ID',escapeHtml(r.id)],['Date',fmtDate(r.date)],['Type',escapeHtml(r.type||'')],['Severity',sevPill(r.sev)],['Location',escapeHtml(r.location||'')],['Description',escapeHtml(r.desc||'')],['Person Involved',escapeHtml(r.person||'')],['Root Cause',escapeHtml(r.rootCause||'')],['Status',statusPill(r.status)],['CAPA',capaBadge(r.capaRef,d)],invViewRow(r.id,d),['Evidence',evViewHTML(r.evidenceFiles)]]);
   } else if(module==='ptw'){
     const r=(d.permits||[]).find(x=>x.id===id);if(!r)return;
     title='Permit: '+escapeHtml(r.id);
@@ -3845,12 +4041,12 @@ function openView(module,id){
   } else if(module==='capa'){
     const r=(d.capas||[]).find(x=>x.id===id);if(!r)return;
     title='CAPA: '+escapeHtml(r.id);
-    body=viewTable([['CAPA ID',escapeHtml(r.id)],['Source Module',escapeHtml(r.source_module||'')],['Source Ref',escapeHtml(r.source_ref||'')],['WHAT',escapeHtml(r.what||'')],['WHO',escapeHtml(r.who||'')],['WHEN',fmtDate(r.when)||'—'],['HOW',escapeHtml(r.how||'')],['Priority',priorityPill(r.priority)],['Status',statusPill(r.status)],['Created',fmtDate(r.created)],['Closed Date',fmtDate(r.closed_date)||'—'],['Evidence',escapeHtml(r.evidence||'')]]);
+    body=viewTable([['CAPA ID',escapeHtml(r.id)],['Source Module',escapeHtml(r.source_module||'')],['Source Ref',escapeHtml(r.source_ref||'')],['WHAT',escapeHtml(r.what||'')],['WHO',escapeHtml(r.who||'')],['WHEN',fmtDate(r.when)||'—'],['HOW',escapeHtml(r.how||'')],['Priority',priorityPill(r.priority)],['Status',statusPill(r.status)],['Created',fmtDate(r.created)],['Closed Date',fmtDate(r.closed_date)||'—'],['Closure Notes',escapeHtml(r.evidence||'—')],['Closure Evidence Files',evViewHTML(r.evidenceFiles)]]);
   } else if(module==='moc'){
     const r=(d.mocs||[]).find(x=>x.id===id);if(!r)return;
     title='Change Request: '+escapeHtml(r.id);
     const mocStatusPill=s=>{const m={Draft:'pill-gray','Pending Approval':'pill-yellow',Approved:'pill-blue','In Progress':'pill-teal',Completed:'pill-green',Rejected:'pill-red',Cancelled:'pill-gray'};return`<span class="pill ${m[s]||'pill-gray'}">${s}</span>`;};
-    body=viewTable([['MoC ID',escapeHtml(r.id)],['Title',`<strong>${escapeHtml(r.title||'')}</strong>`],['Type',`<span class="pill pill-blue">${escapeHtml(r.type||'')}</span>`],['Initiated By',escapeHtml(r.initiator||'')],['Department',escapeHtml(r.dept||'')],['Request Date',fmtDate(r.date)||'—'],['Target Date',fmtDate(r.target)||'—'],['Risk Level',priorityPill(r.riskLevel)],['Status',mocStatusPill(r.status)],['Approver',escapeHtml(r.approver||'—')],['Approval Date',fmtDate(r.approvedDate)||'—'],['Description',escapeHtml(r.desc||'')],['Reason / Justification',escapeHtml(r.reason||'')],['Hazards Introduced',escapeHtml(r.hazards||'')],['Mitigation / Controls',escapeHtml(r.controls||'')],['Training Required',r.training==='Yes'?'<span class="pill pill-orange">Yes</span>':'No'],['Training Details',escapeHtml(r.trainingNotes||'—')],['Post-Implementation Review',escapeHtml(r.reviewNotes||'—')]]);
+    body=viewTable([['MoC ID',escapeHtml(r.id)],['Title',`<strong>${escapeHtml(r.title||'')}</strong>`],['Type',`<span class="pill pill-blue">${escapeHtml(r.type||'')}</span>`],['Initiated By',escapeHtml(r.initiator||'')],['Department',escapeHtml(r.dept||'')],['Request Date',fmtDate(r.date)||'—'],['Target Date',fmtDate(r.target)||'—'],['Risk Level',priorityPill(r.riskLevel)],['Status',mocStatusPill(r.status)],['Approver',escapeHtml(r.approver||'—')],['Approval Date',fmtDate(r.approvedDate)||'—'],['Description',escapeHtml(r.desc||'')],['Reason / Justification',escapeHtml(r.reason||'')],['Hazards Introduced',escapeHtml(r.hazards||'')],['Mitigation / Controls',escapeHtml(r.controls||'')],['Training Required',r.training==='Yes'?'<span class="pill pill-orange">Yes</span>':'No'],['Training Details',escapeHtml(r.trainingNotes||'—')],['Post-Implementation Review',escapeHtml(r.reviewNotes||'—')],['Supporting Documents',evViewHTML(r.evidenceFiles)]]);
   }
   document.getElementById('view-modal-title').textContent=title;
   document.getElementById('view-modal-body').innerHTML=body;
@@ -4191,6 +4387,7 @@ function openAddObs(){
   document.getElementById('obs-f-capa-who').value='';
   document.getElementById('obs-f-capa-when').value='';
   document.getElementById('obs-f-capa-how').value='';
+  evClear('obs');
   openModal('obs-modal');
 }
 function editObs(id){
@@ -4212,6 +4409,7 @@ function editObs(id){
   document.getElementById('obs-f-capa-who').value=o.rcaWho||'';
   document.getElementById('obs-f-capa-when').value=o.rcaWhen||'';
   document.getElementById('obs-f-capa-how').value=o.rcaHow||'';
+  evLoad('obs',o.evidenceFiles||[]);
   openModal('obs-modal');
 }
 function saveObservation(){
@@ -4237,6 +4435,7 @@ function saveObservation(){
     rcaWhen:document.getElementById('obs-f-capa-when').value||'',
     rcaHow:document.getElementById('obs-f-capa-how').value||'',
     capaRef:'',
+    evidenceFiles:evCollect('obs'),
     createdBy:currentUser?.email||''
   };
   if(editId){
@@ -4306,6 +4505,7 @@ function openAddNM(){
   document.getElementById('nm-f-priority').value='Medium';document.getElementById('nm-capa-fields').style.display='none';
   document.getElementById('nm-f-rca').value='';document.getElementById('nm-f-capa-what').value='';
   document.getElementById('nm-f-capa-who').value='';document.getElementById('nm-f-capa-when').value='';
+  evClear('nm');
   openModal('nm-modal');
 }
 function saveNearMiss(){
@@ -4331,6 +4531,7 @@ function saveNearMiss(){
     rcaWho:document.getElementById('nm-f-capa-who').value||'',
     rcaWhen:document.getElementById('nm-f-capa-when').value||'',
     capaRef:'',
+    evidenceFiles:evCollect('nm'),
     createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.nearMisses.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.nearMisses[idx].capaRef||'';d.nearMisses[idx]=rec;}}
@@ -4396,6 +4597,7 @@ function editNM(id){
   document.getElementById('nm-f-capa-what').value=n.rcaWhat||'';
   document.getElementById('nm-f-capa-who').value=n.rcaWho||'';
   document.getElementById('nm-f-capa-when').value=n.rcaWhen||'';
+  evLoad('nm',n.evidenceFiles||[]);
   openModal('nm-modal');
 }
 document.getElementById('nm-search').addEventListener('input',()=>renderNearMiss(1));
@@ -4415,6 +4617,7 @@ function openAddInc(){
   document.getElementById('inc-f-status').value='Open';
   document.getElementById('inc-f-priority').value='Medium';
   ['inc-f-location','inc-f-desc','inc-f-person','inc-f-rootcause','inc-f-capa-what','inc-f-capa-who','inc-f-capa-when','inc-f-capa-how'].forEach(id=>document.getElementById(id).value='');
+  evClear('inc');
   openModal('inc-modal');
 }
 function saveIncident(){
@@ -4438,6 +4641,7 @@ function saveIncident(){
     capaHow:document.getElementById('inc-f-capa-how').value||'',
     priority:document.getElementById('inc-f-priority').value,
     capaRef:'',
+    evidenceFiles:evCollect('inc'),
     createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.incidents.findIndex(x=>x.id===editId);if(idx>=0){rec.capaRef=d.incidents[idx].capaRef||'';d.incidents[idx]=rec;}}
@@ -4474,6 +4678,7 @@ function editInc(id){
   document.getElementById('inc-f-capa-when').value=i.capaWhen||'';
   document.getElementById('inc-f-capa-how').value=i.capaHow||'';
   document.getElementById('inc-f-priority').value=i.priority||'Medium';
+  evLoad('inc',i.evidenceFiles||[]);
   openModal('inc-modal');
 }
 function renderIncidents(page=1){
@@ -4820,7 +5025,8 @@ function saveLegal(){
     responsible:document.getElementById('legal-f-responsible').value||'',
     freq:document.getElementById('legal-f-freq').value,
     lastComplied:document.getElementById('legal-f-last').value||'',
-    status:document.getElementById('legal-f-status').value
+    status:document.getElementById('legal-f-status').value,
+    evidenceFiles:evCollect('legal')
   };
   if(editId){const idx=d.legalItems.findIndex(x=>x.id===editId);if(idx>=0)d.legalItems[idx]=rec;}
   else d.legalItems.push(rec);
@@ -4837,6 +5043,7 @@ function editLegal(id){
   document.getElementById('legal-f-freq').value=l.freq||'Annual';
   document.getElementById('legal-f-last').value=l.lastComplied||'';
   document.getElementById('legal-f-status').value=l.status||'COMPLIANT';
+  evLoad('legal',l.evidenceFiles||[]);
   openModal('legal-modal');
 }
 function renderLegal(page=1){
@@ -4935,6 +5142,7 @@ function openAddCapa(){
   document.getElementById('capa-f-closed-date').value='';
   document.getElementById('capa-f-evidence').value='';
   document.getElementById('capa-close-fields').style.display='none';
+  evClear('capa');
   openModal('capa-modal');
 }
 function editCapa(id){
@@ -4954,6 +5162,7 @@ function editCapa(id){
   document.getElementById('capa-f-closed-date').value=c.closed_date||'';
   document.getElementById('capa-f-evidence').value=c.evidence||'';
   document.getElementById('capa-close-fields').style.display=c.status==='Closed'?'block':'none';
+  evLoad('capa',c.evidenceFiles||[]);
   openModal('capa-modal');
 }
 function saveCapa(){
@@ -4973,6 +5182,7 @@ function saveCapa(){
     created:document.getElementById('capa-f-created').value||today(),
     closed_date:document.getElementById('capa-f-closed-date').value||'',
     evidence:document.getElementById('capa-f-evidence').value||'',
+    evidenceFiles:evCollect('capa'),
     createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.capas.findIndex(x=>x.id===editId);if(idx>=0)d.capas[idx]=rec;else d.capas.push(rec);}
@@ -5347,6 +5557,7 @@ function openAddMoc(){
   document.getElementById('moc-f-training').value='No';
   document.getElementById('moc-f-training-notes').value='';
   document.getElementById('moc-f-review-notes').value='';
+  evClear('moc');
   openModal('moc-modal');
 }
 
@@ -5371,6 +5582,7 @@ function editMoc(id){
   document.getElementById('moc-f-training').value=m.training||'No';
   document.getElementById('moc-f-training-notes').value=m.trainingNotes||'';
   document.getElementById('moc-f-review-notes').value=m.reviewNotes||'';
+  evLoad('moc',m.evidenceFiles||[]);
   openModal('moc-modal');
 }
 
@@ -5401,6 +5613,7 @@ function saveMoc(){
     training:document.getElementById('moc-f-training').value,
     trainingNotes:document.getElementById('moc-f-training-notes').value||'',
     reviewNotes:document.getElementById('moc-f-review-notes').value||'',
+    evidenceFiles:evCollect('moc'),
     createdBy:currentUser?.email||''
   };
   if(editId){const idx=d.mocs.findIndex(x=>x.id===editId);if(idx>=0)d.mocs[idx]=rec;}
@@ -5493,6 +5706,7 @@ function openAddAsset(){
   document.getElementById('asset-f-condition').value='Good';
   document.getElementById('asset-f-notes').value='';
   document.getElementById('asset-f-standard').value='';
+  evClear('asset');
   openModal('asset-modal');
 }
 function editAsset(id){
@@ -5512,6 +5726,7 @@ function editAsset(id){
   document.getElementById('asset-f-condition').value=a.condition||'Good';
   document.getElementById('asset-f-notes').value=a.notes||'';
   document.getElementById('asset-f-standard').value=a.standard||'';
+  evLoad('asset',a.evidenceFiles||[]);
   openModal('asset-modal');
 }
 function saveAsset(){
@@ -5535,7 +5750,8 @@ function saveAsset(){
     result, condition,
     notes:document.getElementById('asset-f-notes').value||'',
     standard:document.getElementById('asset-f-standard').value||'',
-    status:getAssetStatus(nextDate,result,condition)
+    status:getAssetStatus(nextDate,result,condition),
+    evidenceFiles:evCollect('asset')
   };
   if(editId){const idx=d.assets.findIndex(x=>x.id===editId);if(idx>=0)d.assets[idx]=rec;}
   else d.assets.push(rec);
@@ -5758,6 +5974,7 @@ function openAddInvestigation(incidentRef){
       else if(nm&&nm.hipo==1){setInvMethod('both');}
     }
   }
+  evClear('inv');
   openModal('inv-modal');
 }
 
@@ -5782,6 +5999,7 @@ function editInvestigation(id){
   build5WhyRows(inv.whys||[]);
   buildFishboneGrid(inv.fishbone||null);
   refreshFishboneSVG();
+  evLoad('inv',inv.evidenceFiles||[]);
   openModal('inv-modal');
 }
 
@@ -5814,6 +6032,7 @@ function saveInvestigation(){
     fishbone:fishData,rootCauseFishbone:rcFb,
     findings:document.getElementById('inv-f-findings').value||'',
     recommendations:document.getElementById('inv-f-recommendations').value||'',
+    evidenceFiles:evCollect('inv'),
     capaRefs:editId?((d.investigations.find(x=>x.id===editId)||{}).capaRefs||[]):[]
   };
   // Auto-create CAPA
@@ -5886,6 +6105,9 @@ function viewInvestigationReport(id){
   if(inv.findings)html+=`<h2>Key Findings</h2><p style="white-space:pre-line">${escapeHtml(inv.findings)}</p>`;
   if(inv.recommendations)html+=`<h2>Recommendations</h2><p style="white-space:pre-line">${escapeHtml(inv.recommendations)}</p>`;
   if((inv.capaRefs||[]).length)html+=`<h2>CAPAs Raised</h2><p>${inv.capaRefs.map(c=>`<strong>${c}</strong>`).join(', ')}</p>`;
+  if((inv.evidenceFiles||[]).length){
+    html+=`<h2>📎 Investigation Evidence (${inv.evidenceFiles.length} file${inv.evidenceFiles.length!==1?'s':''})</h2><div style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px">${evViewHTML(inv.evidenceFiles)}</div>`;
+  }
   html+=`<div style="margin-top:30px;border-top:2px solid #2563eb;padding-top:12px;font-size:11px;color:#777;text-align:center">
     ${escapeHtml(inv.id)} | ${fmtDate(inv.date)} | CONFIDENTIAL<br>Lead Investigator: ${escapeHtml(inv.investigator||'—')} | GRCentral SHEQ-AI
   </div></div>`;
@@ -6130,6 +6352,7 @@ function openAddAudit(){
   document.getElementById('audit-f-notes').value='';
   _auditAnswers={};
   loadAuditTemplate();
+  evClear('audit');
   openModal('audit-modal');
 }
 
@@ -6147,6 +6370,7 @@ function editAudit(id){
   document.getElementById('audit-f-notes').value=a.notes||'';
   _auditAnswers=JSON.parse(JSON.stringify(a.answers||{}));
   loadAuditTemplate();
+  evLoad('audit',a.evidenceFiles||[]);
   openModal('audit-modal');
 }
 
@@ -6173,6 +6397,7 @@ function saveAudit(){
     score:scores.pct,passes:scores.passes,fails:scores.fails,critFails:scores.critFails,
     answers:JSON.parse(JSON.stringify(_auditAnswers)),
     notes:document.getElementById('audit-f-notes').value||'',
+    evidenceFiles:evCollect('audit'),
     capaRefs:editId?((d.audits.find(a=>a.id===editId)||{}).capaRefs||[]):[]
   };
   // Auto-generate CAPAs for critical failures (new audits only)
@@ -6228,6 +6453,9 @@ function viewAuditReport(id){
   }
   if(a.notes)html+=`<h3>Overall Notes</h3><p>${escapeHtml(a.notes)}</p>`;
   if((a.capaRefs||[]).length)html+=`<h3>CAPAs Raised</h3><p>${a.capaRefs.join(', ')}</p>`;
+  if((a.evidenceFiles||[]).length){
+    html+=`<h3>📎 Evidence Attachments (${a.evidenceFiles.length})</h3><div style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px">${evViewHTML(a.evidenceFiles)}</div>`;
+  }
   html+=`<div style="margin-top:30px;border-top:2px solid #2563eb;padding-top:12px;font-size:11px;color:#777;text-align:center">
     ${escapeHtml(a.id)} | ${fmtDate(a.date)} | CONFIDENTIAL<br>Prepared by ${escapeHtml(a.auditor||'SHEQ')} | GRCentral
   </div></div>`;
