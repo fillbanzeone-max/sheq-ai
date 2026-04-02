@@ -2456,7 +2456,7 @@
   <div class="card">
     <div class="table-wrap">
       <table>
-        <thead><tr><th>ID</th><th>Date</th><th>Topic</th><th>Facilitator</th><th>Location</th><th>Attendees</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th>Date</th><th>Topic</th><th>Facilitator</th><th>Location</th><th>Attendees</th><th>Status</th><th>Signed Report</th><th>Actions</th></tr></thead>
         <tbody id="toolbox-tbody"></tbody>
       </table>
     </div>
@@ -2622,6 +2622,16 @@
     </div>
     <div class="form-group"><label>Attendee Names <span style="font-weight:400;color:var(--muted)">(comma-separated)</span></label><textarea id="tb-f-attendees" placeholder="J. Machava, M. Sitoe, C. Tembe…"></textarea></div>
     <div class="form-group"><label>Key Points Covered</label><textarea id="tb-f-notes" placeholder="Main safety messages, hazards discussed, actions agreed…"></textarea></div>
+    <!-- Signed Report Upload -->
+    <div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:var(--sp-2);background:var(--card2);margin-top:var(--sp-1)">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:var(--sp-1)">📋 Signed Attendance / Report Document</div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 8px">Upload the signed toolbox talk attendance register or printed report signed by all attendees. Accepted: images, PDF, Word, Excel.</p>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-tb').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'tb')">
+        <input type="file" id="ev-input-tb" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display:none" onchange="evFilePicked(this,'tb')">
+        <span style="color:var(--muted);font-size:13px">📁 Click or drag &amp; drop — signed attendance register, printed report, photos of flip chart<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-tb" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No documents uploaded yet.</span></div>
+    </div>
     <input type="hidden" id="tb-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('toolbox-modal')">Cancel</button>
@@ -5399,6 +5409,7 @@ function openAddToolbox(){
   document.getElementById('tb-f-duration').value='';
   document.getElementById('tb-f-attendees').value='';
   document.getElementById('tb-f-notes').value='';
+  evClear('tb');
   openModal('toolbox-modal');
 }
 function editToolbox(id){
@@ -5414,6 +5425,7 @@ function editToolbox(id){
   document.getElementById('tb-f-duration').value=t.duration||'';
   document.getElementById('tb-f-attendees').value=t.attendees||'';
   document.getElementById('tb-f-notes').value=t.notes||'';
+  evLoad('tb',t.signedDocs||[]);
   openModal('toolbox-modal');
 }
 function saveToolbox(){
@@ -5430,12 +5442,36 @@ function saveToolbox(){
     duration:parseInt(document.getElementById('tb-f-duration').value)||0,
     attendees:document.getElementById('tb-f-attendees').value||'',
     notes:document.getElementById('tb-f-notes').value||'',
-    status:document.getElementById('tb-f-status').value
+    status:document.getElementById('tb-f-status').value,
+    signedDocs:evCollect('tb')
   };
   if(editId){const idx=d.toolboxTalks.findIndex(x=>x.id===editId);if(idx>=0)d.toolboxTalks[idx]=rec;}
   else d.toolboxTalks.push(rec);
   saveData(d);closeModal('toolbox-modal');renderToolbox(1);
   showToast('Toolbox talk saved — '+rec.id,'success');
+}
+function viewToolbox(id){
+  const d=getData()||getDefaultData();
+  const t=(d.toolboxTalks||[]).find(x=>x.id===id);if(!t)return;
+  const hasDocs=t.signedDocs&&t.signedDocs.length>0;
+  document.getElementById('view-modal-title').textContent='Toolbox Talk: '+t.id;
+  document.getElementById('view-modal-body').innerHTML=viewTable([
+    ['Talk ID',escapeHtml(t.id)],
+    ['Date',fmtDate(t.date)],
+    ['Topic',`<strong>${escapeHtml(t.topic||'')}</strong>`],
+    ['Facilitator',escapeHtml(t.facilitator||'—')],
+    ['Location',escapeHtml(t.location||'—')],
+    ['Status',statusPill(t.status)],
+    ['Number of Attendees',String(t.attendeeCount||0)+(t.duration?` <span style="color:var(--muted);font-size:11px"> · ${t.duration} min duration</span>`:'')],
+    ['Attendee Names',escapeHtml(t.attendees||'—')],
+    ['Key Points Covered',`<span style="white-space:pre-line">${escapeHtml(t.notes||'—')}</span>`],
+    ['Signed Report / Attendance Register', hasDocs
+      ? `<div style="margin-top:4px">${evViewHTML(t.signedDocs)}</div>`
+      : '<span style="color:var(--muted);font-size:12px">No signed document uploaded — use Edit to attach one.</span>']
+  ]);
+  document.getElementById('view-modal-raise-capa').style.display='none';
+  document.getElementById('view-modal-raise-inv').style.display='none';
+  openModal('view-modal');
 }
 function deleteToolbox(id){
   const d=getData()||getDefaultData();if(!confirm('Delete toolbox talk '+id+'?\nThis cannot be undone.'))return;
@@ -5452,7 +5488,9 @@ function renderToolbox(page=1){
   const completed=items.filter(t=>t.status==='Completed').length;
   const planned=items.filter(t=>t.status==='Planned').length;
   const totalAttendees=items.filter(t=>t.status==='Completed').reduce((s,t)=>s+(t.attendeeCount||0),0);
-  document.getElementById('toolbox-stats').innerHTML=`<span class="stat-chip">Total: ${items.length}</span><span class="stat-chip" style="color:#16a34a">✓ Completed: ${completed}</span><span class="stat-chip" style="color:#0e7490">Planned: ${planned}</span><span class="stat-chip" style="color:#374151">👥 Total Attendees: ${totalAttendees}</span>`;
+  const withDocs=items.filter(t=>t.signedDocs&&t.signedDocs.length>0).length;
+  const noDocs=items.filter(t=>t.status==='Completed'&&(!t.signedDocs||!t.signedDocs.length)).length;
+  document.getElementById('toolbox-stats').innerHTML=`<span class="stat-chip">Total: ${items.length}</span><span class="stat-chip" style="color:#16a34a">✓ Completed: ${completed}</span><span class="stat-chip" style="color:#0e7490">Planned: ${planned}</span><span class="stat-chip" style="color:#374151">👥 Attendees: ${totalAttendees}</span><span class="stat-chip" style="color:#16a34a">📋 Signed: ${withDocs}</span>${noDocs>0?`<span class="stat-chip" style="color:#dc2626">⚠ No Report: ${noDocs}</span>`:''}`;
   const {items:rows,total}=paginate(items,page);
   document.getElementById('toolbox-tbody').innerHTML=rows.map(t=>`
     <tr>
@@ -5463,7 +5501,9 @@ function renderToolbox(page=1){
       <td>${t.location||'—'}</td>
       <td class="num">${t.attendeeCount||0}${t.duration?` <span style="color:var(--muted);font-size:11px">(${t.duration}min)</span>`:''}</td>
       <td>${statusPill(t.status)}</td>
-      <td>
+      <td>${(t.signedDocs&&t.signedDocs.length)?`<span class="pill pill-green" style="font-size:10px" title="${t.signedDocs.length} signed document(s) attached">📋 ${t.signedDocs.length} Doc${t.signedDocs.length>1?'s':''}</span>`:`<span style="color:var(--muted);font-size:11px">—</span>`}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-ghost" onclick="viewToolbox('${t.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editToolbox('${t.id}')">Edit</button>
         <button class="btn btn-sm btn-danger" onclick="deleteToolbox('${t.id}')">Del</button>
       </td>
