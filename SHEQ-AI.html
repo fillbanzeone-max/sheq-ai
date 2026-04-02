@@ -6304,114 +6304,416 @@ function generateReport(){
   const monthName=monthNames[month-1];
   const ym=year+'-'+month.toString().padStart(2,'0');
   const prevYm=month===1?(year-1)+'-12':year+'-'+(month-1).toString().padStart(2,'0');
+  const prevMonthName=monthNames[month===1?11:month-2];
 
-  // Data slices
+  // ── Data slices ──────────────────────────────────────────────
   const obs=d.observations||[];const nm=d.nearMisses||[];const inc=d.incidents||[];
-  const ptw=d.permits||[];const risks=d.risks||[];const legal=d.legalItems||[];const capas=d.capas||[];
+  const ptw=d.permits||[];const risks=d.risks||[];const legal=d.legalItems||[];
+  const capas=d.capas||[];const audits=d.audits||[];const mocs=d.mocs||[];
+  const assets=d.assets||[];const invs=d.investigations||[];
 
   const obsMonth=obs.filter(o=>o.date&&o.date.startsWith(ym));
   const obsPrev=obs.filter(o=>o.date&&o.date.startsWith(prevYm));
   const nmMonth=nm.filter(n=>n.date&&n.date.startsWith(ym));
+  const nmPrev=nm.filter(n=>n.date&&n.date.startsWith(prevYm));
   const incMonth=inc.filter(i=>i.date&&i.date.startsWith(ym));
   const incPrev=inc.filter(i=>i.date&&i.date.startsWith(prevYm));
   const ptwMonth=ptw.filter(p=>p.from&&p.from.startsWith(ym));
+  const audMonth=audits.filter(a=>a.date&&a.date.startsWith(ym));
+  const mocMonth=mocs.filter(m=>m.date&&m.date.startsWith(ym));
+  const assetMonth=assets.filter(a=>a.nextInspection&&a.nextInspection.startsWith(ym));
+  const invMonth=invs.filter(v=>v.date&&v.date.startsWith(ym));
   const openCapas=capas.filter(c=>c.status!=='Closed');
   const overdueCapas=capas.filter(c=>c.status==='Overdue');
+  const closedCapasMonth=capas.filter(c=>c.status==='Closed'&&c.closedDate&&c.closedDate.startsWith(ym));
 
   const safeObs=obsMonth.filter(o=>o.type==='SAFE').length;
+  const atRiskObs=obsMonth.filter(o=>o.type==='AT-RISK').length;
   const totalObsM=obsMonth.length;
   const safeRatio=totalObsM>0?Math.round(safeObs/totalObsM*100):0;
   const ptwExpired=ptwMonth.filter(p=>getPTWStatus(p)==='EXPIRED').length;
   const ptwCompliance=ptwMonth.length>0?Math.round((ptwMonth.length-ptwExpired)/ptwMonth.length*100):100;
 
+  // Trend helpers
+  const trend=(curr,prev)=>{
+    if(prev===0&&curr===0)return'unchanged';
+    if(prev===0)return`increased from zero to ${curr}`;
+    const delta=curr-prev;const pct=Math.abs(Math.round(delta/prev*100));
+    if(delta===0)return'unchanged from the previous month';
+    return`${delta>0?'increased':'decreased'} by ${pct}% (${delta>0?'+':''}${delta}) compared to ${prevMonthName}`;
+  };
+  const trendWord=(curr,prev,lowerBetter=false)=>{
+    if(curr===prev)return'📊 Stable';
+    const up=curr>prev;
+    if(lowerBetter)return up?'📈 Worsening':'📉 Improving';
+    return up?'📈 Improving':'📉 Declining';
+  };
+
   function rag(val,target,lowerIsBetter=false){
-    if(lowerIsBetter){if(val<=target)return'<span class="rag-green">G</span>';if(val<=target*1.2)return'<span class="rag-amber">A</span>';return'<span class="rag-red">R</span>';}
-    if(val>=target)return'<span class="rag-green">G</span>';if(val>=target*0.8)return'<span class="rag-amber">A</span>';return'<span class="rag-red">R</span>';
+    if(lowerIsBetter){if(val<=target)return'<span class="rag-green">●</span>';if(val<=target*1.2||val<=target+1)return'<span class="rag-amber">●</span>';return'<span class="rag-red">●</span>';}
+    if(val>=target)return'<span class="rag-green">●</span>';if(val>=target*0.8)return'<span class="rag-amber">●</span>';return'<span class="rag-red">●</span>';
   }
+
   const lti=incMonth.filter(i=>i.sev<=2).length;
+  const ltiPrev=incPrev.filter(i=>i.sev<=2).length;
   const fac=incMonth.filter(i=>i.sev===4).length;
+  const hipoNm=nmMonth.filter(n=>n.hipo).length;
   const envEvents=incMonth.filter(i=>i.type==='Environmental').length;
   const mhrsWorked=175*160;
   const ltifr=lti>0?((lti/mhrsWorked)*1000000).toFixed(2):'0.00';
+  const sevBreakdown=[1,2,3,4,5].map(s=>({sev:s,count:incMonth.filter(i=>i.sev===s).length}));
 
   const calData=d.calendar&&d.calendar[year]?d.calendar[year]:{};
   const calMonthKey=monthNames[month-1].substring(0,3);
   let calCompleted=0,calPlanned=0,calMissed=0;
   Object.values(calData).forEach(actData=>{const s=actData[calMonthKey];if(s==='completed')calCompleted++;else if(s==='planned')calPlanned++;else if(s==='missed')calMissed++;});
+  const calTotal=calCompleted+calPlanned+calMissed;
+
+  // Audit metrics
+  const avgAuditScore=audMonth.length?Math.round(audMonth.reduce((s,a)=>s+(a.score||0),0)/audMonth.length):null;
+  const critFailAudits=audMonth.filter(a=>a.critFails>0).length;
+  const auditPassed=audMonth.filter(a=>(a.score||0)>=75).length;
+
+  // MoC metrics
+  const openMocs=mocs.filter(m=>m.status!=='Closed'&&m.status!=='Completed');
+  const closedMocsMonth=mocMonth.filter(m=>m.status==='Closed'||m.status==='Completed');
+
+  // Asset metrics
+  const overdueAssets=assets.filter(a=>a.status==='Overdue'||a.status==='Failed');
+  const assetDue=assets.filter(a=>a.nextInspection&&a.nextInspection.startsWith(ym));
+
+  // Investigations
+  const openInvs=invs.filter(v=>v.status!=='Complete');
+  const completeInvs=invMonth.filter(v=>v.status==='Complete');
+
+  // Legal
+  const legalOverdue=legal.filter(l=>l.status==='OVERDUE').length;
+  const legalCompliant=legal.filter(l=>l.status==='COMPLIANT').length;
+  const legalDue=legal.filter(l=>l.status==='DUE SOON').length;
+
+  // Risk
+  const critRisks=risks.filter(r=>r.rRating==='CRITICAL');
+  const highRisks=risks.filter(r=>r.rRating==='HIGH');
 
   const docRef=`GRC-SHQ-RPT-MSR-${month.toString().padStart(2,'0')}-${year}`;
 
+  // ── Narrative builders ────────────────────────────────────────
+  const execNarrative=()=>{
+    const lines=[];
+    lines.push(`This report presents the Safety, Health, Environment and Quality (SHEQ) performance of the organisation for the reporting period of <strong>${monthName} ${year}</strong>. It is prepared by the SHEQ Department for presentation to the General Manager and all Department Heads.`);
+
+    // Overall tone
+    const noInc=incMonth.length===0;const noLti=lti===0;
+    if(noInc)lines.push(`The organisation recorded <strong>no incidents</strong> during ${monthName} ${year}, which reflects positively on the effectiveness of current safety controls and proactive hazard management.`);
+    else if(noLti)lines.push(`A total of <strong>${incMonth.length} incident(s)</strong> were recorded during ${monthName} ${year}. Encouragingly, none of these resulted in a Lost Time Injury (LTI), indicating that the severity of events remains manageable. However, all incidents require thorough investigation and corrective action to prevent recurrence.`);
+    else lines.push(`During ${monthName} ${year}, a total of <strong>${incMonth.length} incident(s)</strong> were recorded, including <strong>${lti} Lost Time Injur${lti===1?'y':'ies'} (LTI${lti===1?'':'s'})</strong>. This represents a serious concern for the organisation and warrants immediate management attention, root cause analysis, and sustained corrective intervention.`);
+
+    // Near misses
+    if(nmMonth.length>0)lines.push(`${nmMonth.length} near miss event${nmMonth.length!==1?'es were':' was'} reported during the period${hipoNm>0?`, of which <strong>${hipoNm}</strong> ${hipoNm===1?'was':'were'} classified as High Potential (HiPo) events requiring priority investigation`:''}. Near miss reporting is encouraged as a key leading safety indicator.`);
+    else lines.push(`No near misses were formally reported during ${monthName}. Management should reinforce the importance of near miss reporting as part of the safety culture, as under-reporting may mask latent hazards.`);
+
+    // Observations
+    if(totalObsM>0)lines.push(`The field observation programme yielded <strong>${totalObsM} observation${totalObsM!==1?'s':''}</strong> this month, with a safe behaviour ratio of <strong>${safeRatio}%</strong>${safeRatio>=70?' — exceeding the 70% target':' — below the 70% minimum target'}. ${atRiskObs>0?`The ${atRiskObs} at-risk observation${atRiskObs!==1?'s':''} identified have been channelled into the CAPA system for corrective action.`:''}`);
+    else lines.push(`No formal job observations were recorded during ${monthName}. The observation target of ≥10 per month was not met. Supervisors and SHEQ officers are reminded to conduct and log field observations as a priority activity.`);
+
+    // CAPAs
+    if(overdueCapas.length>0)lines.push(`⚠️ A total of <strong>${overdueCapas.length} corrective action${overdueCapas.length!==1?'s':''}</strong> in the CAPA Tracker ${overdueCapas.length===1?'is':'are'} currently overdue. Responsible persons are required to provide an update or closure evidence immediately. Unresolved CAPAs increase organisational liability and risk exposure.`);
+    else if(openCapas.length>0)lines.push(`The CAPA Tracker reflects <strong>${openCapas.length} open action${openCapas.length!==1?'s':''}</strong>, all of which are within their target dates. Continued monitoring is required to ensure timely closure.`);
+    else lines.push(`All corrective actions in the CAPA Tracker are currently closed. This reflects strong follow-through by responsible parties.`);
+
+    return lines.map(l=>`<p style="line-height:1.7;margin-bottom:10px">${l}</p>`).join('');
+  };
+
+  const obsNarrative=()=>{
+    if(totalObsM===0)return`<p style="color:#777;font-style:italic;line-height:1.7">No observations were submitted during ${monthName} ${year}. The SHEQ team should re-emphasise the field observation programme to supervisors and team leads. Observations are a critical leading indicator of safety culture and risk awareness.</p>`;
+    const obsByType={};obsMonth.forEach(o=>{obsByType[o.type]=(obsByType[o.type]||0)+1;});
+    const topTypes=Object.entries(obsByType).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([t,c])=>`${t} (${c})`).join(', ');
+    const obsLocations={};obsMonth.forEach(o=>{if(o.location)obsLocations[o.location]=(obsLocations[o.location]||0)+1;});
+    const topLoc=Object.entries(obsLocations).sort((a,b)=>b[1]-a[1])[0];
+    const trendSentence=obsPrev.length>0?` This ${trend(totalObsM,obsPrev.length)}.`:'';
+    return`<p style="line-height:1.7;margin-bottom:10px">A total of <strong>${totalObsM} job observation${totalObsM!==1?'s were':' was'}</strong> conducted during ${monthName} ${year}.${trendSentence} Of these, <strong>${safeObs}</strong> were classified as SAFE and <strong>${atRiskObs}</strong> were flagged as AT-RISK, yielding a safe behaviour ratio of <strong>${safeRatio}%</strong> against a monthly target of ≥70%.</p>
+    ${atRiskObs>0?`<p style="line-height:1.7;margin-bottom:10px">The ${atRiskObs} at-risk observation${atRiskObs!==1?'s':''} identified highlight areas where behaviour-based interventions, toolbox talks, or additional supervision may be required.${topLoc?` The highest observation activity was recorded at <strong>${topLoc[0]}</strong> (${topLoc[1]} observation${topLoc[1]!==1?'s':''}).`:''}</p>`:''}`;
+  };
+
+  const incNarrative=()=>{
+    if(incMonth.length===0)return`<p style="line-height:1.7;color:#16a34a"><strong>✅ Zero incidents were recorded during ${monthName} ${year}.</strong> This is a commendable result. The organisation is encouraged to sustain this performance through continued hazard identification, effective controls, and safety culture reinforcement. Incident-free periods must not breed complacency.</p>`;
+    const incTypes={};incMonth.forEach(i=>{incTypes[i.type]=(incTypes[i.type]||0)+1;});
+    const topIncType=Object.entries(incTypes).sort((a,b)=>b[1]-a[1])[0];
+    const underInv=incMonth.filter(i=>i.status==='Under Investigation').length;
+    const trendSentence=incPrev.length>0?` This represents a ${trend(incMonth.length,incPrev.length)}.`:'';
+    let txt=`<p style="line-height:1.7;margin-bottom:10px"><strong>${incMonth.length} incident${incMonth.length!==1?'s were':' was'}</strong> recorded during ${monthName} ${year}.${trendSentence} `;
+    if(lti>0)txt+=`Of these, <strong>${lti}</strong> resulted in Lost Time Injur${lti===1?'y':'ies'} (LTI${lti===1?'':'s'}), and <strong>${fac}</strong> were first aid case${fac!==1?'s':''}.`;
+    if(topIncType)txt+=` The most prevalent incident type was <strong>${topIncType[0]}</strong> (${topIncType[1]} case${topIncType[1]!==1?'s':''}).`;
+    txt+=`</p>`;
+    if(underInv>0)txt+=`<p style="line-height:1.7;margin-bottom:10px">⚠️ <strong>${underInv}</strong> incident${underInv!==1?'s are':' is'} still <em>Under Investigation</em>. Responsible investigators are required to finalise root cause analysis and submit findings within the prescribed timeframe.</p>`;
+    if(envEvents>0)txt+=`<p style="line-height:1.7;margin-bottom:10px">🌿 <strong>${envEvents} environmental event${envEvents!==1?'s were':' was'}</strong> recorded this period. These require prompt reporting to the relevant environmental authority where legislatively mandated, and corrective action plans must be submitted to the SHEQ Manager.</p>`;
+    return txt;
+  };
+
+  const nmNarrative=()=>{
+    if(nmMonth.length===0)return`<p style="line-height:1.7;color:#777;font-style:italic">No near misses were formally recorded during ${monthName} ${year}. While a zero count may appear positive, it more likely reflects under-reporting. Research consistently shows that organisations with active near miss reporting programmes experience fewer serious incidents. Management is encouraged to reinforce a blame-free near miss reporting culture.</p>`;
+    const trendSentence=nmPrev.length>0?` This ${trend(nmMonth.length,nmPrev.length)}.`:'';
+    return`<p style="line-height:1.7;margin-bottom:10px"><strong>${nmMonth.length} near miss event${nmMonth.length!==1?'s were':' was'}</strong> reported during ${monthName} ${year}.${trendSentence}${hipoNm>0?` Of particular concern, <strong>${hipoNm}</strong> event${hipoNm!==1?'s were':' was'} classified as <strong>High Potential (HiPo)</strong>, meaning they had the potential to cause a serious or fatal injury. These events must receive priority investigation, and findings must be shared across the organisation via lessons-learned communication.`:' None of the reported near misses were classified as High Potential (HiPo) events.'}</p>
+    <p style="line-height:1.7;margin-bottom:10px">Near miss reporting is a leading safety indicator. The organisation targets ≥3 near miss reports per month as evidence of an open reporting culture. ${nmMonth.length>=3?'This target was met during the reporting period.':'This target was <strong>not met</strong> during the reporting period. Corrective awareness campaigns are recommended.'}</p>`;
+  };
+
+  const capaNarrative=()=>{
+    const byPriority={Critical:0,High:0,Medium:0,Low:0};
+    openCapas.forEach(c=>{if(byPriority[c.priority]!==undefined)byPriority[c.priority]++;});
+    const bySource={};capas.forEach(c=>{bySource[c.source_module]=(bySource[c.source_module]||0)+1;});
+    const topSource=Object.entries(bySource).sort((a,b)=>b[1]-a[1])[0];
+    let txt=`<p style="line-height:1.7;margin-bottom:10px">The CAPA Tracker currently holds <strong>${capas.length} corrective action${capas.length!==1?'s':''}</strong> in total, of which <strong>${openCapas.length}</strong> remain open and <strong>${overdueCapas.length}</strong> are overdue. `;
+    if(closedCapasMonth.length>0)txt+=`During ${monthName}, <strong>${closedCapasMonth.length}</strong> CAPA${closedCapasMonth.length!==1?'s were':' was'} formally closed, demonstrating follow-through by responsible parties. `;
+    txt+=`</p>`;
+    if(overdueCapas.length>0){
+      txt+=`<p style="line-height:1.7;margin-bottom:10px;color:#dc2626">⚠️ <strong>Overdue CAPAs represent an elevated risk to the organisation.</strong> Failure to close corrective actions timeously may indicate inadequate resource allocation, unclear ownership, or a lack of management prioritisation. All overdue items have been escalated to relevant supervisors via the automated escalation system. Responsible persons must provide a written update or evidence of closure by the next SHEQ meeting.</p>`;
+    }
+    if(byPriority.Critical>0||byPriority.High>0)txt+=`<p style="line-height:1.7;margin-bottom:10px">Of the open CAPAs, <strong>${byPriority.Critical}</strong> are classified as <em>Critical</em> and <strong>${byPriority.High}</strong> as <em>High</em> priority. These must be closed before lower-priority items and should receive weekly management review.${topSource?` The largest source of CAPAs is the <strong>${topSource[0]}</strong> module (${topSource[1]} action${topSource[1]!==1?'s':''}).`:''}</p>`;
+    return txt;
+  };
+
+  const ptwNarrative=()=>{
+    if(ptwMonth.length===0)return`<p style="line-height:1.7;color:#777;font-style:italic">No permits to work were issued during ${monthName} ${year}. If high-risk work was performed without a PTW, this constitutes a serious compliance gap and must be investigated immediately.</p>`;
+    const typeBreakdown={};ptwMonth.forEach(p=>{typeBreakdown[p.type]=(typeBreakdown[p.type]||0)+1;});
+    const topType=Object.entries(typeBreakdown).sort((a,b)=>b[1]-a[1])[0];
+    return`<p style="line-height:1.7;margin-bottom:10px">A total of <strong>${ptwMonth.length} permit${ptwMonth.length!==1?'s':''} to work</strong> were issued during ${monthName} ${year}, reflecting ongoing management of high-risk activities. The overall PTW compliance rate for the period was <strong>${ptwCompliance}%</strong>${ptwCompliance===100?' — a perfect score, demonstrating excellent permit discipline':ptwCompliance>=90?' — above the 90% threshold, though improvement is still required':' — below the acceptable threshold of 90%, indicating systemic gaps in permit management that require immediate corrective action'}.</p>
+    ${ptwExpired>0?`<p style="line-height:1.7;margin-bottom:10px;color:#dc2626">⚠️ <strong>${ptwExpired} permit${ptwExpired!==1?'s':''}</strong> expired without formal closure or suspension. Expired permits without closure are a serious compliance concern and may indicate work continuing beyond authorised timeframes. Supervisors responsible for these permits must be counselled and re-trained on PTW protocols.</p>`:''}
+    ${topType?`<p style="line-height:1.7;margin-bottom:10px">The most frequently issued permit type was <strong>${topType[0]}</strong> (${topType[1]} permit${topType[1]!==1?'s':''}), which reflects the dominant high-risk work activities for the period.</p>`:''}`;
+  };
+
+  const legalNarrative=()=>{
+    let txt=`<p style="line-height:1.7;margin-bottom:10px">The Legal and Compliance Register contains <strong>${legal.length} legislative and regulatory obligation${legal.length!==1?'s':''}</strong>. As at ${monthName} ${year}: <strong>${legalCompliant}</strong> obligation${legalCompliant!==1?'s are':' is'} fully compliant, <strong>${legalDue}</strong> ${legalDue!==1?'are':'is'} due for renewal soon, and <strong style="color:${legalOverdue>0?'#dc2626':'inherit'}">${legalOverdue}</strong> ${legalOverdue!==1?'are':'is'} currently overdue.</p>`;
+    if(legalOverdue>0)txt+=`<p style="line-height:1.7;margin-bottom:10px;color:#dc2626">⚠️ Overdue legal obligations expose the organisation to regulatory enforcement action, penalties, and reputational damage. The SHEQ Manager must escalate these items to the relevant Departmental Head and engage with the applicable authority to regularise compliance status without delay.</p>`;
+    if(legalDue>0)txt+=`<p style="line-height:1.7;margin-bottom:10px">Items classified as <em>Due Soon</em> should be actioned proactively to prevent them lapsing into an overdue state. Responsible persons should initiate renewal or compliance activities within the next 30 days.</p>`;
+    return txt;
+  };
+
+  const riskNarrative=()=>{
+    const allHigh=risks.filter(r=>r.rRating==='HIGH'||r.rRating==='CRITICAL');
+    if(risks.length===0)return`<p style="color:#777;font-style:italic;line-height:1.7">No risks are currently captured in the Risk Register. A comprehensive risk assessment must be conducted and all significant hazards recorded.</p>`;
+    let txt=`<p style="line-height:1.7;margin-bottom:10px">The Risk Register contains <strong>${risks.length} identified risk${risks.length!==1?'s':''}</strong>. Of these, <strong>${critRisks.length}</strong> are rated <strong style="color:#dc2626">CRITICAL</strong> and <strong>${highRisks.length}</strong> are rated <strong style="color:#d97706">HIGH</strong>, requiring active management and priority control measures.</p>`;
+    if(critRisks.length>0)txt+=`<p style="line-height:1.7;margin-bottom:10px">Critical risks cannot be accepted and must have documented interim and permanent controls in place. Risk owners are accountable for implementing and evidencing controls at each management review cycle. The following CRITICAL risks are currently active: ${critRisks.map(r=>`<em>${r.hazard}</em>`).join(', ')}.</p>`;
+    if(allHigh.length===0)txt+=`<p style="line-height:1.7;color:#16a34a">✅ No HIGH or CRITICAL residual risks are currently registered. This reflects effective risk treatment and control implementation.</p>`;
+    return txt;
+  };
+
+  const calNarrative=()=>{
+    const compRate=calTotal>0?Math.round(calCompleted/calTotal*100):100;
+    if(calTotal===0)return`<p style="color:#777;font-style:italic;line-height:1.7">No SHEQ activities were scheduled in the calendar for ${monthName} ${year}. Activities such as inspections, drills, audits, and training should be planned in advance and recorded in the SHEQ Calendar.</p>`;
+    return`<p style="line-height:1.7;margin-bottom:10px">A total of <strong>${calTotal} SHEQ activit${calTotal!==1?'ies were':'y was'}</strong> scheduled for ${monthName} ${year}. Of these, <strong>${calCompleted}</strong> ${calCompleted!==1?'were':'was'} completed, <strong>${calPlanned}</strong> remain planned/upcoming, and <strong style="color:${calMissed>0?'#dc2626':'inherit'}">${calMissed}</strong> ${calMissed!==1?'were':'was'} missed — yielding an activity completion rate of <strong>${compRate}%</strong>.</p>
+    ${calMissed>0?`<p style="line-height:1.7;margin-bottom:10px;color:#dc2626">⚠️ Missed SHEQ activities represent gaps in proactive safety management. Each missed activity must be rescheduled as a priority. Recurring patterns of missed activities should be escalated to Senior Management.</p>`:'<p style="line-height:1.7;color:#16a34a">✅ All scheduled SHEQ activities were completed or are on track. This reflects good planning discipline and commitment from the responsible parties.</p>'}`;
+  };
+
+  const auditNarrative=()=>{
+    if(audMonth.length===0)return`<p style="color:#777;font-style:italic;line-height:1.7">No formal audits or inspections were conducted during ${monthName} ${year}. Regular auditing is a critical component of the management system and must be scheduled and executed in accordance with the annual audit programme.</p>`;
+    let txt=`<p style="line-height:1.7;margin-bottom:10px"><strong>${audMonth.length} audit${audMonth.length!==1?'s were':' was'}</strong> conducted during ${monthName} ${year}${avgAuditScore!==null?`, with an average compliance score of <strong>${avgAuditScore}%</strong>`:''}.${auditPassed>0?` <strong>${auditPassed}</strong> audit${auditPassed!==1?'s':''}  achieved a passing score of ≥75%.`:''}${critFailAudits>0?` <strong style="color:#dc2626">${critFailAudits}</strong> audit${critFailAudits!==1?'s':''} recorded critical non-conformances, triggering automatic corrective action entries in the CAPA Tracker.`:''}</p>`;
+    if(critFailAudits>0)txt+=`<p style="line-height:1.7;margin-bottom:10px;color:#dc2626">⚠️ Critical non-conformances identified during audits indicate failures in essential safety controls. These must not be treated as routine findings — immediate corrective action is required, and the effectiveness of the fix must be verified by the SHEQ Manager before the finding is closed.</p>`;
+    const typeBreakdown={};audMonth.forEach(a=>{typeBreakdown[a.type]=(typeBreakdown[a.type]||0)+1;});
+    const auditTypes=Object.entries(typeBreakdown).map(([t,c])=>`${t} (${c})`).join(', ');
+    if(auditTypes)txt+=`<p style="line-height:1.7;margin-bottom:10px">Audit types conducted this period included: <strong>${auditTypes}</strong>.</p>`;
+    return txt;
+  };
+
+  const mocNarrative=()=>{
+    if(mocMonth.length===0&&openMocs.length===0)return`<p style="color:#777;font-style:italic;line-height:1.7">No Management of Change (MoC) requests were initiated or outstanding during ${monthName} ${year}. All physical, organisational, or process changes must be formally documented via the MoC process before implementation to ensure risk is properly assessed and controlled.</p>`;
+    let txt='';
+    if(mocMonth.length>0)txt+=`<p style="line-height:1.7;margin-bottom:10px"><strong>${mocMonth.length} Management of Change (MoC) request${mocMonth.length!==1?'s were':' was'}</strong> initiated during ${monthName} ${year}. The MoC process ensures that all changes to equipment, processes, personnel, or the work environment are assessed for risk before implementation.</p>`;
+    if(openMocs.length>0)txt+=`<p style="line-height:1.7;margin-bottom:10px">There are currently <strong>${openMocs.length} open MoC item${openMocs.length!==1?'s':''}</strong> awaiting approval or implementation. Outstanding MoCs must be actively managed to prevent unapproved changes from being implemented, which could introduce uncontrolled risk.</p>`;
+    if(closedMocsMonth.length>0)txt+=`<p style="line-height:1.7;margin-bottom:10px">During this period, <strong>${closedMocsMonth.length} MoC${closedMocsMonth.length!==1?'s were':' was'}</strong> successfully closed, indicating that the associated changes have been implemented, documented, and the risk assessment has been finalised.</p>`;
+    return txt;
+  };
+
+  const assetNarrative=()=>{
+    if(assets.length===0)return`<p style="color:#777;font-style:italic;line-height:1.7">No equipment or asset records are currently captured in the Asset Inspection Register. All safety-critical equipment must be registered with its inspection schedule to ensure statutory and manufacturer compliance.</p>`;
+    let txt=`<p style="line-height:1.7;margin-bottom:10px">The Equipment and Asset Inspection Register contains <strong>${assets.length} registered asset${assets.length!==1?'s':''}</strong>. `;
+    if(assetDue.length>0)txt+=`<strong>${assetDue.length}</strong> asset${assetDue.length!==1?' inspections are':' inspection is'} scheduled for ${monthName} ${year}. `;
+    if(overdueAssets.length>0)txt+=`<strong style="color:#dc2626">${overdueAssets.length}</strong> asset${overdueAssets.length!==1?'s':''} ${overdueAssets.length!==1?'are':'is'} currently overdue for inspection or have recorded a failed status.`;
+    else txt+=`All assets are within their inspection schedules.`;
+    txt+=`</p>`;
+    if(overdueAssets.length>0)txt+=`<p style="line-height:1.7;margin-bottom:10px;color:#dc2626">⚠️ Assets that are overdue for inspection or classified as Failed must not be operated until they have been inspected, repaired, and certified by a competent person. Using out-of-inspection equipment is a legal violation and creates direct injury risk. Responsible persons must arrange inspections as a matter of urgency.</p>`;
+    return txt;
+  };
+
+  const invNarrative=()=>{
+    if(invs.length===0)return`<p style="color:#777;font-style:italic;line-height:1.7">No incident investigations are currently on record. All incidents, near misses, and high-risk observations classified as requiring root cause analysis (RCA) must be formally investigated using the 5-Why or Fishbone methodology.</p>`;
+    let txt=`<p style="line-height:1.7;margin-bottom:10px">The organisation has <strong>${invs.length} investigation${invs.length!==1?'s':''}</strong> on record in total, of which <strong>${openInvs.length}</strong> ${openInvs.length!==1?'are':'is'} currently open or in progress. `;
+    if(invMonth.length>0)txt+=`During ${monthName} ${year}, <strong>${invMonth.length}</strong> investigation${invMonth.length!==1?'s were':' was'} initiated${completeInvs.length>0?` and <strong>${completeInvs.length}</strong> ${completeInvs.length!==1?'were':'was'} completed`:''}.`;
+    txt+=`</p>`;
+    if(openInvs.length>0){
+      const by5Why=openInvs.filter(v=>v.method==='5why').length;
+      const byFish=openInvs.filter(v=>v.method==='fishbone').length;
+      const byBoth=openInvs.filter(v=>v.method==='both').length;
+      txt+=`<p style="line-height:1.7;margin-bottom:10px">Open investigations are using the following methodologies: <strong>5-Why</strong> (${by5Why}), <strong>Fishbone/Ishikawa</strong> (${byFish}), <strong>Both methods</strong> (${byBoth}). Investigation findings and corrective actions must be communicated to the workforce to prevent recurrence of similar events.</p>`;
+    }
+    if(openInvs.length>0)txt+=`<p style="line-height:1.7;margin-bottom:10px;color:#d97706">⚠️ Investigations must be completed within the prescribed timeframes — typically 5 working days for Severity 1–2 incidents. Prolonged open investigations delay corrective action implementation and may indicate resource or knowledge gaps. The SHEQ Manager must review progress weekly.</p>`;
+    return txt;
+  };
+
+  // ── Report HTML ───────────────────────────────────────────────
   const html=`<div class="report-doc">
-    <h1>🛡️ Monthly SHEQ Report</h1>
-    <p style="text-align:center;color:#666;font-size:12px">GRCentral | ${monthName} ${year}</p>
-    <hr style="border:2px solid #2563eb;margin:12px 0">
+    <div style="text-align:center;padding:20px 0 10px">
+      <h1 style="font-size:22px;margin-bottom:4px">🛡️ Monthly SHEQ Report</h1>
+      <p style="color:#555;font-size:13px;margin:0"><strong>GRCentral</strong> | ${monthName} ${year}</p>
+      <p style="color:#888;font-size:11px;margin:4px 0 0">Document Ref: ${docRef} | <em>CONFIDENTIAL</em></p>
+    </div>
+    <hr style="border:none;border-top:3px solid #2563eb;margin:8px 0 20px">
 
-    <h2>A. Executive Summary</h2>
-    <table><thead><tr><th>Item</th><th>Detail</th></tr></thead><tbody>
-      <tr><td>Reporting Period</td><td>${monthName} ${year}</td></tr>
-      <tr><td>Prepared By</td><td>SHEQ Department</td></tr>
-      <tr><td>Presented To</td><td>General Manager & Department Heads</td></tr>
-      <tr><td>Document Ref</td><td>${docRef}</td></tr>
-      <tr><td>Total Observations</td><td>${totalObsM}</td></tr>
-      <tr><td>Total Near Misses</td><td>${nmMonth.length}</td></tr>
-      <tr><td>Total Incidents</td><td>${incMonth.length}</td></tr>
-      <tr><td>Open CAPAs</td><td>${openCapas.length}</td></tr>
-      <tr><td>CAPAs Overdue</td><td style="color:${overdueCapas.length>0?'#dc2626':'#16a34a'}">${overdueCapas.length}</td></tr>
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">A. Executive Summary</h2>
+    <div style="background:#f0f4ff;border-radius:8px;padding:14px 18px;margin-bottom:16px">
+      ${execNarrative()}
+    </div>
+    <table><thead><tr><th>KPI</th><th>Value</th><th>Status</th></tr></thead><tbody>
+      <tr><td>Total Incidents</td><td>${incMonth.length}</td><td>${rag(incMonth.length,0,true)} ${trendWord(incMonth.length,incPrev.length,true)}</td></tr>
+      <tr><td>Lost Time Injuries</td><td>${lti}</td><td>${rag(lti,0,true)} ${trendWord(lti,ltiPrev,true)}</td></tr>
+      <tr><td>LTIFR (per million hrs)</td><td>${ltifr}</td><td>${rag(parseFloat(ltifr),0,true)}</td></tr>
+      <tr><td>Near Misses Reported</td><td>${nmMonth.length}</td><td>${rag(nmMonth.length,3)} ${trendWord(nmMonth.length,nmPrev.length)}</td></tr>
+      <tr><td>HiPo Near Misses</td><td>${hipoNm}</td><td>${rag(hipoNm,0,true)}</td></tr>
+      <tr><td>Job Observations</td><td>${totalObsM}</td><td>${rag(totalObsM,10)} ${trendWord(totalObsM,obsPrev.length)}</td></tr>
+      <tr><td>Safe Observation Ratio</td><td>${safeRatio}%</td><td>${rag(safeRatio,70)}</td></tr>
+      <tr><td>PTW Compliance Rate</td><td>${ptwCompliance}%</td><td>${rag(ptwCompliance,100)}</td></tr>
+      <tr><td>Open CAPAs</td><td>${openCapas.length}</td><td>${rag(openCapas.length,0,true)}</td></tr>
+      <tr><td>Overdue CAPAs</td><td>${overdueCapas.length}</td><td style="color:${overdueCapas.length>0?'#dc2626':'#16a34a'}">${rag(overdueCapas.length,0,true)}</td></tr>
+      <tr><td>Legal Items Overdue</td><td>${legalOverdue}</td><td>${rag(legalOverdue,0,true)}</td></tr>
+      <tr><td>Open Investigations</td><td>${openInvs.length}</td><td>${rag(openInvs.length,0,true)}</td></tr>
+    </tbody></table>
+    <p style="font-size:11px;color:#888;margin-top:4px">● Green = On target | ● Amber = Monitor | ● Red = Action required | 📈📉📊 = Month-on-month trend</p>
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">B. Leading Indicators</h2>
+    <p style="line-height:1.7;margin-bottom:10px">Leading indicators measure proactive safety activities that predict future safety performance. Strong leading indicator performance generally correlates with fewer incidents. The following metrics reflect the organisation's proactive safety effort during ${monthName} ${year}.</p>
+    <table><thead><tr><th>Indicator</th><th>Target</th><th>Actual</th><th>RAG</th><th>Commentary</th></tr></thead><tbody>
+      <tr><td>Job Observations</td><td>≥10/month</td><td>${totalObsM}</td><td>${rag(totalObsM,10)}</td><td>${totalObsM>=10?'Target met. Observation programme is active and effective.':'Target not met. Supervisors must increase observation frequency. Each supervisor should aim for at least 2 observations per week.'}</td></tr>
+      <tr><td>Safe Observation Ratio</td><td>≥70%</td><td>${safeRatio}%</td><td>${rag(safeRatio,70)}</td><td>${safeRatio>=70?'Ratio above target — workforce behaviour is predominantly safe.':'Ratio below target — a higher proportion of at-risk behaviours has been observed. Targeted behaviour-based safety interventions are recommended.'}</td></tr>
+      <tr><td>Near Misses Reported</td><td>≥3/month</td><td>${nmMonth.length}</td><td>${rag(nmMonth.length,3)}</td><td>${nmMonth.length>=3?'Near miss reporting culture is active.':'Near miss reporting is below target. Consider launching a campaign to encourage reporting without fear of blame.'}</td></tr>
+      <tr><td>HiPo Near Misses Investigated</td><td>100%</td><td>${hipoNm>0?Math.round(invs.filter(v=>nmMonth.filter(n=>n.hipo).some(n=>n.id===v.incidentRef)).length/hipoNm*100)+'%':'N/A'}</td><td>${hipoNm===0?'<span class="rag-green">●</span>':rag(invs.filter(v=>nmMonth.filter(n=>n.hipo).some(n=>n.id===v.incidentRef)).length/hipoNm*100,100)}</td><td>${hipoNm===0?'No HiPo events reported this period.':'All HiPo near misses must be formally investigated with RCA completed within 5 working days.'}</td></tr>
+      <tr><td>PTW Compliance Rate</td><td>100%</td><td>${ptwCompliance}%</td><td>${rag(ptwCompliance,100)}</td><td>${ptwCompliance===100?'Full PTW compliance achieved.':ptwExpired>0?`${ptwExpired} permit(s) expired without formal closure. PTW administrators must enforce strict permit lifecycle management.`:'Compliance gap identified — review PTW process adherence with permit administrators.'}</td></tr>
+      <tr><td>Audits Completed</td><td>≥1/month</td><td>${audMonth.length}</td><td>${rag(audMonth.length,1)}</td><td>${audMonth.length>=1?`${audMonth.length} audit${audMonth.length!==1?'s':''} conducted. Average score: ${avgAuditScore!==null?avgAuditScore+'%':'N/A'}.`:'No audits conducted. At least one formal inspection or audit must be completed per month per the audit programme.'}</td></tr>
     </tbody></table>
 
-    <h2>B. Leading Indicators</h2>
-    <table><thead><tr><th>Indicator</th><th>Target</th><th>Actual</th><th>RAG</th><th>Notes</th></tr></thead><tbody>
-      <tr><td>Job Observations</td><td>≥10/month</td><td>${totalObsM}</td><td>${rag(totalObsM,10)}</td><td>${totalObsM<10?'Below target — increase observation frequency':''}</td></tr>
-      <tr><td>Safe Observation Ratio</td><td>≥70%</td><td>${safeRatio}%</td><td>${rag(safeRatio,70)}</td><td>${safeRatio<70?'At-Risk observations require follow-up CAPAs':''}</td></tr>
-      <tr><td>Near Misses Reported</td><td>≥3/month</td><td>${nmMonth.length}</td><td>${rag(nmMonth.length,3)}</td><td>${nmMonth.length<3?'Encourage near miss reporting culture':''}</td></tr>
-      <tr><td>PTW Compliance Rate</td><td>100%</td><td>${ptwCompliance}%</td><td>${rag(ptwCompliance,100)}</td><td>${ptwExpired>0?`${ptwExpired} permit(s) expired without formal closure`:''}</td></tr>
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">C. Lagging Indicators</h2>
+    <p style="line-height:1.7;margin-bottom:10px">Lagging indicators measure the outcomes of safety performance — typically events that have already occurred. While these do not prevent harm, they are essential for benchmarking and trend analysis. The following results represent the safety outcomes for ${monthName} ${year}.</p>
+    <table><thead><tr><th>Indicator</th><th>Target</th><th>Actual</th><th>Trend vs ${prevMonthName}</th><th>RAG</th><th>Definition</th></tr></thead><tbody>
+      <tr><td>Total Incidents</td><td>0</td><td>${incMonth.length}</td><td>${trendWord(incMonth.length,incPrev.length,true)}</td><td>${rag(incMonth.length,0,true)}</td><td>All recorded incidents this month</td></tr>
+      <tr><td>Lost Time Injuries (LTIs)</td><td>0</td><td>${lti}</td><td>${trendWord(lti,ltiPrev,true)}</td><td>${rag(lti,0,true)}</td><td>Injuries causing ≥1 day absence (Sev 1–2)</td></tr>
+      <tr><td>First Aid Cases (FAC)</td><td>0</td><td>${fac}</td><td>—</td><td>${rag(fac,0,true)}</td><td>Minor injuries requiring first aid only (Sev 4)</td></tr>
+      <tr><td>Environmental Events</td><td>0</td><td>${envEvents}</td><td>—</td><td>${rag(envEvents,0,true)}</td><td>Incidents with environmental impact</td></tr>
+      <tr><td>HiPo Near Misses</td><td>0</td><td>${hipoNm}</td><td>${trendWord(hipoNm,nmPrev.filter(n=>n.hipo).length,true)}</td><td>${rag(hipoNm,0,true)}</td><td>Near misses with potential for serious harm</td></tr>
+      <tr><td>LTIFR</td><td>0.00</td><td>${ltifr}</td><td>—</td><td>${rag(parseFloat(ltifr),0,true)}</td><td>Lost Time Injury Frequency Rate per 1,000,000 hrs worked (est. ${mhrsWorked.toLocaleString()} hrs/month)</td></tr>
+    </tbody></table>
+    ${lti>0?`<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:6px;padding:10px 14px;margin-top:10px"><strong>⚠️ LTI Alert:</strong> ${lti} Lost Time Injur${lti===1?'y':'ies'} recorded this period. Each LTI requires a full Root Cause Analysis, interim control measures, and a Board-level report. The LTIFR of ${ltifr} must be reported to the relevant health and safety authority if it exceeds statutory thresholds.</div>`:''}
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">D. Incident Analysis — ${monthName} ${year}</h2>
+    ${incNarrative()}
+    ${incMonth.length?`<table><thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Severity</th><th>Location</th><th>Description</th><th>Status</th></tr></thead><tbody>${incMonth.map(i=>`<tr style="background:${i.sev<=2?'#fee2e2':i.sev===3?'#ffedd5':''}"><td>${i.id}</td><td>${fmtDate(i.date)}</td><td>${i.type}</td><td>${i.sev===1?'1 – Fatality':i.sev===2?'2 – LTI':i.sev===3?'3 – Medical Treatment':i.sev===4?'4 – First Aid':'5 – Near Miss'}</td><td>${i.location}</td><td>${truncate(i.desc,70)}</td><td>${i.status}</td></tr>`).join('')}</tbody></table>
+    <p style="font-size:11px;color:#888;margin-top:4px">Severity 1–2 (red) = LTI events. Severity 3 (orange) = medical treatment. All incidents require CAPA and investigation where applicable.</p>`:''}
+    <h3 style="margin-top:14px">Incident Breakdown by Severity</h3>
+    <table><thead><tr><th>Severity Level</th><th>Description</th><th>Count</th></tr></thead><tbody>
+      ${sevBreakdown.map(s=>`<tr><td>Severity ${s.sev}</td><td>${s.sev===1?'Fatality / Permanent Disability':s.sev===2?'Lost Time Injury (LTI)':s.sev===3?'Medical Treatment Case':s.sev===4?'First Aid Case':'Near Miss / No Injury'}</td><td>${s.count}</td></tr>`).join('')}
     </tbody></table>
 
-    <h2>C. Lagging Indicators</h2>
-    <table><thead><tr><th>Indicator</th><th>Target</th><th>Actual</th><th>RAG</th><th>Definition</th></tr></thead><tbody>
-      <tr><td>Total Incidents</td><td>0</td><td>${incMonth.length}</td><td>${rag(incMonth.length,0,true)}</td><td>All recorded incidents this month</td></tr>
-      <tr><td>Lost Time Injuries (LTIs)</td><td>0</td><td>${lti}</td><td>${rag(lti,0,true)}</td><td>Severity 1–2 incidents</td></tr>
-      <tr><td>First Aid Cases</td><td>0</td><td>${fac}</td><td>${rag(fac,0,true)}</td><td>Severity 4 incidents</td></tr>
-      <tr><td>Environmental Events</td><td>0</td><td>${envEvents}</td><td>${rag(envEvents,0,true)}</td><td>Environmental incidents</td></tr>
-      <tr><td>LTIFR</td><td>0.00</td><td>${ltifr}</td><td>${rag(parseFloat(ltifr),0,true)}</td><td>Per million hours worked (est. ${mhrsWorked.toLocaleString()} hrs)</td></tr>
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">E. Near Miss Register — ${monthName} ${year}</h2>
+    ${nmNarrative()}
+    ${nmMonth.length?`<table><thead><tr><th>ID</th><th>Date</th><th>Location</th><th>Potential Outcome</th><th>HiPo</th><th>Severity</th><th>Status</th></tr></thead><tbody>${nmMonth.map(n=>`<tr style="background:${n.hipo?'#fef9c3':''}"><td>${n.id}</td><td>${fmtDate(n.date)}</td><td>${n.location}</td><td>${truncate(n.outcome,60)}</td><td>${n.hipo?'<strong style="color:#b45309">⚡ YES</strong>':'No'}</td><td>${n.sev}</td><td>${n.status}</td></tr>`).join('')}</tbody></table>`:''}
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">F. CAPA Tracker — Corrective & Preventive Actions</h2>
+    ${capaNarrative()}
+    <table><thead><tr><th>Priority</th><th>Open</th><th>Overdue</th><th>Closed (this month)</th></tr></thead><tbody>
+      ${['Critical','High','Medium','Low'].map(p=>{const open=openCapas.filter(c=>c.priority===p).length;const od=overdueCapas.filter(c=>c.priority===p).length;const cl=closedCapasMonth.filter(c=>c.priority===p).length;return`<tr style="background:${p==='Critical'?'#fee2e2':p==='High'?'#ffedd5':p==='Medium'?'#fef9c3':''}"><td><strong>${p}</strong></td><td>${open}</td><td>${od>0?`<strong style="color:#dc2626">${od}</strong>`:0}</td><td>${cl}</td></tr>`}).join('')}
+      <tr style="font-weight:bold"><td>TOTAL</td><td>${openCapas.length}</td><td>${overdueCapas.length}</td><td>${closedCapasMonth.length}</td></tr>
+    </tbody></table>
+    ${capas.length?`<h3 style="margin-top:14px">All Active CAPAs</h3>
+    <table><thead><tr><th>CAPA ID</th><th>Source</th><th>What (Action Required)</th><th>Who</th><th>Due Date</th><th>Priority</th><th>Status</th></tr></thead><tbody>${capas.filter(c=>c.status!=='Closed').map(c=>`<tr style="background:${c.status==='Overdue'?'#fee2e2':c.status==='In Progress'?'#dbeafe':''}"><td>${c.id}</td><td>${c.source_module} / ${c.source_ref}</td><td>${truncate(c.what,60)}</td><td>${c.who}</td><td>${fmtDate(c.when)}</td><td>${c.priority}</td><td><strong>${c.status}</strong></td></tr>`).join('')}</tbody></table>`:''}
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">G. Audit & Inspection Results — ${monthName} ${year}</h2>
+    ${auditNarrative()}
+    ${audMonth.length?`<table><thead><tr><th>Audit ID</th><th>Type</th><th>Date</th><th>Auditor</th><th>Location</th><th>Score</th><th>Critical Fails</th><th>Status</th></tr></thead><tbody>${audMonth.map(a=>`<tr style="background:${a.critFails>0?'#fee2e2':(a.score||0)>=75?'#f0fdf4':'#fef9c3'}"><td>${a.id}</td><td>${a.type}</td><td>${fmtDate(a.date)}</td><td>${a.auditor||'—'}</td><td>${a.location||'—'}</td><td><strong>${a.score||0}%</strong></td><td>${a.critFails>0?`<strong style="color:#dc2626">${a.critFails}</strong>`:'0'}</td><td>${a.status}</td></tr>`).join('')}</tbody></table>`:''}
+    ${audits.length>0?`<h3 style="margin-top:14px">Cumulative Audit Performance (All Time)</h3>
+    <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+      <tr><td>Total Audits Conducted</td><td>${audits.length}</td></tr>
+      <tr><td>Average Compliance Score</td><td>${Math.round(audits.reduce((s,a)=>s+(a.score||0),0)/audits.length)}%</td></tr>
+      <tr><td>Audits with Critical Fails</td><td>${audits.filter(a=>a.critFails>0).length}</td></tr>
+      <tr><td>Audits Achieving ≥75% Score</td><td>${audits.filter(a=>(a.score||0)>=75).length}</td></tr>
+    </tbody></table>`:''}
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">H. Permit to Work Summary — ${monthName} ${year}</h2>
+    ${ptwNarrative()}
+    ${ptwMonth.length?`<table><thead><tr><th>PTW Status</th><th>Count</th><th>% of Total</th></tr></thead><tbody>
+      ${['ACTIVE','PENDING','CLOSED','SUSPENDED','EXPIRED'].map(s=>{const cnt=ptwMonth.filter(p=>getPTWStatus(p)===s).length;return`<tr style="background:${s==='EXPIRED'?'#fee2e2':s==='CLOSED'?'#f0fdf4':''}"><td>${s}</td><td>${cnt}</td><td>${ptwMonth.length>0?Math.round(cnt/ptwMonth.length*100):0}%</td></tr>`;}).join('')}
+      <tr style="font-weight:bold"><td>TOTAL</td><td>${ptwMonth.length}</td><td>—</td></tr>
+      <tr style="font-weight:bold;background:#dbeafe"><td>Compliance Rate</td><td colspan="2">${ptwCompliance}%</td></tr>
+    </tbody></table>`:''}
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">I. Legal & Regulatory Compliance</h2>
+    ${legalNarrative()}
+    <table><thead><tr><th>Ref</th><th>Law / Standard / Requirement</th><th>Frequency</th><th>Last Complied</th><th>Status</th></tr></thead><tbody>
+      ${legal.length?legal.map(l=>`<tr style="background:${l.status==='OVERDUE'?'#fee2e2':l.status==='DUE SOON'?'#fef9c3':''}"><td>${l.id}</td><td>${l.law}</td><td>${l.freq}</td><td>${fmtDate(l.lastComplied)||'Not recorded'}</td><td style="font-weight:bold;color:${l.status==='COMPLIANT'?'#16a34a':l.status==='OVERDUE'?'#dc2626':'#d97706'}">${l.status}</td></tr>`).join(''):`<tr><td colspan="5" style="color:#777;font-style:italic">No legal obligations recorded.</td></tr>`}
     </tbody></table>
 
-    <h2>D. Incidents — ${monthName} ${year}</h2>
-    ${incMonth.length?`<table><thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Sev</th><th>Location</th><th>Description</th><th>Status</th></tr></thead><tbody>${incMonth.map(i=>`<tr><td>${i.id}</td><td>${fmtDate(i.date)}</td><td>${i.type}</td><td>${i.sev}</td><td>${i.location}</td><td>${truncate(i.desc,60)}</td><td>${i.status}</td></tr>`).join('')}</tbody></table>`:'<p style="color:#777;font-style:italic">No incidents recorded this period.</p>'}
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">J. Risk Register — High &amp; Critical Risks</h2>
+    ${riskNarrative()}
+    ${risks.filter(r=>r.rRating==='HIGH'||r.rRating==='CRITICAL').length?`<table><thead><tr><th>ID</th><th>Hazard / Risk Description</th><th>Category</th><th>Residual Score</th><th>Rating</th><th>Control Owner</th></tr></thead><tbody>${risks.filter(r=>r.rRating==='HIGH'||r.rRating==='CRITICAL').map(r=>`<tr style="background:${r.rRating==='CRITICAL'?'#fee2e2':'#ffedd5'}"><td>${r.id}</td><td>${r.hazard}</td><td>${r.category}</td><td>${r.rScore}</td><td><strong style="color:${r.rRating==='CRITICAL'?'#dc2626':'#d97706'}">${r.rRating}</strong></td><td>${r.owner}</td></tr>`).join('')}</tbody></table>`:''}
 
-    <h2>E. Near Misses — ${monthName} ${year}</h2>
-    ${nmMonth.length?`<table><thead><tr><th>ID</th><th>Date</th><th>Location</th><th>Outcome</th><th>HiPo</th><th>Sev</th><th>Status</th></tr></thead><tbody>${nmMonth.map(n=>`<tr><td>${n.id}</td><td>${fmtDate(n.date)}</td><td>${n.location}</td><td>${truncate(n.outcome,50)}</td><td>${n.hipo?'YES':'No'}</td><td>${n.sev}</td><td>${n.status}</td></tr>`).join('')}</tbody></table>`:'<p style="color:#777;font-style:italic">No near misses recorded this period.</p>'}
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">K. Management of Change (MoC) — ${monthName} ${year}</h2>
+    ${mocNarrative()}
+    ${mocMonth.length||openMocs.length?`<table><thead><tr><th>MoC ID</th><th>Title</th><th>Category</th><th>Date Initiated</th><th>Proposed By</th><th>Risk Level</th><th>Status</th></tr></thead><tbody>
+      ${[...new Set([...mocMonth,...openMocs])].map(m=>`<tr style="background:${m.status==='Rejected'?'#fee2e2':m.status==='Closed'||m.status==='Completed'?'#f0fdf4':''}"><td>${m.id}</td><td>${m.title||'—'}</td><td>${m.category||'—'}</td><td>${fmtDate(m.date)}</td><td>${m.proposedBy||'—'}</td><td>${m.riskLevel||'—'}</td><td><strong>${m.status}</strong></td></tr>`).join('')}
+    </tbody></table>`:''}
 
-    <h2>F. CAPA Tracker Status</h2>
-    ${capas.length?`<table><thead><tr><th>CAPA ID</th><th>Source</th><th>Ref</th><th>WHAT</th><th>WHO</th><th>WHEN</th><th>Priority</th><th>Status</th></tr></thead><tbody>${capas.map(c=>`<tr style="background:${c.status==='Overdue'?'#fee2e2':c.status==='Closed'?'#dcfce7':c.status==='In Progress'?'#dbeafe':''}"><td>${c.id}</td><td>${c.source_module}</td><td>${c.source_ref}</td><td>${truncate(c.what,50)}</td><td>${c.who}</td><td>${fmtDate(c.when)}</td><td>${c.priority}</td><td>${c.status}</td></tr>`).join('')}</tbody></table>`:'<p style="color:#777;font-style:italic">No CAPAs on record.</p>'}
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">L. Equipment &amp; Asset Inspections</h2>
+    ${assetNarrative()}
+    ${assets.length?`<table><thead><tr><th>Asset ID</th><th>Equipment</th><th>Category</th><th>Last Inspection</th><th>Next Due</th><th>Inspector</th><th>Status</th></tr></thead><tbody>
+      ${[...overdueAssets,...assetDue.filter(a=>!overdueAssets.includes(a))].slice(0,20).map(a=>`<tr style="background:${a.status==='Overdue'||a.status==='Failed'?'#fee2e2':a.status==='Passed'?'#f0fdf4':''}"><td>${a.id}</td><td>${a.name||'—'}</td><td>${a.category||'—'}</td><td>${fmtDate(a.lastInspection)||'Never'}</td><td>${fmtDate(a.nextInspection)||'—'}</td><td>${a.inspector||'—'}</td><td><strong style="color:${a.status==='Overdue'||a.status==='Failed'?'#dc2626':a.status==='Passed'?'#16a34a':'#d97706'}">${a.status}</strong></td></tr>`).join('')}
+    </tbody></table>
+    <p style="font-size:11px;color:#888;margin-top:4px">Showing overdue/failed assets and assets due this month. Total registered assets: ${assets.length}.</p>`:''}
 
-    <h2>G. PTW Summary — ${monthName} ${year}</h2>
-    <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>
-      ${['ACTIVE','PENDING','CLOSED','SUSPENDED','EXPIRED'].map(s=>`<tr><td>${s}</td><td>${ptwMonth.filter(p=>getPTWStatus(p)===s).length}</td></tr>`).join('')}
-      <tr><td><strong>Compliance Rate</strong></td><td><strong>${ptwCompliance}%</strong></td></tr>
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">M. Incident Investigations (RCA)</h2>
+    ${invNarrative()}
+    ${invs.length?`<table><thead><tr><th>Inv ID</th><th>Source Ref</th><th>Title</th><th>Method</th><th>Date Opened</th><th>Investigator</th><th>Status</th></tr></thead><tbody>
+      ${invs.map(v=>`<tr style="background:${v.status==='Complete'?'#f0fdf4':v.status==='In Progress'?'#dbeafe':'#fef9c3'}"><td>${v.id}</td><td>${v.incidentRef||'—'}</td><td>${truncate(v.title||'—',50)}</td><td>${v.method==='5why'?'5-Why':v.method==='fishbone'?'Fishbone':'Both Methods'}</td><td>${fmtDate(v.date)}</td><td>${v.investigator||'—'}</td><td><strong>${v.status}</strong></td></tr>`).join('')}
+    </tbody></table>`:''}
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">N. SHEQ Activity Calendar — ${monthName} ${year}</h2>
+    ${calNarrative()}
+    <table><thead><tr><th>Activity Status</th><th>Count</th><th>Notes</th></tr></thead><tbody>
+      <tr style="background:#f0fdf4"><td>✅ Completed</td><td>${calCompleted}</td><td>Activities fully executed as planned</td></tr>
+      <tr style="background:#dbeafe"><td>📅 Planned / Upcoming</td><td>${calPlanned}</td><td>Scheduled — not yet due or in progress</td></tr>
+      <tr style="background:${calMissed>0?'#fee2e2':''}"><td>❌ Missed</td><td>${calMissed}</td><td>${calMissed>0?'Must be rescheduled as priority. Investigate root cause of non-completion.':'No missed activities'}</td></tr>
     </tbody></table>
 
-    <h2>H. Legal Compliance Register</h2>
-    <table><thead><tr><th>Ref</th><th>Law / Standard</th><th>Frequency</th><th>Last Complied</th><th>Status</th></tr></thead><tbody>
-      ${legal.map(l=>`<tr><td>${l.id}</td><td>${l.law}</td><td>${l.freq}</td><td>${fmtDate(l.lastComplied)||'—'}</td><td style="color:${l.status==='COMPLIANT'?'#16a34a':l.status==='OVERDUE'?'#dc2626':'#d97706'}">${l.status}</td></tr>`).join('')}
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">O. Monthly Focus Topic: ${topic}</h2>
+    <p style="line-height:1.7;margin-bottom:10px">The focus topic for ${monthName} ${year} is: <strong>${topic}</strong>. This topic has been selected based on current incident trends, seasonal risk factors, and organisational priorities. The SHEQ team is required to prepare a targeted communication, awareness session, or toolbox talk addressing this topic during the reporting period.</p>
+    <p style="line-height:1.7;margin-bottom:10px">Key actions related to this focus topic must be recorded in the meeting minutes and tracked as CAPAs where applicable. Evidence of focus topic delivery (attendance registers, photographs, toolbox talk records) should be filed with the SHEQ department.</p>
+    <div style="background:#f0f4ff;border-radius:6px;padding:12px 16px;margin-top:6px">
+      <strong>Suggested actions for "${topic}":</strong>
+      <ul style="margin:8px 0 0 16px;line-height:1.8">
+        <li>Conduct a targeted toolbox talk on the topic with all workforce members</li>
+        <li>Review related procedures, risk assessments, and training records</li>
+        <li>Identify any gaps and create CAPAs with assigned responsible persons</li>
+        <li>Communicate relevant lessons learned from incidents linked to this topic</li>
+        <li>Record attendance and file evidence with the SHEQ department</li>
+      </ul>
+    </div>
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">P. Management Actions Required</h2>
+    <p style="line-height:1.7;margin-bottom:10px">The following items require management decision, resource allocation, or escalation based on the findings of this report:</p>
+    <table><thead><tr><th>#</th><th>Action Item</th><th>Priority</th><th>Responsible</th></tr></thead><tbody>
+      ${overdueCapas.length>0?`<tr style="background:#fee2e2"><td>1</td><td>Close or provide written update on all <strong>${overdueCapas.length} overdue CAPA(s)</strong> immediately</td><td>CRITICAL</td><td>Responsible Persons / HODs</td></tr>`:''}
+      ${lti>0?`<tr style="background:#fee2e2"><td>2</td><td>Ensure full Root Cause Analysis (RCA) is completed for all ${lti} LTI event(s) and Board report submitted</td><td>CRITICAL</td><td>SHEQ Manager</td></tr>`:''}
+      ${legalOverdue>0?`<tr style="background:#ffedd5"><td>3</td><td>Regularise <strong>${legalOverdue} overdue legal obligation(s)</strong> — engage relevant authority to avoid enforcement action</td><td>HIGH</td><td>SHEQ Manager / Legal</td></tr>`:''}
+      ${critRisks.length>0?`<tr style="background:#ffedd5"><td>4</td><td>Review and validate controls for <strong>${critRisks.length} CRITICAL risk(s)</strong> in the Risk Register</td><td>HIGH</td><td>Risk Owners / SHEQ</td></tr>`:''}
+      ${critFailAudits>0?`<tr style="background:#ffedd5"><td>5</td><td>Verify closure of corrective actions for <strong>${critFailAudits} audit(s)</strong> with critical non-conformances</td><td>HIGH</td><td>Audit Coordinators</td></tr>`:''}
+      ${overdueAssets.length>0?`<tr style="background:#fef9c3"><td>6</td><td>Arrange urgent inspection for <strong>${overdueAssets.length} overdue/failed asset(s)</strong> — do not operate uninspected safety-critical equipment</td><td>HIGH</td><td>Maintenance / Operations</td></tr>`:''}
+      ${calMissed>0?`<tr style="background:#fef9c3"><td>7</td><td>Reschedule <strong>${calMissed} missed SHEQ activit${calMissed!==1?'ies':'y'}</strong> — investigate cause of non-delivery</td><td>MEDIUM</td><td>SHEQ Department</td></tr>`:''}
+      ${openInvs.length>0?`<tr style="background:#fef9c3"><td>8</td><td>Progress and close <strong>${openInvs.length} open investigation(s)</strong> — finalise RCA findings and share lessons learned</td><td>MEDIUM</td><td>Investigators / SHEQ</td></tr>`:''}
+      ${totalObsM<10?`<tr><td>9</td><td>Increase observation programme — only <strong>${totalObsM}</strong> of the 10 required observations were conducted</td><td>MEDIUM</td><td>All Supervisors</td></tr>`:''}
+      ${nmMonth.length<3?`<tr><td>10</td><td>Reinforce near miss reporting culture — target ≥3 reports per month (${nmMonth.length} reported this period)</td><td>LOW</td><td>All Managers</td></tr>`:''}
+      ${(overdueCapas.length+lti+legalOverdue+critRisks.length+critFailAudits+overdueAssets.length+calMissed+openInvs.length+(totalObsM<10?1:0)+(nmMonth.length<3?1:0))===0?`<tr style="background:#f0fdf4"><td>—</td><td>✅ No critical management actions identified this period. Maintain current performance standards.</td><td>—</td><td>All</td></tr>`:''}
     </tbody></table>
 
-    <h2>I. Risk Register — HIGH & CRITICAL Items</h2>
-    ${risks.filter(r=>r.rRating==='HIGH'||r.rRating==='CRITICAL').length?`<table><thead><tr><th>ID</th><th>Hazard</th><th>Category</th><th>Residual Score</th><th>Rating</th><th>Owner</th></tr></thead><tbody>${risks.filter(r=>r.rRating==='HIGH'||r.rRating==='CRITICAL').map(r=>`<tr style="background:${r.rRating==='CRITICAL'?'#fee2e2':'#ffedd5'}"><td>${r.id}</td><td>${r.hazard}</td><td>${r.category}</td><td>${r.rScore}</td><td>${r.rRating}</td><td>${r.owner}</td></tr>`).join('')}</tbody></table>`:'<p style="color:#777;font-style:italic">No HIGH or CRITICAL residual risks.</p>'}
-
-    <h2>J. SHEQ Calendar — ${monthName} ${year}</h2>
-    <table><thead><tr><th>Status</th><th>Count</th></tr></thead><tbody>
-      <tr><td>Completed</td><td>${calCompleted}</td></tr>
-      <tr><td>Planned (upcoming)</td><td>${calPlanned}</td></tr>
-      <tr><td style="color:#dc2626">Missed</td><td>${calMissed}</td></tr>
-    </tbody></table>
-
-    <h2>K. Focus Topic: ${topic}</h2>
-    <p style="color:#666">Refer to SHEQ team presentation for detailed content on <em>${topic}</em>. Key actions and learnings to be recorded in the meeting minutes.</p>
-
-    <div style="margin-top:30px;border-top:2px solid #2563eb;padding-top:12px;font-size:11px;color:#777;text-align:center">
-      ${docRef} | ${monthName} ${year} | CONFIDENTIAL<br>
-      Prepared by SHEQ Department | GRCentral | Distribution: General Manager, Department Heads, SHEQ Meeting Attendees
+    <div style="margin-top:30px;border-top:3px solid #2563eb;padding-top:14px;font-size:11px;color:#777;text-align:center;line-height:1.8">
+      <strong style="color:#1e3a5f">${docRef}</strong> | ${monthName} ${year} | 🔒 CONFIDENTIAL<br>
+      Prepared by the SHEQ Department | GRCentral | Generated: ${new Date().toLocaleDateString('en-ZA',{day:'2-digit',month:'long',year:'numeric'})}<br>
+      Distribution: General Manager · Department Heads · SHEQ Meeting Attendees<br>
+      <em>This report is auto-generated from the SHEQ-AI Management System. For queries, contact the SHEQ Department.</em>
     </div>
   </div>`;
   document.getElementById('report-output').innerHTML=html;
