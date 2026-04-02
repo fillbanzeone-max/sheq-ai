@@ -1,7 +1,7 @@
 {
-  "name": "SHEQ-AI by GRCentral",
-  "short_name": "SHEQ-AI",
-  "description": "AI-powered Safety, Health, Environment & Quality Management System",
+  "name": "ESG Management Systems - SHEQ",
+  "short_name": "ESG SHEQ",
+  "description": "ESG Management Systems — Safety, Health, Environment & Quality Management Platform",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -29,7 +29,7 @@
       "name": "Dashboard",
       "short_name": "Dash",
       "url": "./index.html",
-      "description": "Open the SHEQ Dashboard"
+      "description": "Open the ESG SHEQ Dashboard"
     }
   ]
 }

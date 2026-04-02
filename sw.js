@@ -1,7 +1,7 @@
-// SHEQ-AI Service Worker — v1.2
+// ESG Management Systems - SHEQ Service Worker — v1.3
 // Cache-first strategy for the app shell; passes through CDN/Firebase requests.
 
-const CACHE_NAME = 'sheq-ai-v1';
+const CACHE_NAME = 'esg-sheq-v1';
 const SHELL_FILES = [
   './index.html',
   './SHEQ-AI.html',
