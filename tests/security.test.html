@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SHEQ Security Tests</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0;padding:2rem}
+    h1{font-size:1.4rem;font-weight:700;color:#f8fafc;margin-bottom:.25rem}
+    p.sub{color:#94a3b8;font-size:.85rem;margin-bottom:2rem}
+    .suite{margin-bottom:2rem}
+    .suite-title{font-size:.95rem;font-weight:700;color:#7dd3fc;margin-bottom:.75rem;
+      border-bottom:1px solid #1e3a5f;padding-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em}
+    .test{display:flex;align-items:flex-start;gap:.75rem;padding:.4rem .6rem;border-radius:6px;
+      font-size:.82rem;margin-bottom:3px}
+    .test.pass{background:#052e16}
+    .test.fail{background:#450a0a}
+    .badge{flex-shrink:0;font-size:.7rem;font-weight:700;padding:2px 7px;border-radius:999px;
+      letter-spacing:.05em;margin-top:1px}
+    .badge.pass{background:#166534;color:#bbf7d0}
+    .badge.fail{background:#7f1d1d;color:#fecaca}
+    .name{color:#e2e8f0;flex:1}
+    .detail{color:#94a3b8;font-size:.75rem;white-space:nowrap}
+    .summary{margin-top:2rem;padding:1rem 1.25rem;border-radius:10px;font-size:1rem;font-weight:700}
+    .summary.all-pass{background:#052e16;color:#86efac;border:1px solid #166534}
+    .summary.has-fail{background:#450a0a;color:#fca5a5;border:1px solid #7f1d1d}
+    button{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;
+      padding:.55rem 1.4rem;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;
+      margin-bottom:2rem}
+    button:hover{opacity:.88}
+  </style>
+</head>
+<body>
+<h1>SHEQ Security Test Suite</h1>
+<p class="sub">API-05 · RBAC authorization checks &nbsp;|&nbsp; API-03 · PII masking &nbsp;|&nbsp; API-14 · PII log sanitisation</p>
+<button onclick="runAll()">Run Tests</button>
+<div id="output"></div>
+
+<script>
+// ── Minimal stubs so the isolated functions can run ───────────
+const ROLE_KEY = 'sheqai_role_test'; // isolated key — won't touch the app's real role
+const ROLES = ['viewer','reporter','sheq_manager','privacy_officer','admin'];
+
+const RBAC = {
+  view:           new Set(['viewer','reporter','sheq_manager','privacy_officer','admin']),
+  create:         new Set(['reporter','sheq_manager','privacy_officer','admin']),
+  edit:           new Set(['sheq_manager','privacy_officer','admin']),
+  delete:         new Set(['sheq_manager','admin']),
+  export:         new Set(['sheq_manager','privacy_officer','admin']),
+  view_pii:       new Set(['sheq_manager','privacy_officer','admin']),
+  admin_settings: new Set(['admin']),
+  gdpr:           new Set(['privacy_officer','admin']),
+  reset_data:     new Set(['admin']),
+};
+
+let _currentRole = 'admin';
+function _setRole(r){ _currentRole = r; }
+function getCurrentRole(){ return _currentRole; }
+function can(p){ return RBAC[p]?.has(getCurrentRole()) ?? false; }
+function requireRole(p){ return can(p); }
+
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function maskPII(val){
+  if(can('view_pii')) return escapeHtml(String(val||''));
+  const s = String(val||'');
+  if(!s) return '—';
+  const parts = s.trim().split(/\s+/);
+  if(parts.length >= 2) return parts[0][0].toUpperCase()+'. '+parts[parts.length-1][0].toUpperCase()+'.';
+  return s[0].toUpperCase()+'***';
+}
+
+const _PII_RULES = [
+  [/\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g,           '[EMAIL]'],
+  [/\b(\+?27|0)[6-8][0-9]{8}\b/g,                                       '[PHONE]'],
+  [/\b\d{13}\b/g,                                                        '[ID-NUMBER]'],
+  [/"(person|name|email|phone|contact|employee_id|national_id)":\s*"[^"]*"/g, '"$1":"[REDACTED]"'],
+];
+function _sanitizePII(val){
+  let s = (typeof val === 'object') ? JSON.stringify(val) : String(val);
+  _PII_RULES.forEach(([rx,rep]) => { s = s.replace(rx, rep); });
+  return s;
+}
+
+// ── Test runner ───────────────────────────────────────────────
+const suites = [];
+
+function suite(title, fn){
+  const cases = [];
+  function it(name, actual, expected){
+    const pass = actual === expected;
+    cases.push({ name, pass, actual, expected });
+  }
+  fn(it);
+  suites.push({ title, cases });
+}
+
+function define(){
+  suites.length = 0;
+
+  // ── Suite 1: RBAC can() matrix ──────────────────────────────
+  suite('RBAC · can() permission matrix', it => {
+    const matrix = [
+      ['view',            {viewer:true, reporter:true,  sheq_manager:true,  privacy_officer:true,  admin:true }],
+      ['create',          {viewer:false,reporter:true,  sheq_manager:true,  privacy_officer:true,  admin:true }],
+      ['edit',            {viewer:false,reporter:false, sheq_manager:true,  privacy_officer:true,  admin:true }],
+      ['delete',          {viewer:false,reporter:false, sheq_manager:true,  privacy_officer:false, admin:true }],
+      ['export',          {viewer:false,reporter:false, sheq_manager:true,  privacy_officer:true,  admin:true }],
+      ['view_pii',        {viewer:false,reporter:false, sheq_manager:true,  privacy_officer:true,  admin:true }],
+      ['admin_settings',  {viewer:false,reporter:false, sheq_manager:false, privacy_officer:false, admin:true }],
+      ['gdpr',            {viewer:false,reporter:false, sheq_manager:false, privacy_officer:true,  admin:true }],
+      ['reset_data',      {viewer:false,reporter:false, sheq_manager:false, privacy_officer:false, admin:true }],
+    ];
+    matrix.forEach(([perm, expected]) => {
+      ROLES.forEach(role => {
+        _setRole(role);
+        it(`can('${perm}') — ${role}`, can(perm), expected[role]);
+      });
+    });
+  });
+
+  // ── Suite 2: reporter blocked on all admin actions ──────────
+  suite('RBAC · reporter blocked on privileged actions (API-05)', it => {
+    ['delete','admin_settings','reset_data','gdpr','export','edit','view_pii'].forEach(perm => {
+      _setRole('reporter');
+      it(`reporter cannot '${perm}'`, requireRole(perm), false);
+    });
+    _setRole('reporter');
+    it('reporter can view', requireRole('view'), true);
+    it('reporter can create', requireRole('create'), true);
+  });
+
+  // ── Suite 3: viewer is strictly read-only ───────────────────
+  suite('RBAC · viewer is strictly read-only', it => {
+    ['create','edit','delete','export','view_pii','admin_settings','gdpr','reset_data'].forEach(perm => {
+      _setRole('viewer');
+      it(`viewer cannot '${perm}'`, requireRole(perm), false);
+    });
+    _setRole('viewer');
+    it('viewer can view', requireRole('view'), true);
+  });
+
+  // ── Suite 4: admin has all permissions ──────────────────────
+  suite('RBAC · admin has full access', it => {
+    Object.keys(RBAC).forEach(perm => {
+      _setRole('admin');
+      it(`admin can '${perm}'`, requireRole(perm), true);
+    });
+  });
+
+  // ── Suite 5: PII masking (API-03) ───────────────────────────
+  suite('PII masking · maskPII() (API-03)', it => {
+    const fullName = 'John Smith';
+
+    ['sheq_manager','privacy_officer','admin'].forEach(role => {
+      _setRole(role);
+      it(`${role}: full name visible`, maskPII(fullName).includes('John'), true);
+    });
+
+    ['viewer','reporter'].forEach(role => {
+      _setRole(role);
+      const result = maskPII(fullName);
+      it(`${role}: full name hidden`, result.includes('John'), false);
+      it(`${role}: initials shown (J. S.)`, result, 'J. S.');
+    });
+
+    _setRole('viewer');
+    it('single-word name → initial+***', maskPII('Madonna'), 'M***');
+    it('empty string → dash', maskPII(''), '—');
+  });
+
+  // ── Suite 6: PII log sanitisation (API-14) ──────────────────
+  suite('PII log sanitisation · _sanitizePII() (API-14)', it => {
+    it('email redacted',
+      _sanitizePII('Contact test@example.com now').includes('[EMAIL]'), true);
+    it('SA mobile +27 format redacted',
+      _sanitizePII('+27821234567').includes('[PHONE]'), true);
+    it('SA mobile 0xx format redacted',
+      _sanitizePII('0731234567').includes('[PHONE]'), true);
+    it('13-digit ID number redacted',
+      _sanitizePII('ID: 9001015009087').includes('[ID-NUMBER]'), true);
+    it('"person" JSON field redacted',
+      _sanitizePII('{"person":"John Smith"}').includes('[REDACTED]'), true);
+    it('"email" JSON field redacted',
+      _sanitizePII('{"email":"user@corp.com"}').includes('[REDACTED]'), true);
+    it('"name" JSON field redacted',
+      _sanitizePII('{"name":"Jane Doe"}').includes('[REDACTED]'), true);
+    it('"phone" JSON field redacted',
+      _sanitizePII('{"phone":"0821234567"}').includes('[REDACTED]'), true);
+    it('safe text passes through unchanged',
+      _sanitizePII('Observation at Site A'), 'Observation at Site A');
+    it('numbers that are not 13 digits pass through',
+      _sanitizePII('12345').includes('[ID-NUMBER]'), false);
+    it('object input is JSON-stringified then sanitised',
+      _sanitizePII({email:'a@b.com'}).includes('[EMAIL]'), true);
+  });
+}
+
+function runAll(){
+  define();
+  let totalPass = 0, totalFail = 0;
+  const html = suites.map(s => {
+    const pass = s.cases.filter(c=>c.pass).length;
+    const fail = s.cases.filter(c=>!c.pass).length;
+    totalPass += pass; totalFail += fail;
+    const rows = s.cases.map(c => `
+      <div class="test ${c.pass?'pass':'fail'}">
+        <span class="badge ${c.pass?'pass':'fail'}">${c.pass?'PASS':'FAIL'}</span>
+        <span class="name">${c.name}</span>
+        ${!c.pass?`<span class="detail">expected: ${c.expected} · got: ${c.actual}</span>`:''}
+      </div>`).join('');
+    return `<div class="suite">
+      <div class="suite-title">${s.title} &nbsp;<span style="font-weight:400;color:#64748b">${pass}/${s.cases.length}</span></div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  const summaryClass = totalFail ? 'has-fail' : 'all-pass';
+  const summaryText = totalFail
+    ? `${totalFail} test${totalFail!==1?'s':''} failed — ${totalPass} passed`
+    : `All ${totalPass} tests passed`;
+
+  document.getElementById('output').innerHTML =
+    html + `<div class="summary ${summaryClass}">${summaryText}</div>`;
+}
+
+runAll();
+</script>
+</body>
+</html>

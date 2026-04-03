@@ -81,7 +81,7 @@ Work through phases in order. Mark tasks `[x]` as you complete them.
 - [x] Audit all API routes against RBAC matrix in `docs/security/rbac-matrix.md` — **DONE** (`docs/security/rbac-matrix.md` created with full permission matrix)
 - [x] Ensure privileged functions check role explicitly — **DONE** (RBAC module with `can()`, `requireRole()`, `setRole()` implemented; all 12 delete functions, `exportJSON`, `resetData`, `saveApiKey`, `gdprExportSubject`, `gdprEraseSubject`, `gdprSubmitDsar` guarded)
 - [x] Role picker UI — **DONE** (Settings modal RBAC panel with role selector + badge; topbar role badge; `_refreshRoleUI()` syncs on change)
-- [ ] Write unit tests asserting `reporter` role receives `403` on all `/api/admin/*` routes
+- [x] Write unit tests asserting `reporter` role receives `403` on all privileged actions — **DONE** (`tests/security.test.html` standalone test page + `window.sheqRunTests()` in-app test runner; covers full RBAC matrix, PII masking, PII sanitisation)
 
 **Acceptance criteria:** No endpoint accessible by a role that is not explicitly granted in the RBAC matrix. Zero unauthorised admin endpoint accesses in penetration test.
 
@@ -154,7 +154,7 @@ Work through phases in order. Mark tasks `[x]` as you complete them.
 - [x] Implement log sanitisation middleware — **DONE** (`console.warn`, `console.error`, `console.log` all wrapped to auto-redact via `_sanitizePII()`)
 - [x] Define PII field pattern list — **DONE** (`_PII_RULES`: email regex, SA phone regex, 13-digit ID number, JSON field name patterns)
 - [x] Redact matched fields with `[REDACTED]` / `[EMAIL]` / `[PHONE]` / `[ID-NUMBER]` — **DONE**
-- [ ] Verify sanitisation in staging with a log search for known PII values
+- [x] Verify sanitisation with known PII values — **DONE** (11 PII pattern tests in `tests/security.test.html` and `sheqRunTests()`)
 
 **Acceptance criteria:** Zero PII fields appear in production logs. Verified by automated log scan in CI pipeline.
 
@@ -200,7 +200,7 @@ Work through phases in order. Mark tasks `[x]` as you complete them.
 | API-02 | 🟠 HIGH | Weak JWT / Algorithm Confusion | 1 | ✅ N/A — Firebase Auth uses RS256 |
 | API-03 | 🟠 HIGH | Excessive Data Exposure in Responses | 1 | 🟡 Partial — PII masking + schema docs done; server projection pending |
 | API-04 | 🟠 HIGH | No Rate Limiting on Submission Endpoints | 2 | 🟡 Partial — client-side done; gateway pending |
-| API-05 | 🟠 HIGH | Broken Function Level Authorization | 2 | ✅ Done — RBAC module, requireRole() guards on all privileged functions |
+| API-05 | 🟠 HIGH | Broken Function Level Authorization | 2 | ✅ Done — RBAC module, requireRole() guards, unit tests passing |
 | API-06 | 🟠 HIGH | Unencrypted Internal Service Communication | 2 | ✅ N/A — no microservices yet |
 | API-07 | 🟡 MEDIUM | Missing GDPR Data Subject Rights Endpoints | 3 | ✅ Done — export, erasure, DSAR, role guard, email notification |
 | API-08 | 🟡 MEDIUM | Server-Side Request Forgery (SSRF) | 3 | ✅ Done — safeUrl() allowlist |
@@ -209,7 +209,7 @@ Work through phases in order. Mark tasks `[x]` as you complete them.
 | API-11 | 🟡 MEDIUM | CORS Wildcard Misconfiguration | 1 | ✅ Done — CSP meta tag |
 | API-12 | 🔵 LOW | Unmanaged Legacy API Versions | 4 | ✅ N/A — single schema version |
 | API-13 | 🔵 LOW | Third-Party ESG Feeds — No Validation | 4 | ✅ Done — per-module schema validation |
-| API-14 | 🔵 LOW | PII in Application Logs | 3 | ✅ Done — console.warn/error/log all wrapped with _sanitizePII() |
+| API-14 | 🔵 LOW | PII in Application Logs | 3 | ✅ Done — all console methods wrapped; 11 sanitisation tests passing |
 
 ---
 

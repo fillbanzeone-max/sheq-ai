@@ -3792,6 +3792,104 @@ function _refreshRoleUI(){
 // Expose for console debugging
 window.sheqRole = () => console.log('Current role:', getCurrentRole());
 window.sheqSetRole = setRole;
+
+// ── Security self-test suite ─────────────────────────────────
+// Usage (browser console): sheqRunTests()
+// Returns a summary object with pass/fail counts.
+window.sheqRunTests = function sheqRunTests() {
+  const results = [];
+  const _savedRole = getCurrentRole();
+
+  function assert(name, actual, expected) {
+    const pass = actual === expected;
+    results.push({ name, pass, actual, expected });
+    return pass;
+  }
+
+  // ── RBAC: can() matrix ─────────────────────────────────────
+  const rbacMatrix = [
+    // [permission,       viewer,  reporter,  sheq_manager,  privacy_officer,  admin]
+    ['view',             true,    true,      true,          true,             true  ],
+    ['create',          false,    true,      true,          true,             true  ],
+    ['edit',            false,   false,      true,          true,             true  ],
+    ['delete',          false,   false,      true,          false,            true  ],
+    ['export',          false,   false,      true,          true,             true  ],
+    ['view_pii',        false,   false,      true,          true,             true  ],
+    ['admin_settings',  false,   false,     false,          false,            true  ],
+    ['gdpr',            false,   false,     false,          true,             true  ],
+    ['reset_data',      false,   false,     false,          false,            true  ],
+  ];
+  const roleList = ['viewer','reporter','sheq_manager','privacy_officer','admin'];
+
+  rbacMatrix.forEach(([perm, ...expected]) => {
+    roleList.forEach((role, i) => {
+      localStorage.setItem(ROLE_KEY, role);
+      const actual = can(perm);
+      assert(`can('${perm}') for role='${role}'`, actual, expected[i]);
+    });
+  });
+
+  // ── requireRole(): reporter blocked on privileged actions ──
+  ['delete','admin_settings','reset_data','gdpr','export'].forEach(perm => {
+    localStorage.setItem(ROLE_KEY, 'reporter');
+    const blocked = !requireRole(perm, '[test]');
+    assert(`requireRole('${perm}') blocks reporter`, blocked, true);
+  });
+
+  // ── requireRole(): admin allowed on all actions ─────────────
+  ['delete','admin_settings','reset_data','gdpr','export','view','create','edit','view_pii'].forEach(perm => {
+    localStorage.setItem(ROLE_KEY, 'admin');
+    const allowed = requireRole(perm, '[test]');
+    assert(`requireRole('${perm}') allows admin`, allowed, true);
+  });
+
+  // ── maskPII(): privileged role sees full name ───────────────
+  localStorage.setItem(ROLE_KEY, 'sheq_manager');
+  assert('maskPII shows full name for sheq_manager', maskPII('John Smith').includes('John'), true);
+
+  localStorage.setItem(ROLE_KEY, 'admin');
+  assert('maskPII shows full name for admin', maskPII('Jane Doe').includes('Jane'), true);
+
+  // ── maskPII(): non-privileged role sees initials only ───────
+  localStorage.setItem(ROLE_KEY, 'reporter');
+  const masked = maskPII('John Smith');
+  assert('maskPII hides full name for reporter', masked.includes('John'), false);
+  assert('maskPII shows initials for reporter', masked === 'J. S.', true);
+
+  localStorage.setItem(ROLE_KEY, 'viewer');
+  const maskedV = maskPII('Jane Doe');
+  assert('maskPII hides full name for viewer', maskedV.includes('Jane'), false);
+  assert('maskPII shows initials for viewer', maskedV === 'J. D.', true);
+
+  // ── _sanitizePII(): known PII patterns are redacted ─────────
+  assert('sanitize: email redacted',
+    _sanitizePII('Contact test@example.com now').includes('[EMAIL]'), true);
+  assert('sanitize: SA phone redacted',
+    _sanitizePII('Call +27821234567 now').includes('[PHONE]'), true);
+  assert('sanitize: 13-digit ID redacted',
+    _sanitizePII('ID: 9001015009087').includes('[ID-NUMBER]'), true);
+  assert('sanitize: person JSON field redacted',
+    _sanitizePII('{"person":"John Smith"}').includes('[REDACTED]'), true);
+  assert('sanitize: email JSON field redacted',
+    _sanitizePII('{"email":"user@corp.com"}').includes('[REDACTED]'), true);
+  assert('sanitize: safe text passes through',
+    _sanitizePII('Observation at Site A'), 'Observation at Site A');
+
+  // ── Restore original role ────────────────────────────────────
+  localStorage.setItem(ROLE_KEY, _savedRole);
+
+  // ── Print report ─────────────────────────────────────────────
+  const passed = results.filter(r => r.pass).length;
+  const failed = results.filter(r => !r.pass).length;
+  const style = failed ? 'color:#dc2626;font-weight:700' : 'color:#16a34a;font-weight:700';
+  _origLog('%c[SHEQ-TESTS] Results: ' + passed + ' passed, ' + failed + ' failed', style);
+  results.filter(r => !r.pass).forEach(r =>
+    _origLog('%c  FAIL: ' + r.name + ' — expected: ' + r.expected + ', got: ' + r.actual, 'color:#dc2626'));
+  if (!failed) _origLog('%c  All tests passed.', 'color:#16a34a');
+  console.table(results);
+  return { passed, failed, results };
+};
+
 // ============================================================
 // END RBAC MODULE
 // ============================================================
