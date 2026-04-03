@@ -2145,6 +2145,7 @@
     <span id="topbar-date"></span>
     <span id="sync-status" class="loading">⬤ Loading…</span>
     <span id="topbar-user" style="font-size:.78rem;color:var(--muted);display:none"></span>
+    <span id="topbar-role-badge" style="font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid;letter-spacing:.05em;display:none"></span>
     <button class="btn btn-ghost btn-sm" onclick="navigateTo('emergency')" title="Emergency Contacts" style="color:#dc2626;font-size:1.1rem">🚑</button>
     <button class="btn btn-ghost btn-sm" id="settings-btn-top" onclick="loadNotifSettings();openModal('settings-modal')">⚙️</button>
     <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="logOut()" title="Sign out" style="display:none">⏏ Sign Out</button>
@@ -2909,6 +2910,23 @@
     </div>
     <div id="api-test-result" style="margin-bottom:var(--sp-2);font-size:12px"></div>
     <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
+    <div class="card-title">👤 Role-Based Access Control (API-05)</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px">Select your role to enforce function-level authorisation. PII fields, delete actions, and admin functions are restricted by role.</p>
+    <div class="form-row" style="align-items:flex-end">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Current Role</label>
+        <select id="rbac-role-select" onchange="setRole(this.value)">
+          <option value="viewer">Viewer — read-only, no PII</option>
+          <option value="reporter">Reporter — create records, no PII/delete</option>
+          <option value="sheq_manager">SHEQ Manager — full SHEQ access + PII</option>
+          <option value="privacy_officer">Privacy Officer — GDPR + PII, no delete</option>
+          <option value="admin">Administrator — unrestricted</option>
+        </select>
+      </div>
+      <div style="padding-bottom:2px"><span id="settings-role-badge" style="font-size:.72rem;font-weight:700;padding:4px 12px;border-radius:999px;border:1px solid #cbd5e1;color:var(--muted)">—</span></div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:6px;margin-bottom:var(--sp-2)">⚠ Role is stored locally in this browser. For server-enforced RBAC use Firebase Custom Claims.</p>
+    <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
     <div class="card-title">Data Management</div>
     <div style="display:flex;gap:var(--sp-1);flex-wrap:wrap">
       <button class="btn btn-ghost btn-sm" onclick="exportJSON()">⬇ Export Data (JSON)</button>
@@ -3574,6 +3592,10 @@ function _sanitizePII(val) {
 // Wrap console.warn (used by Firebase SDK) to auto-redact PII
 const _origWarn = console.warn.bind(console);
 console.warn = (...a) => _origWarn(...a.map(_sanitizePII));
+const _origError = console.error.bind(console);
+console.error = (...a) => _origError(...a.map(_sanitizePII));
+const _origLog = console.log.bind(console);
+console.log = (...a) => _origLog(...a.map(_sanitizePII));
 
 // ── API-09: Structured security event log ────────────────────
 // In-memory ring buffer (last 200 events). Ship to SIEM by
@@ -3678,6 +3700,102 @@ window.sheqSecLog = () => { console.table(_secBuf); return _secBuf; };
 // END SECURITY MODULE
 // ============================================================
 
+// ============================================================
+// RBAC MODULE — API-05 · API-03
+// ============================================================
+const ROLES = ['viewer','reporter','sheq_manager','privacy_officer','admin'];
+const ROLE_KEY = 'sheqai_role';
+
+// Role permission matrix
+const RBAC = {
+  //                       viewer  reporter  sheq_mgr  priv_off  admin
+  view:           new Set(['viewer','reporter','sheq_manager','privacy_officer','admin']),
+  create:         new Set(['reporter','sheq_manager','privacy_officer','admin']),
+  edit:           new Set(['sheq_manager','privacy_officer','admin']),
+  delete:         new Set(['sheq_manager','admin']),
+  export:         new Set(['sheq_manager','privacy_officer','admin']),
+  view_pii:       new Set(['sheq_manager','privacy_officer','admin']),
+  admin_settings: new Set(['admin']),
+  gdpr:           new Set(['privacy_officer','admin']),
+  reset_data:     new Set(['admin']),
+};
+
+function getCurrentRole(){
+  return localStorage.getItem(ROLE_KEY) || 'admin'; // default admin for single-user setup
+}
+
+function setRole(role){
+  if(!ROLES.includes(role)) return;
+  localStorage.setItem(ROLE_KEY, role);
+  secLog('ROLE_CHANGED', { role, classification:'Internal' });
+  _refreshRoleUI();
+}
+
+function can(permission){
+  return RBAC[permission]?.has(getCurrentRole()) ?? false;
+}
+
+function requireRole(permission, label=''){
+  if(can(permission)) return true;
+  const role = getCurrentRole();
+  showToast(`Access denied: "${label||permission}" requires a higher role. Current role: ${role}.`, 'error', 5000);
+  secLog('ACCESS_DENIED', { permission, role, label, classification:'Internal' });
+  return false;
+}
+
+// PII masking — returns masked string for non-privileged roles
+function maskPII(val){
+  if(can('view_pii')) return escapeHtml(String(val||''));
+  const s = String(val||'');
+  if(!s) return '—';
+  // Show first name initial + last name initial only
+  const parts = s.trim().split(/\s+/);
+  if(parts.length >= 2) return parts[0][0].toUpperCase()+'. '+parts[parts.length-1][0].toUpperCase()+'.';
+  return s[0].toUpperCase()+'***';
+}
+
+// Refresh role badge in topbar + settings panel, re-render active page
+function _refreshRoleUI(){
+  const role = getCurrentRole();
+  const colors = {
+    admin:'#7c3aed', sheq_manager:'#0891b2',
+    privacy_officer:'#15803d', reporter:'#d97706', viewer:'#64748b'
+  };
+  const label = role.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  const color = colors[role]||'#475569';
+  // Topbar badge
+  const topBadge = document.getElementById('topbar-role-badge');
+  if(topBadge){
+    topBadge.textContent = label;
+    topBadge.style.background = color+'22';
+    topBadge.style.color = color;
+    topBadge.style.borderColor = color+'55';
+  }
+  // Settings badge + dropdown
+  const sBadge = document.getElementById('settings-role-badge');
+  if(sBadge){
+    sBadge.textContent = label;
+    sBadge.style.background = color+'22';
+    sBadge.style.color = color;
+    sBadge.style.borderColor = color+'55';
+  }
+  const sel = document.getElementById('rbac-role-select');
+  if(sel) sel.value = role;
+  // Re-render active page so PII masking / delete buttons update immediately
+  const cur = document.querySelector('.page.active');
+  if(cur){
+    const pg = cur.id.replace('page-','');
+    if(pg) try{ navigateTo(pg); }catch(e){}
+  }
+}
+
+// Expose for console debugging
+window.sheqRole = () => console.log('Current role:', getCurrentRole());
+window.sheqSetRole = setRole;
+// ============================================================
+// END RBAC MODULE
+// ============================================================
+
 const firebaseConfig = {
   apiKey: "AIzaSyAVoruGdEk7wGPOdKtdrD4MzEZs6zIvAzI",
   authDomain: "ctrg-sheq-ai.firebaseapp.com",
@@ -3710,11 +3828,22 @@ function loginSubmit(){
   btn.disabled=true;btn.textContent='Signing in…';
   // API-04: rate-limit login attempts (10 per minute)
   if (!rateCheck('auth-login', 10)) { btn.disabled=false; btn.textContent='Sign In'; return; }
+  // API-09: auto-block after 10 failures in 5 min
+  const _afKey='sheqai_auth_failures';
+  const _afRaw=JSON.parse(sessionStorage.getItem(_afKey)||'[]');
+  const _now=Date.now();const _window=5*60*1000;
+  const _recent=_afRaw.filter(t=>_now-t<_window);
+  if(_recent.length>=10){
+    errEl.textContent='Account temporarily locked — too many failed attempts. Try again in 5 minutes.';
+    errEl.style.display='block';btn.disabled=false;btn.textContent='Sign In';
+    secLog('AUTH_BLOCKED',{user:email,failures:_recent.length,classification:'Internal'});return;
+  }
   firebase.auth().signInWithEmailAndPassword(email,pass)
-    .then(()=>{ secLog('AUTH_LOGIN_SUCCESS', { user: email, classification:'Internal' }); })
+    .then(()=>{ sessionStorage.removeItem(_afKey);secLog('AUTH_LOGIN_SUCCESS', { user: email, classification:'Internal' }); })
     .catch(err=>{
       btn.disabled=false;btn.textContent='Sign In';
-      secLog('AUTH_LOGIN_FAILURE', { user: email, error_code: err.code, classification:'Internal' });
+      _recent.push(Date.now());sessionStorage.setItem(_afKey,JSON.stringify(_recent));
+      secLog('AUTH_LOGIN_FAILURE', { user: email, error_code: err.code, failures:_recent.length, classification:'Internal' });
       const msgs={
         'auth/user-not-found':'No account found with that email.',
         'auth/wrong-password':'Incorrect password.',
@@ -4850,7 +4979,7 @@ function saveObservation(){
     if(!hasInv) setTimeout(()=>openAddInvestigation(rec.id), 250);
   }
 }
-function deleteObs(id){const d=getData()||getDefaultData();const o=(d.observations||[]).find(x=>x.id===id);if(!confirm('Delete observation '+id+(o?': '+truncate(o.desc,50):'')+'\nThis cannot be undone.'))return;d.observations=(d.observations||[]).filter(x=>x.id!==id);saveData(d);renderObservations(obsPage);}
+function deleteObs(id){if(!requireRole('delete','Delete Observation'))return;const d=getData()||getDefaultData();const o=(d.observations||[]).find(x=>x.id===id);if(!confirm('Delete observation '+id+(o?': '+truncate(o.desc,50):'')+'\nThis cannot be undone.'))return;d.observations=(d.observations||[]).filter(x=>x.id!==id);saveData(d);renderObservations(obsPage);}
 function renderObservations(page=1){
   obsPage=page;
   let d=getData()||getDefaultData();
@@ -4866,7 +4995,7 @@ function renderObservations(page=1){
   document.getElementById('obs-tbody').innerHTML=rows.map(o=>`
     <tr>
       <td data-label="ID"><strong>${o.id}</strong></td>
-      <td data-label="Observer">${o.observer}</td>
+      <td data-label="Observer">${maskPII(o.observer)}</td>
       <td data-label="Date">${fmtDate(o.date)}</td>
       <td data-label="Location">${o.location}</td>
       <td data-label="Type">${typePill(o.type)}</td>
@@ -4941,7 +5070,7 @@ function saveNearMiss(){
     if(!hasInv) setTimeout(()=>openAddInvestigation(rec.id), 250);
   }
 }
-function deleteNM(id){const d=getData()||getDefaultData();const n=(d.nearMisses||[]).find(x=>x.id===id);if(!confirm('Delete near miss '+id+(n?': '+truncate(n.outcome||n.desc,50):'')+'\nThis cannot be undone.'))return;d.nearMisses=(d.nearMisses||[]).filter(x=>x.id!==id);saveData(d);renderNearMiss(nmPage);}
+function deleteNM(id){if(!requireRole('delete','Delete Near Miss'))return;const d=getData()||getDefaultData();const n=(d.nearMisses||[]).find(x=>x.id===id);if(!confirm('Delete near miss '+id+(n?': '+truncate(n.outcome||n.desc,50):'')+'\nThis cannot be undone.'))return;d.nearMisses=(d.nearMisses||[]).filter(x=>x.id!==id);saveData(d);renderNearMiss(nmPage);}
 function renderNearMiss(page=1){
   nmPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('nm-search').value||'').toLowerCase();
@@ -4955,7 +5084,7 @@ function renderNearMiss(page=1){
   document.getElementById('nm-tbody').innerHTML=rows.map(n=>`
     <tr>
       <td data-label="ID"><strong>${n.id}</strong></td>
-      <td data-label="Reporter">${n.reporter}</td>
+      <td data-label="Reporter">${maskPII(n.reporter)}</td>
       <td data-label="Date">${fmtDate(n.date)}</td>
       <td data-label="Location">${n.location}</td>
       <td data-label="Potential Outcome">${truncate(n.outcome,40)}</td>
@@ -5055,7 +5184,7 @@ function saveIncident(){
     }
   }
 }
-function deleteInc(id){const d=getData()||getDefaultData();const i=(d.incidents||[]).find(x=>x.id===id);if(!confirm('Delete incident '+id+(i?': '+truncate(i.desc,50):'')+'\nThis cannot be undone.'))return;d.incidents=(d.incidents||[]).filter(x=>x.id!==id);saveData(d);renderIncidents(incPage);}
+function deleteInc(id){if(!requireRole('delete','Delete Incident'))return;const d=getData()||getDefaultData();const i=(d.incidents||[]).find(x=>x.id===id);if(!confirm('Delete incident '+id+(i?': '+truncate(i.desc,50):'')+'\nThis cannot be undone.'))return;d.incidents=(d.incidents||[]).filter(x=>x.id!==id);saveData(d);renderIncidents(incPage);}
 function editInc(id){
   const d=getData()||getDefaultData();const i=(d.incidents||[]).find(x=>x.id===id);if(!i)return;
   document.getElementById('inc-modal-title').textContent='Edit Incident';
@@ -5094,7 +5223,7 @@ function renderIncidents(page=1){
       <td data-label="Severity">${sevPill(i.sev)}</td>
       <td data-label="Location">${i.location}</td>
       <td data-label="Description">${truncate(i.desc,40)}</td>
-      <td data-label="Person">${i.person}</td>
+      <td data-label="Person">${maskPII(i.person)}</td>
       <td data-label="Status">${statusPill(i.status)}</td>
       <td data-label="CAPA">${capaBadge(i.capaRef,d)}</td>
       <td data-label="Investigation">${invBadge(i.id,d)||(i.sev<=2||i.status==='Under Investigation'?`<button class="btn btn-sm btn-ghost" style="color:var(--accent);font-size:11px" onclick="openAddInvestigation('${i.id}')">🔍 Start RCA</button>`:'—')}</td>
@@ -5231,7 +5360,7 @@ function editPTW(id){
   openModal('ptw-modal');
 }
 function changePTWStatus(id,status){let d=getData();const p=(d.permits||[]).find(x=>x.id===id);if(!p)return;p.status=status;saveData(d);renderPermits(ptwPage);}
-function deletePTW(id){const d=getData()||getDefaultData();const p=(d.permits||[]).find(x=>x.id===id);if(!confirm('Delete permit '+id+(p?' — '+truncate(p.activity,50):'')+'\nThis cannot be undone.'))return;d.permits=(d.permits||[]).filter(x=>x.id!==id);saveData(d);renderPermits(ptwPage);}
+function deletePTW(id){if(!requireRole('delete','Delete Permit'))return;const d=getData()||getDefaultData();const p=(d.permits||[]).find(x=>x.id===id);if(!confirm('Delete permit '+id+(p?' — '+truncate(p.activity,50):'')+'\nThis cannot be undone.'))return;d.permits=(d.permits||[]).filter(x=>x.id!==id);saveData(d);renderPermits(ptwPage);}
 function renderPermits(page=1){
   ptwPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('ptw-search').value||'').toLowerCase();
@@ -5371,7 +5500,7 @@ function editRisk(id){
   selP=r.ip||null;selI=r.ii||null;renderRiskMatrix();
   openModal('risk-modal');
 }
-function deleteRisk(id){const d=getData()||getDefaultData();const r=(d.risks||[]).find(x=>x.id===id);if(!confirm('Delete risk '+id+(r?' — '+truncate(r.hazard,50):'')+'\nThis cannot be undone.'))return;d.risks=(d.risks||[]).filter(x=>x.id!==id);saveData(d);renderRisks();renderRiskMatrix();}
+function deleteRisk(id){if(!requireRole('delete','Delete Risk'))return;const d=getData()||getDefaultData();const r=(d.risks||[]).find(x=>x.id===id);if(!confirm('Delete risk '+id+(r?' — '+truncate(r.hazard,50):'')+'\nThis cannot be undone.'))return;d.risks=(d.risks||[]).filter(x=>x.id!==id);saveData(d);renderRisks();renderRiskMatrix();}
 function renderRisks(page=1){
   riskPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('risk-search').value||'').toLowerCase();
@@ -5430,7 +5559,7 @@ function saveLegal(){
   else d.legalItems.push(rec);
   saveData(d);closeModal('legal-modal');renderLegal(1);
 }
-function deleteLegal(id){const d=getData()||getDefaultData();const l=(d.legalItems||[]).find(x=>x.id===id);if(!confirm('Delete legal item '+id+(l?' — '+truncate(l.requirement,50):'')+'\nThis cannot be undone.'))return;d.legalItems=(d.legalItems||[]).filter(x=>x.id!==id);saveData(d);renderLegal(legalPage);}
+function deleteLegal(id){if(!requireRole('delete','Delete Legal Item'))return;const d=getData()||getDefaultData();const l=(d.legalItems||[]).find(x=>x.id===id);if(!confirm('Delete legal item '+id+(l?' — '+truncate(l.requirement,50):'')+'\nThis cannot be undone.'))return;d.legalItems=(d.legalItems||[]).filter(x=>x.id!==id);saveData(d);renderLegal(legalPage);}
 function editLegal(id){
   const d=getData()||getDefaultData();const l=(d.legalItems||[]).find(x=>x.id===id);if(!l)return;
   document.getElementById('legal-f-edit-id').value=id;
@@ -5588,7 +5717,7 @@ function saveCapa(){
   else d.capas.push(rec);
   saveData(d);signAndUpdateRecord('capas',rec.id);closeModal('capa-modal');renderCapas(1);
 }
-function deleteCapa(id){const d=getData()||getDefaultData();const c=(d.capas||[]).find(x=>x.id===id);if(!confirm('Delete CAPA '+id+(c?' — '+truncate(c.what,50):'')+'\nThis cannot be undone.'))return;d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);}
+function deleteCapa(id){if(!requireRole('delete','Delete CAPA'))return;const d=getData()||getDefaultData();const c=(d.capas||[]).find(x=>x.id===id);if(!confirm('Delete CAPA '+id+(c?' — '+truncate(c.what,50):'')+'\nThis cannot be undone.'))return;d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);}
 function renderCapas(page=1){
   capaPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('capa-search').value||'').toLowerCase();
@@ -5722,7 +5851,7 @@ function viewToolbox(id){
   openModal('view-modal');
 }
 function deleteToolbox(id){
-  const d=getData()||getDefaultData();if(!confirm('Delete toolbox talk '+id+'?\nThis cannot be undone.'))return;
+  if(!requireRole('delete','Delete Toolbox Talk'))return;const d=getData()||getDefaultData();if(!confirm('Delete toolbox talk '+id+'?\nThis cannot be undone.'))return;
   d.toolboxTalks=(d.toolboxTalks||[]).filter(x=>x.id!==id);saveData(d);renderToolbox(toolboxPage);
 }
 function renderToolbox(page=1){
@@ -5825,7 +5954,7 @@ function saveInduction(){
   showToast('Induction saved — '+rec.id,'success');
 }
 function deleteInduction(id){
-  const d=getData()||getDefaultData();if(!confirm('Delete induction '+id+'?\nThis cannot be undone.'))return;
+  if(!requireRole('delete','Delete Induction'))return;const d=getData()||getDefaultData();if(!confirm('Delete induction '+id+'?\nThis cannot be undone.'))return;
   d.inductions=(d.inductions||[]).filter(x=>x.id!==id);saveData(d);renderInductions(inductionPage);
 }
 function renderInductions(page=1){
@@ -6057,7 +6186,7 @@ function saveMoc(){
 }
 
 function deleteMoc(id){
-  const d=getData()||getDefaultData();const m=(d.mocs||[]).find(x=>x.id===id);
+  if(!requireRole('delete','Delete MOC'))return;const d=getData()||getDefaultData();const m=(d.mocs||[]).find(x=>x.id===id);
   if(!confirm('Delete change request '+id+(m?' — '+truncate(m.title,50):'')+'\nThis cannot be undone.'))return;
   d.mocs=(d.mocs||[]).filter(x=>x.id!==id);saveData(d);renderMoc(mocPage);
 }
@@ -6191,7 +6320,7 @@ function saveAsset(){
   showToast('Asset saved — '+rec.id,'success');
 }
 function deleteAsset(id){
-  const d=getData()||getDefaultData();if(!confirm('Delete asset '+id+'?\nThis cannot be undone.'))return;
+  if(!requireRole('delete','Delete Asset'))return;const d=getData()||getDefaultData();if(!confirm('Delete asset '+id+'?\nThis cannot be undone.'))return;
   d.assets=(d.assets||[]).filter(x=>x.id!==id);saveData(d);renderAssets(assetPage);
 }
 function renderAssets(page=1){
@@ -6892,7 +7021,7 @@ function viewAuditReport(id){
 }
 
 function deleteAudit(id){
-  const d=getData()||getDefaultData();
+  if(!requireRole('delete','Delete Audit'))return;const d=getData()||getDefaultData();
   if(!confirm('Delete audit '+id+'?\nThis cannot be undone.'))return;
   d.audits=(d.audits||[]).filter(x=>x.id!==id);saveData(d);renderAudits(auditPage);
 }
@@ -7520,6 +7649,7 @@ async function testNotifEmail(){
 // SETTINGS
 // ============================================================
 function saveApiKey(){
+  if(!requireRole('admin_settings','Save API Key'))return;
   const key=document.getElementById('api-key-input').value.trim();
   if(!key){alert('Please enter an API key.');return;}
   sessionStorage.setItem('sheqai_apikey',key);
@@ -7548,6 +7678,7 @@ async function testApiKey(){
   }catch(e){document.getElementById('api-test-result').style.color='#dc2626';document.getElementById('api-test-result').textContent='Error: '+e.message;}
 }
 function exportJSON(){
+  if(!requireRole('export','Export Data'))return;
   const d=getData()||getDefaultData();
   secLog('DATA_EXPORT',{format:'json',classification:'Internal'});
   const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
@@ -7559,6 +7690,7 @@ function exportJSON(){
 
 // ── API-07: GDPR Data Subject Rights ────────────────────────
 function gdprExportSubject(){
+  if(!requireRole('gdpr','GDPR Export'))return;
   const query=(document.getElementById('gdpr-subject-id').value||'').trim().toLowerCase();
   if(!query){alert('Enter a name or employee reference to search.');return;}
   const d=getData()||getDefaultData();
@@ -7586,6 +7718,7 @@ function gdprExportSubject(){
 }
 
 function gdprEraseSubject(){
+  if(!requireRole('gdpr','GDPR Erase'))return;
   const query=(document.getElementById('gdpr-subject-id').value||'').trim().toLowerCase();
   if(!query){alert('Enter a name or employee reference to erase.');return;}
   if(!confirm(`This will pseudonymise all personal data matching "${query}" across all modules.\n\nThis cannot be undone. Continue?`))return;
@@ -7642,6 +7775,7 @@ async function verifyRecordSignature(moduleKey, recordId) {
 window.sheqVerify = verifyRecordSignature;
 
 function gdprSubmitDsar(){
+  if(!requireRole('gdpr','Submit DSAR'))return;
   const subject=(document.getElementById('gdpr-dsar-subject').value||'').trim();
   const type=document.getElementById('gdpr-dsar-type').value;
   const notes=(document.getElementById('gdpr-dsar-notes').value||'').trim();
@@ -7655,6 +7789,8 @@ function gdprSubmitDsar(){
   secLog('GDPR_DSAR_SUBMITTED',{case_id:rec.id,type,sla_due:rec.sla_due,classification:'Personal'});
   document.getElementById('gdpr-result').style.color='#16a34a';
   document.getElementById('gdpr-result').textContent=`✓ DSAR ${rec.id} created. SLA due: ${rec.sla_due}.`;
+  // API-07: send notification email to privacy officer
+  sendNotificationEmail('DSAR', rec, rec.handled_by, `Type: ${type} | SLA Due: ${rec.sla_due} | Notes: ${notes||'—'}`).catch(()=>{});
   document.getElementById('gdpr-dsar-subject').value='';
   document.getElementById('gdpr-dsar-notes').value='';
 }
@@ -7720,6 +7856,7 @@ function importJSON(){
   };inp.click();
 }
 function resetData(){
+  if(!requireRole('reset_data','Reset All Data'))return;
   const typed=prompt('Type DELETE to confirm resetting ALL data. This cannot be undone.');
   if(typed!=='DELETE'){
     if(typed!==null)alert('Reset cancelled — you must type DELETE exactly.');
@@ -7834,6 +7971,7 @@ window.addEventListener('DOMContentLoaded',()=>{
       document.getElementById('main').style.visibility='hidden';
       document.getElementById('mobile-nav').style.display='none';
       document.getElementById('topbar-user').style.display='none';
+      document.getElementById('topbar-role-badge').style.display='none';
       document.getElementById('logout-btn').style.display='none';
       // Reset login form
       const btn=document.getElementById('login-btn');
@@ -7849,7 +7987,9 @@ window.addEventListener('DOMContentLoaded',()=>{
     const userEl=document.getElementById('topbar-user');
     userEl.textContent='👤 '+(user.email||'');
     userEl.style.display='';
+    document.getElementById('topbar-role-badge').style.display='';
     document.getElementById('logout-btn').style.display='';
+    _refreshRoleUI();
 
     // Boot from localStorage for instant display
     let d=getData();
