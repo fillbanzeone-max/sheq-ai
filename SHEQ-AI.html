@@ -2637,9 +2637,9 @@
   </div>
   <div class="kpi-grid" id="dash-kpi-row"></div>
   <div class="charts-row">
-    <div class="card"><div class="card-title">Incident Trend (Monthly)</div><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
-    <div class="card"><div class="card-title">Observation Type Ratio</div><div class="chart-wrap"><canvas id="chart-ratio"></canvas></div></div>
-    <div class="card"><div class="card-title">Risk Register by Rating</div><div class="chart-wrap"><canvas id="chart-risk"></canvas></div></div>
+    <div class="card"><div class="card-title">📈 Obs / Near Miss / Incidents — Monthly Trend</div><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
+    <div class="card"><div class="card-title">📋 Permits to Work — by Status</div><div class="chart-wrap"><canvas id="chart-ratio"></canvas></div></div>
+    <div class="card"><div class="card-title">🎯 Risk Register — by Rating</div><div class="chart-wrap"><canvas id="chart-risk"></canvas></div></div>
   </div>
   <div class="card" style="margin-top:var(--sp-2)">
     <div class="card-title" id="dash-module-title">Module Activity Overview</div>
@@ -5360,20 +5360,31 @@ function renderDashboard(){
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
 
-  // Incident trend chart (last 6 months)
-  const months=[];const incCounts=[];
-  for(let i=5;i>=0;i--){const d2=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d2.toLocaleDateString('en-GB',{month:'short',year:'2-digit'}));const ym2=d2.getFullYear()+'-'+(d2.getMonth()+1).toString().padStart(2,'0');incCounts.push((d.incidents||[]).filter(x=>x.date&&x.date.startsWith(ym2)).length);}
+  // Combined monthly trend — Observations, Near Misses, Incidents (last 6 months)
+  const months=[],obsCounts=[],nmCounts=[],incCounts=[];
+  for(let i=5;i>=0;i--){
+    const d2=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push(d2.toLocaleDateString('en-GB',{month:'short',year:'2-digit'}));
+    const ym2=d2.getFullYear()+'-'+(d2.getMonth()+1).toString().padStart(2,'0');
+    obsCounts.push((d.observations||[]).filter(x=>x.date&&x.date.startsWith(ym2)).length);
+    nmCounts.push((d.nearMisses||[]).filter(x=>x.date&&x.date.startsWith(ym2)).length);
+    incCounts.push((d.incidents||[]).filter(x=>x.date&&x.date.startsWith(ym2)).length);
+  }
   if(trendChart)trendChart.destroy();
-  trendChart=new Chart(document.getElementById('chart-trend').getContext('2d'),{type:'bar',data:{labels:months,datasets:[{label:'Incidents',data:incCounts,backgroundColor:'rgba(234,88,12,.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  trendChart=new Chart(document.getElementById('chart-trend').getContext('2d'),{type:'line',data:{labels:months,datasets:[
+    {label:'Observations',data:obsCounts,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:.35,fill:true},
+    {label:'Near Misses', data:nmCounts, borderColor:'#d97706',backgroundColor:'rgba(217,119,6,.08)',borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:.35,fill:true},
+    {label:'Incidents',   data:incCounts,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:.35,fill:true}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:16,font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}}}});
 
-  // Observation ratio chart
-  const safe=obsSafe,atRisk=obsRisk,impr=obsImpr;
+  // PTW by status — pie
+  const ptwPending=permits.filter(p=>p.status==='PENDING').length;
   if(ratioChart)ratioChart.destroy();
-  ratioChart=new Chart(document.getElementById('chart-ratio').getContext('2d'),{type:'pie',data:{labels:['Safe','At-Risk','Improvement'],datasets:[{data:[safe,atRisk,impr],backgroundColor:['#22c55e','#ef4444','#06b6d4']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  ratioChart=new Chart(document.getElementById('chart-ratio').getContext('2d'),{type:'pie',data:{labels:['Active','Pending','Expired','Closed'],datasets:[{data:[ptwActive,ptwPending,ptwExpired,ptwClosed],backgroundColor:['#0891b2','#f59e0b','#ef4444','#94a3b8'],borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,font:{size:11}}}}}});
 
-  // Risk by rating donut
+  // Risk Register by rating — pie
   if(riskChart)riskChart.destroy();
-  riskChart=new Chart(document.getElementById('chart-risk').getContext('2d'),{type:'doughnut',data:{labels:['Low','Medium','High','Critical'],datasets:[{data:[rLow,rMed,rHigh,rExt],backgroundColor:['#22c55e','#fde047','#f97316','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  riskChart=new Chart(document.getElementById('chart-risk').getContext('2d'),{type:'pie',data:{labels:['Low','Medium','High','Critical'],datasets:[{data:[rLow,rMed,rHigh,rExt],backgroundColor:['#22c55e','#fde047','#f97316','#ef4444'],borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,font:{size:11}}}}}});
 
   // Module Activity Overview table
   const incOverdue=incs.filter(i=>i.status==='Overdue').length;
