@@ -5446,7 +5446,7 @@ function renderDashboard(){
     {label:'Observations',data:obsCounts,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:.35,fill:true},
     {label:'Near Misses', data:nmCounts, borderColor:'#d97706',backgroundColor:'rgba(217,119,6,.08)',borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:.35,fill:true},
     {label:'Incidents',   data:incCounts,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',borderWidth:2,pointRadius:4,pointHoverRadius:6,tension:.35,fill:true}
-  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:16,font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}}}});
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:16,font:{size:11}}}},scales:{y:{beginAtZero:true,suggestedMax:50,ticks:{stepSize:10},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}}}});
 
   // PTW by status — pie
   const ptwPending=permits.filter(p=>p.status==='PENDING').length;
