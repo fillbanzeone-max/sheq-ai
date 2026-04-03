@@ -634,7 +634,7 @@
     ============================================================ */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
       gap: var(--sp-2);
       margin-bottom: var(--sp-3);
     }
@@ -740,7 +740,7 @@
     }
 
     .chart-wrap canvas {
-      max-height: 240px;
+      max-height: 320px;
     }
 
     /* ============================================================
@@ -1747,8 +1747,16 @@
       align-items: stretch;
     }
 
+    #mobile-nav {
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+    #mobile-nav::-webkit-scrollbar { display: none; }
+
     .mobile-nav-item {
-      flex: 1;
+      flex: 0 0 auto;
+      min-width: 64px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1758,7 +1766,7 @@
       font-size: var(--fs-xs);
       font-weight: 500;
       cursor: pointer;
-      padding: 6px 4px;
+      padding: 6px 8px;
       transition: color 0.15s;
       border: none;
       background: none;
@@ -2538,7 +2546,11 @@
       style="width:100%;padding:11px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer">
       Sign In
     </button>
-    <p style="text-align:center;font-size:.75rem;color:#94a3b8;margin-top:18px;margin-bottom:0">
+    <div style="text-align:center;margin-top:14px">
+      <a href="#" onclick="showForgotPassword();return false;" style="font-size:.8rem;color:#2563eb;text-decoration:none;font-weight:500">Forgot password?</a>
+    </div>
+    <div id="forgot-result" style="display:none;font-size:.8rem;padding:9px 12px;border-radius:6px;margin-top:10px;text-align:center"></div>
+    <p style="text-align:center;font-size:.75rem;color:#94a3b8;margin-top:14px;margin-bottom:0">
       Contact your SHEQ Manager to request access.
     </p>
   </div>
@@ -2585,9 +2597,16 @@
 <div id="mobile-nav">
   <div class="mobile-nav-item active" data-page="dashboard"><span class="nav-icon">📊</span>Dash</div>
   <div class="mobile-nav-item" data-page="observations"><span class="nav-icon">👁️</span>Obs</div>
+  <div class="mobile-nav-item" data-page="nearmiss"><span class="nav-icon">⚠️</span>NM</div>
   <div class="mobile-nav-item" data-page="incidents"><span class="nav-icon">🚨</span>Inc</div>
-  <div class="mobile-nav-item" data-page="capa"><span class="nav-icon">✅</span>CAPA</div>
   <div class="mobile-nav-item" data-page="permits"><span class="nav-icon">📋</span>PTW</div>
+  <div class="mobile-nav-item" data-page="risks"><span class="nav-icon">🎯</span>Risk</div>
+  <div class="mobile-nav-item" data-page="legal"><span class="nav-icon">⚖️</span>Legal</div>
+  <div class="mobile-nav-item" data-page="capa"><span class="nav-icon">✅</span>CAPA</div>
+  <div class="mobile-nav-item" data-page="toolbox"><span class="nav-icon">🗣️</span>TBT</div>
+  <div class="mobile-nav-item" data-page="inductions"><span class="nav-icon">🪪</span>Ind</div>
+  <div class="mobile-nav-item" data-page="assets"><span class="nav-icon">🔧</span>Assets</div>
+  <div class="mobile-nav-item" data-page="audits"><span class="nav-icon">📝</span>Audits</div>
 </div>
 
 <!-- ===== MAIN ===== -->
@@ -4408,6 +4427,28 @@ function loginSubmit(){
     });
 }
 
+function showForgotPassword(){
+  const email=(document.getElementById('login-email').value||'').trim();
+  const res=document.getElementById('forgot-result');
+  if(!email){
+    res.style.cssText='display:block;background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:.8rem;padding:9px 12px;border-radius:6px;margin-top:10px;text-align:center';
+    res.textContent='Enter your email address above first.';
+    return;
+  }
+  res.style.cssText='display:block;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:.8rem;padding:9px 12px;border-radius:6px;margin-top:10px;text-align:center';
+  res.textContent='Sending reset email…';
+  firebase.auth().sendPasswordResetEmail(email)
+    .then(()=>{
+      res.style.cssText='display:block;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;font-size:.8rem;padding:9px 12px;border-radius:6px;margin-top:10px;text-align:center';
+      res.textContent='✓ Reset email sent to '+email+'. Check your inbox.';
+    })
+    .catch(err=>{
+      res.style.cssText='display:block;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;font-size:.8rem;padding:9px 12px;border-radius:6px;margin-top:10px;text-align:center';
+      const msgs={'auth/user-not-found':'No account found with that email.','auth/invalid-email':'Invalid email address.'};
+      res.textContent=msgs[err.code]||'Could not send reset email: '+err.message;
+    });
+}
+
 function logOut(){
   if(!confirm('Sign out?'))return;
   secLog('AUTH_LOGOUT', { classification:'Internal' });
@@ -5298,6 +5339,15 @@ function renderDashboard(){
   const capaOverdue=capas.filter(c=>c.status==='Overdue').length;
   const capaClosed=capas.filter(c=>c.status==='Closed').length;
 
+  // Pre-compute Toolbox & Induction stats for KPI cards
+  const _tbt=(d.toolboxTalks||[]).filter(t=>inPeriod(t.date));
+  const _tbtCompleted=_tbt.filter(t=>t.status==='Completed').length;
+  const _tbtPlanned=_tbt.filter(t=>t.status==='Planned').length;
+  const _ind=(d.inductions||[]).map(i=>({...i,status:getInductionStatus(i.expiry)}));
+  const _indValid=_ind.filter(i=>i.status==='Valid').length;
+  const _indExpiring=_ind.filter(i=>i.status==='Expiring Soon').length;
+  const _indExpired=_ind.filter(i=>i.status==='Expired').length;
+
   document.getElementById('dash-kpi-row').innerHTML=`
     <div class="kpi-card" style="--kpi-color:var(--accent)" onclick="navigateTo('observations')" title="Go to Job Observations">
       <div class="kpi-label">Observations</div>
@@ -5356,6 +5406,27 @@ function renderDashboard(){
         <span class="kpib kpib-orange">Open: ${capaOpen}</span>
         <span class="kpib kpib-red">Overdue: ${capaOverdue}</span>
         <span class="kpib kpib-green">Closed: ${capaClosed}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--teal)" onclick="navigateTo('toolbox')" title="Go to Toolbox Talks">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#0e7490)"></div>
+      <div class="kpi-label">Toolbox Talks</div>
+      <div class="kpi-value">${_tbt.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">Done: ${_tbtCompleted}</span>
+        <span class="kpib kpib-blue">Planned: ${_tbtPlanned}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_indExpired>0?'var(--red)':'var(--green)'}" onclick="navigateTo('inductions')" title="Go to Inductions">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,${_indExpired>0?'#ef4444,#dc2626':'#22c55e,#15803d'})"></div>
+      <div class="kpi-label">Inductions</div>
+      <div class="kpi-value">${_ind.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">Valid: ${_indValid}</span>
+        <span class="kpib kpib-yellow">Expiring: ${_indExpiring}</span>
+        <span class="kpib kpib-red">Expired: ${_indExpired}</span>
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
