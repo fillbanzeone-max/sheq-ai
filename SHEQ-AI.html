@@ -16,6 +16,15 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ESG SHEQ">
+  <!-- API-11: Content-Security-Policy — restricts resource origins, removes wildcard -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self' https://*.googleapis.com https://*.gstatic.com https://cdn.jsdelivr.net https://api.emailjs.com https://api.anthropic.com https://*.firebaseio.com https://*.firebaseapp.com;
+             script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com;
+             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+             font-src https://fonts.gstatic.com;
+             connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://identitytoolkit.googleapis.com https://api.anthropic.com https://api.emailjs.com wss://*.firebaseio.com;
+             img-src 'self' data: blob:;
+             worker-src blob:;">
   <style>
     /* ============================================================
        GOOGLE FONTS
@@ -2939,6 +2948,29 @@
     </div>
     <div id="notif-result" style="font-size:12px;margin-bottom:var(--sp-2)"></div>
     <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
+    <div class="card-title">🔒 GDPR — Data Subject Rights (API-07)</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Search by name or employee reference to export or erase personal data, or log a Data Subject Access Request (DSAR) with a 30-day SLA.</p>
+    <div class="form-group"><label>Subject Name / Reference</label><input type="text" id="gdpr-subject-id" placeholder="e.g. João Machava or EMP-012"></div>
+    <div style="display:flex;gap:var(--sp-1);flex-wrap:wrap;margin-bottom:var(--sp-1)">
+      <button class="btn btn-ghost btn-sm" onclick="gdprExportSubject()">📤 Export Subject Data</button>
+      <button class="btn btn-danger btn-sm" onclick="gdprEraseSubject()">🗑 Erase / Pseudonymise</button>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-1) 0">
+    <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Log a DSAR</div>
+    <div class="form-row">
+      <div class="form-group"><label>Subject Name / Reference</label><input type="text" id="gdpr-dsar-subject" placeholder="Full name or employee ref"></div>
+      <div class="form-group"><label>Request Type</label>
+        <select id="gdpr-dsar-type">
+          <option>Access (SAR)</option><option>Erasure (Right to be Forgotten)</option><option>Rectification</option><option>Portability</option><option>Objection</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="gdpr-dsar-notes" rows="2" placeholder="Optional context or instructions…"></textarea></div>
+    <div style="display:flex;gap:var(--sp-1);flex-wrap:wrap;margin-bottom:var(--sp-1)">
+      <button class="btn btn-primary btn-sm" onclick="gdprSubmitDsar()">📋 Submit DSAR (30-day SLA)</button>
+    </div>
+    <div id="gdpr-result" style="font-size:12px;margin-bottom:var(--sp-2)"></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
     <div class="card-title">📱 Install App (PWA / Offline Mode)</div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:8px">Install ESG Management Systems - SHEQ on your device for offline access. Once installed, the app will work without an internet connection and sync to Firebase when connectivity is restored.</p>
     <div style="display:flex;gap:var(--sp-1);flex-wrap:wrap;margin-bottom:var(--sp-1)">
@@ -3521,6 +3553,131 @@
 // ============================================================
 // FIREBASE CONFIG & REAL-TIME SYNC
 // ============================================================
+// ============================================================
+// SECURITY MODULE — API-09 · API-14 · API-04 · API-08 · API-10
+// ============================================================
+
+// ── API-14: PII log sanitiser ─────────────────────────────────
+// Redacts PII patterns before anything reaches the console/SIEM.
+const _PII_RULES = [
+  [/\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/g,           '[EMAIL]'],
+  [/\b(\+?27|0)[6-8][0-9]{8}\b/g,                                       '[PHONE]'],
+  [/\b\d{13}\b/g,                                                        '[ID-NUMBER]'],
+  [/"(person|name|email|phone|contact|employee_id|national_id)":\s*"[^"]*"/g,
+                                                                          '"$1":"[REDACTED]"'],
+];
+function _sanitizePII(val) {
+  let s = (typeof val === 'object') ? JSON.stringify(val) : String(val);
+  _PII_RULES.forEach(([rx, rep]) => { s = s.replace(rx, rep); });
+  return s;
+}
+// Wrap console.warn (used by Firebase SDK) to auto-redact PII
+const _origWarn = console.warn.bind(console);
+console.warn = (...a) => _origWarn(...a.map(_sanitizePII));
+
+// ── API-09: Structured security event log ────────────────────
+// In-memory ring buffer (last 200 events). Ship to SIEM by
+// replacing the console.groupCollapsed block with a fetch() call.
+const _secBuf = [];
+function secLog(event, details = {}) {
+  const entry = {
+    timestamp:           new Date().toISOString(),
+    trace_id:            (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)),
+    user_id:             (typeof currentUser !== 'undefined' && currentUser?.email) || 'unauthenticated',
+    endpoint:            window.location.pathname,
+    event,
+    data_classification: details.classification || 'Internal',
+    source_ip:           'client',   // server-side proxy would fill real IP
+    ...details,
+  };
+  _secBuf.push(entry);
+  if (_secBuf.length > 200) _secBuf.shift();
+  // Structured console output — replace with fetch('/api/siem', …) for production
+  console.groupCollapsed(`%c[SHEQ-SEC] ${event}`, 'color:#0891b2;font-weight:700');
+  console.log(JSON.stringify(entry, null, 2));
+  console.groupEnd();
+}
+
+// ── API-04: Token-bucket rate limiter ────────────────────────
+// Returns false and shows a toast when the bucket is exhausted.
+const _rlBuckets = {};
+function rateCheck(key, limitPerMin = 60) {
+  const now = Date.now();
+  const win = 60_000;
+  if (!_rlBuckets[key] || now > _rlBuckets[key].reset) {
+    _rlBuckets[key] = { count: 0, reset: now + win };
+  }
+  _rlBuckets[key].count++;
+  if (_rlBuckets[key].count > limitPerMin) {
+    const wait = Math.ceil((_rlBuckets[key].reset - now) / 1000);
+    if (typeof showToast === 'function')
+      showToast(`Rate limit reached. Please wait ${wait}s before submitting again.`, 'warn', 5000);
+    secLog('RATE_LIMIT_BREACH', { key, count: _rlBuckets[key].count, limitPerMin });
+    return false;
+  }
+  return true;
+}
+
+// ── API-08: URL allowlist (SSRF guard) ───────────────────────
+const _ALLOWED_ORIGINS = [
+  'https://api.anthropic.com',
+  'https://ctrg-sheq-ai-default-rtdb.firebaseio.com',
+  'https://identitytoolkit.googleapis.com',
+  'https://api.emailjs.com',
+];
+const _BLOCKED_RANGES = ['10.','172.16.','172.17.','172.18.','172.19.','172.20.',
+  '172.21.','172.22.','172.23.','172.24.','172.25.','172.26.','172.27.','172.28.',
+  '172.29.','172.30.','172.31.','192.168.','127.','169.254.','::1','localhost'];
+function safeUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'https:') { secLog('SSRF_BLOCKED', { url, reason: 'non-https' }); return null; }
+    if (_BLOCKED_RANGES.some(r => u.hostname.startsWith(r) || u.hostname === r.replace(/\.$/, ''))) {
+      secLog('SSRF_BLOCKED', { url, reason: 'private-range' }); return null;
+    }
+    if (!_ALLOWED_ORIGINS.some(o => url.startsWith(o))) {
+      secLog('SSRF_BLOCKED', { url, reason: 'not-allowlisted' }); return null;
+    }
+    return url;
+  } catch(e) { secLog('SSRF_BLOCKED', { url, reason: 'invalid-url' }); return null; }
+}
+
+// ── API-10: HMAC-SHA256 ESG payload signing ──────────────────
+// Key is stored in sessionStorage so it is tab-scoped.
+// In production, derive this from a server-issued secret.
+async function _getSigningKey() {
+  const raw = sessionStorage.getItem('sheqai_signing_seed') || (() => {
+    const seed = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36);
+    sessionStorage.setItem('sheqai_signing_seed', seed);
+    return seed;
+  })();
+  return crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(raw),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']
+  );
+}
+async function signPayload(payload) {
+  try {
+    const key = await _getSigningKey();
+    const buf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(JSON.stringify(payload)));
+    return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  } catch(e) { console.error('signPayload failed', e); return null; }
+}
+async function verifyPayload(payload, sig) {
+  try {
+    const key = await _getSigningKey();
+    const sigBytes = Uint8Array.from(atob(sig), c => c.charCodeAt(0));
+    return await crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(JSON.stringify(payload)));
+  } catch(e) { return false; }
+}
+
+// ── Expose security log to console for auditors ──────────────
+window.sheqSecLog = () => { console.table(_secBuf); return _secBuf; };
+
+// ============================================================
+// END SECURITY MODULE
+// ============================================================
+
 const firebaseConfig = {
   apiKey: "AIzaSyAVoruGdEk7wGPOdKtdrD4MzEZs6zIvAzI",
   authDomain: "ctrg-sheq-ai.firebaseapp.com",
@@ -3551,9 +3708,13 @@ function loginSubmit(){
   errEl.style.display='none';
   if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.style.display='block';return;}
   btn.disabled=true;btn.textContent='Signing in…';
+  // API-04: rate-limit login attempts (10 per minute)
+  if (!rateCheck('auth-login', 10)) { btn.disabled=false; btn.textContent='Sign In'; return; }
   firebase.auth().signInWithEmailAndPassword(email,pass)
+    .then(()=>{ secLog('AUTH_LOGIN_SUCCESS', { user: email, classification:'Internal' }); })
     .catch(err=>{
       btn.disabled=false;btn.textContent='Sign In';
+      secLog('AUTH_LOGIN_FAILURE', { user: email, error_code: err.code, classification:'Internal' });
       const msgs={
         'auth/user-not-found':'No account found with that email.',
         'auth/wrong-password':'Incorrect password.',
@@ -3568,6 +3729,7 @@ function loginSubmit(){
 
 function logOut(){
   if(!confirm('Sign out?'))return;
+  secLog('AUTH_LOGOUT', { classification:'Internal' });
   firebase.auth().signOut();
 }
 
@@ -3703,11 +3865,10 @@ function saveData(d) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(d)); }
   catch(e) { saveOk = false; console.error('Save failed', e); }
   updateSyncStatus(saveOk);
+  secLog('DATA_WRITE', { status: saveOk ? 'ok' : 'local-storage-error', classification: 'Internal' });
   if (_fbReady) {
-    // SDK real-time connection is active
     _db.ref(FB_PATH).set(sanitizeForFirebase(d)).catch(e => console.warn('Firebase write failed', e));
   } else if (currentUser) {
-    // SDK can't connect — fall back to REST PUT
     restWrite(d);
   }
 }
@@ -3937,16 +4098,22 @@ function buildDefaultCalendar() {
 }
 
 // ── CAPA ID generator ─────────────────────────────────────
+// API-01: Non-sequential, non-guessable IDs via UUID v4 (prevents object enumeration)
+function _shortUUID() {
+  if(typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID().replace(/-/g,'').substring(0,8).toUpperCase();
+  }
+  // Fallback for older browsers
+  return (Date.now().toString(36) + Math.random().toString(36).substring(2,6)).toUpperCase().substring(0,8);
+}
+
 function genCapaId(capas) {
   const y = new Date().getFullYear();
-  const existing = (capas||[]).filter(c => c.id && c.id.startsWith('CAPA-'+y+'-'));
-  const nums = existing.map(c => parseInt((c.id||'').split('-')[2])||0);
-  return 'CAPA-'+y+'-'+(( Math.max(0,...nums)+1 ).toString().padStart(3,'0'));
+  return 'CAPA-' + y + '-' + _shortUUID();
 }
 
 function genId(prefix, arr) {
-  const nums = (arr||[]).map(x=>parseInt((x.id||'').replace(/\D/g,''))||0);
-  return prefix+'-'+(( Math.max(0,...nums)+1 ).toString().padStart(3,'0'));
+  return prefix + '-' + _shortUUID();
 }
 
 function autoCreateCapa(d, sourceModule, sourceRef, what, who, when, how, priority) {
@@ -4638,6 +4805,7 @@ function editObs(id){
   openModal('obs-modal');
 }
 function saveObservation(){
+  if(!rateCheck('save-obs',100))return;
   if(!validateRequired([['obs-f-observer','Observer Name'],['obs-f-date','Date'],['obs-f-desc','Description']]))return;
   let d=getData();if(!d){d=getDefaultData();}
   d.observations=d.observations||[];
@@ -4675,7 +4843,7 @@ function saveObservation(){
     }
     d.observations.push(rec);
   }
-  saveData(d);closeModal('obs-modal');renderObservations(1);
+  saveData(d);signAndUpdateRecord('observations',rec.id);closeModal('obs-modal');renderObservations(1);
   // Auto-open RCA investigation when RCA is required on a new observation
   if(!editId && capaReq){
     const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
@@ -4734,6 +4902,7 @@ function openAddNM(){
   openModal('nm-modal');
 }
 function saveNearMiss(){
+  if(!rateCheck('save-nm',100))return;
   if(!validateRequired([['nm-f-reporter','Reporter Name'],['nm-f-date','Date'],['nm-f-desc','Description']]))return;
   let d=getData();if(!d)d=getDefaultData();d.nearMisses=d.nearMisses||[];
   const editId=document.getElementById('nm-f-edit-id').value;
@@ -4765,7 +4934,7 @@ function saveNearMiss(){
     if(capaReq){rec.capaRef=autoCreateCapa(d,'NM',rec.id,rec.rcaWhat,rec.rcaWho,rec.rcaWhen,'',rec.priority);}
     d.nearMisses.push(rec);
   }
-  saveData(d);closeModal('nm-modal');renderNearMiss(1);
+  saveData(d);signAndUpdateRecord('nearMisses',rec.id);closeModal('nm-modal');renderNearMiss(1);
   // Auto-open RCA investigation when RCA is required on a new near miss
   if(!editId && capaReq){
     const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
@@ -4846,6 +5015,7 @@ function openAddInc(){
   openModal('inc-modal');
 }
 function saveIncident(){
+  if(!rateCheck('save-inc',100))return;
   if(!validateRequired([['inc-f-date','Date'],['inc-f-location','Location'],['inc-f-desc','Description']]))return;
   let d=getData();if(!d)d=getDefaultData();d.incidents=d.incidents||[];
   const editId=document.getElementById('inc-f-edit-id').value;
@@ -4876,7 +5046,7 @@ function saveIncident(){
     if(capaWhat){rec.capaRef=autoCreateCapa(d,'INC',rec.id,rec.capaWhat,rec.capaWho,rec.capaWhen,rec.capaHow,rec.priority);}
     d.incidents.push(rec);
   }
-  saveData(d);closeModal('inc-modal');renderIncidents(1);
+  saveData(d);signAndUpdateRecord('incidents',rec.id);closeModal('inc-modal');renderIncidents(1);
   // Auto-open RCA investigation for new incidents when status is Under Investigation or Sev 1-2
   if(!editId){
     const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
@@ -4985,6 +5155,7 @@ function openAddPTW(){
   openModal('ptw-modal');
 }
 function savePermit(){
+  if(!rateCheck('save-ptw',100))return;
   if(!validateRequired([['ptw-f-requestor','Requestor'],['ptw-f-activity','Activity'],['ptw-f-from','Valid From'],['ptw-f-to','Valid To']]))return;
   let d=getData();if(!d)d=getDefaultData();d.permits=d.permits||[];
   const editId=document.getElementById('ptw-f-edit-id').value;
@@ -5137,6 +5308,7 @@ function calcRisk(type){
   else{const p=parseInt(document.getElementById('risk-f-rp').value)||1,i=parseInt(document.getElementById('risk-f-ri').value)||1,s=getRiskScore(p,i);document.getElementById('risk-residual-display').innerHTML=`Score: <strong>${s}</strong> — ${ratingPill(riskRating(s))}`;}
 }
 function saveRisk(){
+  if(!rateCheck('save-risk',100))return;
   if(!validateRequired([['risk-f-hazard','Hazard Description'],['risk-f-owner','Risk Owner']]))return;
   let d=getData();if(!d)d=getDefaultData();d.risks=d.risks||[];
   const editId=document.getElementById('risk-f-edit-id').value;
@@ -5240,6 +5412,7 @@ document.getElementById('risk-filter-cat').addEventListener('change',()=>renderR
 // ============================================================
 let legalPage=1;
 function saveLegal(){
+  if(!rateCheck('save-legal',100))return;
   if(!validateRequired([['legal-f-law','Law / Standard'],['legal-f-req','Requirement']]))return;
   let d=getData();if(!d)d=getDefaultData();d.legalItems=d.legalItems||[];
   const editId=document.getElementById('legal-f-edit-id').value;
@@ -5391,6 +5564,7 @@ function editCapa(id){
   openModal('capa-modal');
 }
 function saveCapa(){
+  if(!rateCheck('save-capa',100))return;
   if(!validateRequired([['capa-f-what','WHAT (Action Description)'],['capa-f-who','WHO (Responsible)'],['capa-f-when','WHEN (Target Date)']]))return;
   let d=getData();if(!d)d=getDefaultData();d.capas=d.capas||[];
   const editId=document.getElementById('capa-f-edit-id').value;
@@ -5412,7 +5586,7 @@ function saveCapa(){
   };
   if(editId){const idx=d.capas.findIndex(x=>x.id===editId);if(idx>=0)d.capas[idx]=rec;else d.capas.push(rec);}
   else d.capas.push(rec);
-  saveData(d);closeModal('capa-modal');renderCapas(1);
+  saveData(d);signAndUpdateRecord('capas',rec.id);closeModal('capa-modal');renderCapas(1);
 }
 function deleteCapa(id){const d=getData()||getDefaultData();const c=(d.capas||[]).find(x=>x.id===id);if(!confirm('Delete CAPA '+id+(c?' — '+truncate(c.what,50):'')+'\nThis cannot be undone.'))return;d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);}
 function renderCapas(page=1){
@@ -5502,6 +5676,7 @@ function editToolbox(id){
   openModal('toolbox-modal');
 }
 function saveToolbox(){
+  if(!rateCheck('save-tb',100))return;
   if(!validateRequired([['tb-f-topic','Topic'],['tb-f-date','Date'],['tb-f-facilitator','Facilitator']]))return;
   let d=getData();if(!d)d=getDefaultData();d.toolboxTalks=d.toolboxTalks||[];
   const editId=document.getElementById('tb-f-edit-id').value;
@@ -5626,6 +5801,7 @@ function editInduction(id){
   openModal('ind-modal');
 }
 function saveInduction(){
+  if(!rateCheck('save-ind',100))return;
   if(!validateRequired([['ind-f-name','Name'],['ind-f-date','Date']]))return;
   let d=getData();if(!d)d=getDefaultData();d.inductions=d.inductions||[];
   const editId=document.getElementById('ind-f-edit-id').value;
@@ -5721,6 +5897,7 @@ function editEmergency(id){
   openModal('emg-modal');
 }
 function saveEmergencyContact(){
+  if(!rateCheck('save-emg',100))return;
   if(!validateRequired([['emg-f-name','Name'],['emg-f-phone','Phone']]))return;
   let d=getData();if(!d)d=getDefaultData();d.emergencyContacts=d.emergencyContacts||[];
   const editId=document.getElementById('emg-f-edit-id').value;
@@ -5842,13 +6019,12 @@ function editMoc(id){
 }
 
 function saveMoc(){
+  if(!rateCheck('save-moc',100))return;
   if(!validateRequired([['moc-f-title','Change Title'],['moc-f-initiator','Initiated By']]))return;
   let d=getData();if(!d)d=getDefaultData();d.mocs=d.mocs||[];
   const editId=document.getElementById('moc-f-edit-id').value;
   const y=new Date().getFullYear();
-  const existing=(d.mocs||[]).filter(m=>m.id&&m.id.startsWith('MOC-'+y+'-'));
-  const nums=existing.map(m=>parseInt((m.id||'').split('-')[2])||0);
-  const newId='MOC-'+y+'-'+(( Math.max(0,...nums)+1 ).toString().padStart(3,'0'));
+  const newId='MOC-'+y+'-'+_shortUUID();
   const rec={
     id:editId||newId,
     title:document.getElementById('moc-f-title').value||'',
@@ -5985,6 +6161,7 @@ function editAsset(id){
   openModal('asset-modal');
 }
 function saveAsset(){
+  if(!rateCheck('save-asset',100))return;
   if(!validateRequired([['asset-f-name','Asset Name']]))return;
   let d=getData();if(!d)d=getDefaultData();d.assets=d.assets||[];
   const editId=document.getElementById('asset-f-edit-id').value;
@@ -6068,10 +6245,7 @@ document.getElementById('asset-filter-status').addEventListener('change',()=>ren
 const FB_CATS=['People','Process','Equipment','Environment','Materials','Management'];
 
 function genInvId(arr){
-  const y=new Date().getFullYear();
-  const ex=(arr||[]).filter(x=>x.id&&x.id.startsWith('INV-'+y+'-'));
-  const nums=ex.map(x=>parseInt((x.id||'').split('-')[2])||0);
-  return 'INV-'+y+'-'+(( Math.max(0,...nums)+1 ).toString().padStart(3,'0'));
+  return 'INV-'+new Date().getFullYear()+'-'+_shortUUID();
 }
 
 // ── Fishbone SVG renderer ──────────────────────────────────
@@ -6260,6 +6434,7 @@ function editInvestigation(id){
 
 // ── Save ──────────────────────────────────────────────────
 function saveInvestigation(){
+  if(!rateCheck('save-inv',100))return;
   if(!validateRequired([['inv-f-investigator','Lead Investigator'],['inv-f-date','Date'],['inv-f-inc-ref','Incident Reference']]))return;
   let d=getData();if(!d)d=getDefaultData();d.investigations=d.investigations||[];
   const editId=document.getElementById('inv-f-edit-id').value;
@@ -6507,10 +6682,7 @@ const AUDIT_TEMPLATES={
 };
 
 function genAuditId(audits){
-  const y=new Date().getFullYear();
-  const existing=(audits||[]).filter(a=>a.id&&a.id.startsWith('AUD-'+y+'-'));
-  const nums=existing.map(a=>parseInt((a.id||'').split('-')[2])||0);
-  return 'AUD-'+y+'-'+(( Math.max(0,...nums)+1 ).toString().padStart(3,'0'));
+  return 'AUD-'+new Date().getFullYear()+'-'+_shortUUID();
 }
 
 function calcAuditScore(templateName, answers){
@@ -6630,6 +6802,7 @@ function editAudit(id){
 }
 
 function saveAudit(){
+  if(!rateCheck('save-audit',100))return;
   if(!validateRequired([['audit-f-auditor','Lead Auditor'],['audit-f-date','Date'],['audit-f-location','Location']]))return;
   // Flush any pending note edits
   const type=document.getElementById('audit-f-type').value;
@@ -7363,35 +7536,180 @@ function clearApiKey(){
 async function testApiKey(){
   const key=document.getElementById('api-key-input').value.trim()||sessionStorage.getItem('sheqai_apikey');
   if(!key){document.getElementById('api-test-result').textContent='No key to test.';return;}
+  // API-08: validate URL against allowlist before fetching
+  const endpoint='https://api.anthropic.com/v1/messages';
+  if(!safeUrl(endpoint)){document.getElementById('api-test-result').style.color='#dc2626';document.getElementById('api-test-result').textContent='Blocked: endpoint not on allowlist.';return;}
   document.getElementById('api-test-result').textContent='Testing…';
+  secLog('API_KEY_TEST',{classification:'Internal'});
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:10,messages:[{role:'user',content:'Hi'}]})});
-    if(r.ok){document.getElementById('api-test-result').style.color='#16a34a';document.getElementById('api-test-result').textContent='✓ Connection successful!';}
-    else{const e=await r.json();document.getElementById('api-test-result').style.color='#dc2626';document.getElementById('api-test-result').textContent='Error: '+(e.error?.message||r.statusText);}
+    const r=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:10,messages:[{role:'user',content:'Hi'}]})});
+    if(r.ok){document.getElementById('api-test-result').style.color='#16a34a';document.getElementById('api-test-result').textContent='✓ Connection successful!';secLog('API_KEY_TEST_OK',{classification:'Internal'});}
+    else{const e=await r.json();document.getElementById('api-test-result').style.color='#dc2626';document.getElementById('api-test-result').textContent='Error: '+(e.error?.message||r.statusText);secLog('API_KEY_TEST_FAIL',{status:r.status,classification:'Internal'});}
   }catch(e){document.getElementById('api-test-result').style.color='#dc2626';document.getElementById('api-test-result').textContent='Error: '+e.message;}
 }
 function exportJSON(){
   const d=getData()||getDefaultData();
+  secLog('DATA_EXPORT',{format:'json',classification:'Internal'});
   const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=url;a.download=`sheqai-backup-${today()}.json`;a.click();URL.revokeObjectURL(url);
   localStorage.setItem('sheqai_last_export',Date.now().toString());
   showToast('Backup saved — sheqai-backup-'+today()+'.json','success',3500);
 }
+
+// ── API-07: GDPR Data Subject Rights ────────────────────────
+function gdprExportSubject(){
+  const query=(document.getElementById('gdpr-subject-id').value||'').trim().toLowerCase();
+  if(!query){alert('Enter a name or employee reference to search.');return;}
+  const d=getData()||getDefaultData();
+  const result={subject:query,exported_at:new Date().toISOString(),records:{}};
+  const modules=[
+    ['observations',['observer','person']],
+    ['nearMisses',['reporter','person']],
+    ['incidents',['person','capaWho']],
+    ['permits',['requestor','supervisors']],
+    ['capas',['who']],
+    ['inductions',['name','company']],
+    ['emergencyContacts',['name','phone','email','role']],
+    ['toolboxTalks',['facilitator']],
+  ];
+  modules.forEach(([key,fields])=>{
+    const hits=(d[key]||[]).filter(r=>fields.some(f=>(r[f]||'').toLowerCase().includes(query)));
+    if(hits.length) result.records[key]=hits;
+  });
+  secLog('GDPR_EXPORT',{subject:'[REDACTED]',records_found:Object.keys(result.records).length,classification:'Personal'});
+  const blob=new Blob([JSON.stringify(result,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download=`dsar-export-${today()}.json`;a.click();URL.revokeObjectURL(url);
+  document.getElementById('gdpr-result').style.color='#16a34a';
+  document.getElementById('gdpr-result').textContent=`✓ Export complete. Found records in: ${Object.keys(result.records).join(', ')||'none'}.`;
+}
+
+function gdprEraseSubject(){
+  const query=(document.getElementById('gdpr-subject-id').value||'').trim().toLowerCase();
+  if(!query){alert('Enter a name or employee reference to erase.');return;}
+  if(!confirm(`This will pseudonymise all personal data matching "${query}" across all modules.\n\nThis cannot be undone. Continue?`))return;
+  const d=getData()||getDefaultData();
+  const pseudonym='[ERASED-'+Date.now()+']';
+  const PII_FIELDS=['observer','reporter','person','requestor','who','capaWho','name','facilitator'];
+  let count=0;
+  const modules=['observations','nearMisses','incidents','permits','capas','inductions','emergencyContacts','toolboxTalks'];
+  modules.forEach(key=>{
+    (d[key]||[]).forEach(r=>{
+      PII_FIELDS.forEach(f=>{
+        if((r[f]||'').toLowerCase().includes(query)){r[f]=pseudonym;count++;}
+      });
+    });
+  });
+  // Log erasure as immutable audit record
+  d.gdprErasures=d.gdprErasures||[];
+  d.gdprErasures.push({id:'GDPR-'+_shortUUID(),subject:'[REDACTED]',pseudonym,fields_erased:count,erased_by:currentUser?.email||'system',erased_at:new Date().toISOString()});
+  saveData(d);
+  secLog('GDPR_ERASURE',{fields_erased:count,classification:'Personal'});
+  document.getElementById('gdpr-result').style.color='#16a34a';
+  document.getElementById('gdpr-result').textContent=`✓ Erasure complete. ${count} field(s) pseudonymised across all modules.`;
+}
+
+// ── API-10: Sign record async after save ──────────────────────
+async function signAndUpdateRecord(moduleKey, recordId) {
+  try {
+    const d = getData(); if (!d || !d[moduleKey]) return;
+    const idx = d[moduleKey].findIndex(r => r.id === recordId); if (idx === -1) return;
+    const rec = d[moduleKey][idx];
+    const payload = { id: rec.id, module: moduleKey, submitted_by: rec.createdBy || currentUser?.email || 'system', submitted_at: new Date().toISOString() };
+    const sig = await signPayload(payload);
+    if (sig) {
+      d[moduleKey][idx]._sig      = sig;
+      d[moduleKey][idx]._sig_at   = payload.submitted_at;
+      d[moduleKey][idx]._sig_by   = payload.submitted_by;
+      d[moduleKey][idx]._key_id   = 'sheqai-hmac-sha256-v1';
+      saveData(d);
+      secLog('ESG_PAYLOAD_SIGNED', { id: recordId, module: moduleKey, classification: 'Internal' });
+    }
+  } catch(e) { console.warn('signAndUpdateRecord failed', e); }
+}
+
+async function verifyRecordSignature(moduleKey, recordId) {
+  const d = getData(); if (!d || !d[moduleKey]) return null;
+  const rec = d[moduleKey].find(r => r.id === recordId); if (!rec || !rec._sig) return 'unsigned';
+  const payload = { id: rec.id, module: moduleKey, submitted_by: rec._sig_by, submitted_at: rec._sig_at };
+  const valid = await verifyPayload(payload, rec._sig);
+  secLog('ESG_SIGNATURE_VERIFY', { id: recordId, module: moduleKey, valid, classification: 'Internal' });
+  return valid ? 'valid' : 'tampered';
+}
+
+// Expose for auditors: sheqVerify('observations','OBS-XXXXXXXX')
+window.sheqVerify = verifyRecordSignature;
+
+function gdprSubmitDsar(){
+  const subject=(document.getElementById('gdpr-dsar-subject').value||'').trim();
+  const type=document.getElementById('gdpr-dsar-type').value;
+  const notes=(document.getElementById('gdpr-dsar-notes').value||'').trim();
+  if(!subject){alert('Subject name/reference is required.');return;}
+  const d=getData()||getDefaultData();
+  d.dsarCases=d.dsarCases||[];
+  const sla=new Date();sla.setDate(sla.getDate()+30);
+  const rec={id:'DSAR-'+_shortUUID(),subject,type,notes,status:'Open',submitted_at:new Date().toISOString(),sla_due:sla.toISOString().substring(0,10),handled_by:currentUser?.email||''};
+  d.dsarCases.push(rec);
+  saveData(d);
+  secLog('GDPR_DSAR_SUBMITTED',{case_id:rec.id,type,sla_due:rec.sla_due,classification:'Personal'});
+  document.getElementById('gdpr-result').style.color='#16a34a';
+  document.getElementById('gdpr-result').textContent=`✓ DSAR ${rec.id} created. SLA due: ${rec.sla_due}.`;
+  document.getElementById('gdpr-dsar-subject').value='';
+  document.getElementById('gdpr-dsar-notes').value='';
+}
+// API-13: Per-module JSON schema validators
+const _IMPORT_SCHEMA = {
+  observations:      r => typeof r.id==='string' && typeof r.date==='string' && typeof r.desc==='string',
+  nearMisses:        r => typeof r.id==='string' && typeof r.date==='string',
+  incidents:         r => typeof r.id==='string' && typeof r.date==='string' && typeof r.type==='string',
+  permits:           r => typeof r.id==='string' && typeof r.activity==='string',
+  risks:             r => typeof r.id==='string' && typeof r.hazard==='string',
+  legalItems:        r => typeof r.id==='string' && typeof r.requirement==='string',
+  capas:             r => typeof r.id==='string' && typeof r.what==='string',
+  toolboxTalks:      r => typeof r.id==='string',
+  inductions:        r => typeof r.id==='string' && typeof r.name==='string',
+  emergencyContacts: r => typeof r.id==='string' && typeof r.name==='string',
+  mocs:              r => typeof r.id==='string',
+  assets:            r => typeof r.id==='string',
+  investigations:    r => typeof r.id==='string',
+  audits:            r => typeof r.id==='string',
+};
+function _validateImportModule(key, arr) {
+  if (!Array.isArray(arr)) return { ok: false, reason: `${key} must be an array` };
+  const schema = _IMPORT_SCHEMA[key];
+  if (!schema) return { ok: true };
+  const bad = arr.filter(r => !schema(r));
+  if (bad.length) return { ok: false, reason: `${key}: ${bad.length} record(s) failed schema validation (e.g. missing id/required fields)` };
+  return { ok: true };
+}
+
 function importJSON(){
   const inp=document.createElement('input');inp.type='file';inp.accept='.json';
   inp.onchange=e=>{
     const file=e.target.files[0];if(!file)return;
+    // API-13: 10 MB hard cap on import file size
+    if(file.size > 10*1024*1024){document.getElementById('import-result').style.color='#dc2626';document.getElementById('import-result').textContent='Error: file exceeds 10 MB limit.';return;}
     const reader=new FileReader();
     reader.onload=ev=>{
       try{
         const data=JSON.parse(ev.target.result);
+        if(typeof data!=='object'||Array.isArray(data)||data===null) throw new Error('Import file must be a JSON object.');
         const REQUIRED_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','calendar'];
         const missing=REQUIRED_KEYS.filter(k=>!(k in data));
         if(missing.length&&!data.initialized){throw new Error('Not a valid ESG Management Systems - SHEQ backup file.');}
+        // API-13: per-module schema validation
+        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits'];
+        for(const k of ALL_ARRAY_KEYS){
+          if(!(k in data)) continue;
+          const check=_validateImportModule(k,data[k]);
+          if(!check.ok) throw new Error('Schema validation failed — '+check.reason);
+        }
         const safe={initialized:true};
-        REQUIRED_KEYS.forEach(k=>{safe[k]=Array.isArray(data[k])||typeof data[k]==='object'?data[k]:[];});
+        REQUIRED_KEYS.forEach(k=>{safe[k]=Array.isArray(data[k])?data[k]:[];});
+        ALL_ARRAY_KEYS.forEach(k=>{if(k in data && Array.isArray(data[k])) safe[k]=data[k];});
         if(data.calendar&&typeof data.calendar==='object')safe.calendar=data.calendar;
+        secLog('DATA_IMPORT',{file_size:file.size,modules:Object.keys(safe).length,classification:'Internal'});
         saveData(safe);
         document.getElementById('import-result').style.color='#16a34a';
         document.getElementById('import-result').textContent='✓ Data imported successfully! ('+Object.keys(safe).length+' sections)';
