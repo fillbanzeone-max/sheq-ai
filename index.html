@@ -743,6 +743,11 @@
       max-height: 320px;
     }
 
+    /* Trend chart gets more vertical room because it's 2fr wide */
+    .charts-row > .card:first-child .chart-wrap canvas {
+      max-height: 420px;
+    }
+
     /* ============================================================
        TABLE STYLES
     ============================================================ */
@@ -1578,26 +1583,7 @@
       font-size: var(--fs-xs);
     }
 
-    @media print {
-      #sidebar, #topbar, .toolbar, .btn, .modal-overlay, #mobile-nav {
-        display: none !important;
-      }
-      #main {
-        margin-left: 0 !important;
-      }
-      #content {
-        padding: 0 !important;
-      }
-      .report-doc {
-        border: none;
-        box-shadow: none;
-        padding: 0;
-        max-width: 100%;
-      }
-      body {
-        background: #fff;
-      }
-    }
+    /* @media print — see enhanced block near end of <style> */
 
     /* ============================================================
        CAPA BADGE (navigates to CAPA tracker)
@@ -2515,6 +2501,56 @@
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37,99,235,.14);
     outline: none;
+  }
+
+  /* ── #7 Inline field validation ───────────────────────────── */
+  .field-error {
+    display: block;
+    margin-top: 3px;
+    font-size: .75rem;
+    color: #dc2626;
+    font-weight: 500;
+    animation: fieldErrIn .18s ease;
+  }
+  @keyframes fieldErrIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  [aria-invalid="true"] {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220,38,38,.15) !important;
+  }
+
+  /* ── #8 Enhanced print stylesheet ────────────────────────── */
+  @media print {
+    @page { margin: 18mm 14mm; }
+
+    #sidebar, #topbar, .toolbar, .btn, .modal-overlay,
+    #mobile-nav, #dash-kpi-row, .charts-row,
+    .section-header .search-bar, .section-header select,
+    .pagination, .action-col, [data-print="hide"] {
+      display: none !important;
+    }
+    #main { margin-left: 0 !important; }
+    #content { padding: 8px 0 !important; }
+    body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+
+    .card, .report-doc {
+      border: 1px solid #ccc !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      margin-bottom: 12px;
+    }
+    table { border-collapse: collapse; width: 100%; font-size: 9pt; }
+    th, td { border: 1px solid #bbb; padding: 4px 6px; }
+    th { background: #e5e7eb !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    h1, h2, h3 { page-break-after: avoid; break-after: avoid; }
+    a { text-decoration: none; color: inherit; }
+    .badge, .status-badge { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .report-doc { border: none !important; max-width: 100%; padding: 0; }
   }
   </style>
 
@@ -5191,19 +5227,33 @@ function openView(module,id){
 // ============================================================
 // FORM VALIDATION
 // ============================================================
+function _showFieldError(el, msg){
+  el.setAttribute('aria-invalid','true');
+  let err=el.parentElement.querySelector('.field-error');
+  if(!err){ err=document.createElement('span'); err.className='field-error'; el.parentElement.appendChild(err); }
+  err.textContent=msg;
+}
+function _clearFieldError(el){
+  el.removeAttribute('aria-invalid');
+  const err=el.parentElement?.querySelector('.field-error');
+  if(err) err.remove();
+}
 function validateRequired(fields){
+  let firstInvalid=null;
+  let valid=true;
   for(const [id,label] of fields){
     const el=document.getElementById(id);if(!el)continue;
     const val=(el.value||'').trim();
     if(!val){
-      el.focus();
-      el.style.outline='2px solid var(--red)';
-      setTimeout(()=>{el.style.outline='';},2500);
-      alert(label+' is required.');
-      return false;
+      _showFieldError(el, label+' is required.');
+      if(!firstInvalid) firstInvalid=el;
+      valid=false;
+    } else {
+      _clearFieldError(el);
     }
   }
-  return true;
+  if(firstInvalid) firstInvalid.focus();
+  return valid;
 }
 
 // ============================================================
@@ -5427,6 +5477,17 @@ function renderDashboard(){
         <span class="kpib kpib-green">Valid: ${_indValid}</span>
         <span class="kpib kpib-yellow">Expiring: ${_indExpiring}</span>
         <span class="kpib kpib-red">Expired: ${_indExpired}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${mocPending>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('moc')" title="Go to Management of Change">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,${mocPending>0?'#f59e0b,#d97706':'#2563eb,#7c3aed'})"></div>
+      <div class="kpi-label">Mgmt of Change</div>
+      <div class="kpi-value">${mocs.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-orange">Open: ${mocOpen}</span>
+        <span class="kpib kpib-yellow">Pending: ${mocPending}</span>
+        <span class="kpib kpib-green">Done: ${mocCompleted}</span>
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
@@ -8289,7 +8350,7 @@ async function testNotifEmail(){
 function saveApiKey(){
   if(!requireRole('admin_settings','Save API Key'))return;
   const key=document.getElementById('api-key-input').value.trim();
-  if(!key){alert('Please enter an API key.');return;}
+  if(!key){showToast('Please enter an API key.','warn');return;}
   sessionStorage.setItem('sheqai_apikey',key);
   closeModal('settings-modal');
   document.getElementById('api-test-result').textContent='';
@@ -8330,7 +8391,7 @@ function exportJSON(){
 function gdprExportSubject(){
   if(!requireRole('gdpr','GDPR Export'))return;
   const query=(document.getElementById('gdpr-subject-id').value||'').trim().toLowerCase();
-  if(!query){alert('Enter a name or employee reference to search.');return;}
+  if(!query){showToast('Enter a name or employee reference to search.','warn');return;}
   const d=getData()||getDefaultData();
   const result={subject:query,exported_at:new Date().toISOString(),records:{}};
   const modules=[
@@ -8358,7 +8419,7 @@ function gdprExportSubject(){
 function gdprEraseSubject(){
   if(!requireRole('gdpr','GDPR Erase'))return;
   const query=(document.getElementById('gdpr-subject-id').value||'').trim().toLowerCase();
-  if(!query){alert('Enter a name or employee reference to erase.');return;}
+  if(!query){showToast('Enter a name or employee reference to erase.','warn');return;}
   if(!confirm(`This will pseudonymise all personal data matching "${query}" across all modules.\n\nThis cannot be undone. Continue?`))return;
   const d=getData()||getDefaultData();
   const pseudonym='[ERASED-'+Date.now()+']';
@@ -8417,7 +8478,7 @@ function gdprSubmitDsar(){
   const subject=(document.getElementById('gdpr-dsar-subject').value||'').trim();
   const type=document.getElementById('gdpr-dsar-type').value;
   const notes=(document.getElementById('gdpr-dsar-notes').value||'').trim();
-  if(!subject){alert('Subject name/reference is required.');return;}
+  if(!subject){showToast('Subject name/reference is required.','warn');return;}
   const d=getData()||getDefaultData();
   d.dsarCases=d.dsarCases||[];
   const sla=new Date();sla.setDate(sla.getDate()+30);
@@ -8685,6 +8746,68 @@ window.addEventListener('DOMContentLoaded',()=>{
     }, e=>{ console.warn('Firebase listener error',e); });
   });
 });
+
+// ============================================================
+// #9 — ARIA ACCESSIBILITY PATCH
+// Runs once after DOM is ready; safe to call again after
+// dynamic content is injected (e.g. renderDashboard).
+// ============================================================
+(function patchAria(){
+  // Modal IDs and their human-readable label text
+  const MODAL_META = {
+    'toolbox-modal':   'Toolbox Talk',
+    'ind-modal':       'Induction',
+    'emg-modal':       'Emergency Contact',
+    'asset-modal':     'Asset Register',
+    'moc-modal':       'Management of Change',
+    'settings-modal':  'Settings',
+    'obs-modal':       'Observation',
+    'nm-modal':        'Near Miss',
+    'inc-modal':       'Incident',
+    'ptw-modal':       'Permit to Work',
+    'risk-modal':      'Risk Register',
+    'legal-modal':     'Legal Register',
+    'capa-modal':      'CAPA',
+    'inv-modal':       'Investigation',
+    'audit-modal':     'Audit',
+    'view-modal':      'Record Detail',
+  };
+
+  Object.entries(MODAL_META).forEach(([id, label]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    // Use existing h2/h3 inside the modal as the label if present,
+    // otherwise create a visually-hidden labelled-by span.
+    let titleEl = el.querySelector('h2, h3');
+    if (titleEl) {
+      if (!titleEl.id) titleEl.id = id + '-title';
+      el.setAttribute('aria-labelledby', titleEl.id);
+    } else {
+      el.setAttribute('aria-label', label);
+    }
+  });
+
+  // Close buttons: give descriptive aria-label
+  document.querySelectorAll('.modal-close, .modal-overlay .btn-icon').forEach(btn => {
+    if (!btn.getAttribute('aria-label')) {
+      btn.setAttribute('aria-label', 'Close dialog');
+    }
+  });
+
+  // Required inputs: mark aria-required (fields passed to validateRequired)
+  // We mark all inputs/selects inside modals that have a visible label with *
+  document.querySelectorAll('.modal-overlay label').forEach(lbl => {
+    if (lbl.textContent.includes('*')) {
+      const forId = lbl.getAttribute('for');
+      const input = forId
+        ? document.getElementById(forId)
+        : lbl.querySelector('input, select, textarea');
+      if (input) input.setAttribute('aria-required', 'true');
+    }
+  });
+})();
 </script>
 </body>
 </html>
