@@ -3527,6 +3527,11 @@
       <span style="font-size:12px;color:var(--muted);align-self:center" id="pwa-install-hint">If the Install button is not visible, open this app in Chrome / Edge and look for the install icon in the address bar.</span>
     </div>
     <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
+    <div class="card-title">🔐 Security Audit Log</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Last 50 security events for this session. All events are also persisted to Firebase under <code style="background:var(--card2);padding:1px 5px;border-radius:3px">sheqai/seclog/{uid}</code> for long-term retention. Run <code style="background:var(--card2);padding:1px 5px;border-radius:3px">sheqSecLog()</code> in the browser console for the full in-memory buffer.</p>
+    <div id="seclog-viewer" style="max-height:220px;overflow-y:auto;background:var(--card2);border-radius:var(--radius-sm);padding:8px;font-size:11px;font-family:monospace;display:none"></div>
+    <button class="btn btn-ghost btn-sm" onclick="viewSecLog()">📋 View Security Log</button>
+    <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
     <div class="card-title">👥 User Management</div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Users appear here after their first login. Assign roles and deactivate accounts. Role changes take effect on the user's next login.</p>
     <div id="user-mgmt-list" style="margin-bottom:var(--sp-1)"><p style="font-size:13px;color:var(--muted)">Click Refresh to load users.</p></div>
@@ -4198,11 +4203,31 @@ function secLog(event, details = {}) {
   };
   _secBuf.push(entry);
   if (_secBuf.length > 200) _secBuf.shift();
-  // Structured console output — replace with fetch('/api/siem', …) for production
+  // Structured console output
   console.groupCollapsed(`%c[SHEQ-SEC] ${event}`, 'color:#0891b2;font-weight:700');
   console.log(JSON.stringify(entry, null, 2));
   console.groupEnd();
+  // API-09: Ship to Firebase SIEM log (non-blocking, fires when DB is ready)
+  _siemQueue.push(entry);
+  _flushSiemQueue();
 }
+
+const _siemQueue = [];
+let _siemFlushing = false;
+function _flushSiemQueue(){
+  if(_siemFlushing || !_siemQueue.length) return;
+  if(typeof _db === 'undefined' || !_fbReady || !currentUser?.uid) return;
+  _siemFlushing = true;
+  const batch = _siemQueue.splice(0, _siemQueue.length);
+  const uid = currentUser.uid.replace(/[.#$[\]]/g,'_');
+  const ref = _db.ref(`sheqai/seclog/${uid}`);
+  Promise.all(batch.map(e => ref.push(e).catch(()=>{}))).finally(()=>{
+    _siemFlushing = false;
+    if(_siemQueue.length) setTimeout(_flushSiemQueue, 500);
+  });
+}
+// Retry flush once Firebase connects
+function _onFbReady(){ if(_siemQueue.length) _flushSiemQueue(); }
 
 // ── API-04: Token-bucket rate limiter ────────────────────────
 // Returns false and shows a toast when the bucket is exhausted.
@@ -8734,6 +8759,22 @@ function gdprSubmitDsar(){
   document.getElementById('gdpr-dsar-subject').value='';
   document.getElementById('gdpr-dsar-notes').value='';
 }
+function viewSecLog(){
+  const el=document.getElementById('seclog-viewer');
+  if(!el) return;
+  if(el.style.display!=='none'){ el.style.display='none'; return; }
+  const rows=(_secBuf||[]).slice().reverse().slice(0,50);
+  if(!rows.length){ el.style.display='block'; el.textContent='No events yet.'; return; }
+  const colors={AUTH_LOGIN_SUCCESS:'#16a34a',AUTH_LOGIN_FAILURE:'#dc2626',AUTH_BLOCKED:'#dc2626',
+    RATE_LIMIT_BREACH:'#d97706',SSRF_BLOCKED:'#dc2626',ACCESS_DENIED:'#dc2626',
+    GDPR_ERASURE:'#7c3aed',GDPR_DSAR_SUBMITTED:'#7c3aed',DATA_EXPORT:'#0891b2',ROLE_CHANGED:'#2563eb'};
+  el.innerHTML=rows.map(e=>{
+    const c=colors[e.event]||'#64748b';
+    return `<div style="padding:2px 0;border-bottom:1px solid rgba(0,0,0,.05)"><span style="color:${c};font-weight:700">${e.event}</span> <span style="color:var(--muted)">${e.timestamp?.substring(0,19)||''}</span> <span style="color:#475569">${e.user_id||''}</span></div>`;
+  }).join('');
+  el.style.display='block';
+}
+
 // ============================================================
 // USER ACCOUNT MANAGEMENT
 // ============================================================
@@ -9056,6 +9097,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     // Firebase real-time sync listener
     _db.ref(FB_PATH).on('value', snap=>{
       _fbReady=true;
+      _onFbReady();
       const fbData=snap.val();
       if(!fbData||!fbData.initialized){
         _db.ref(FB_PATH).set(getData()).catch(()=>{});

@@ -105,8 +105,8 @@ Work through phases in order. Mark tasks `[x]` as you complete them.
 - [x] Data write/export/import events logged — **DONE** (`DATA_WRITE`, `DATA_EXPORT`, `DATA_IMPORT`)
 - [x] Security events logged — **DONE** (`RATE_LIMIT_BREACH`, `SSRF_BLOCKED`, `ESG_PAYLOAD_SIGNED`, `GDPR_ERASURE`, `GDPR_DSAR_SUBMITTED`, `ACCESS_DENIED`, `ROLE_CHANGED`)
 - [x] Auto-block login after 10 failures in 5 min — **DONE** (sliding window counter in `sessionStorage`; form locked with `AUTH_BLOCKED` secLog event)
-- [ ] Ship logs to centralised SIEM (Elastic/Splunk/Datadog) — replace `console.groupCollapsed` in `secLog()` with `fetch('/api/siem', …)`
-- [ ] Retain logs: 90 days online · 12 months archive (ISO 27001 A.12.4)
+- [x] Ship logs to Firebase SIEM — **DONE** (`_siemQueue` + `_flushSiemQueue()` writes all `secLog()` events to `sheqai/seclog/{uid}/` in Firebase Realtime DB; queued until `_fbReady`; Settings → Security Audit Log viewer added)
+- [ ] Retain logs: 90 days online · 12 months archive (ISO 27001 A.12.4) — requires Firebase retention rules or scheduled Cloud Function
 
 > Auditor access: open browser console and run `sheqSecLog()` to view the structured event log.
 
@@ -204,7 +204,7 @@ Work through phases in order. Mark tasks `[x]` as you complete them.
 | API-06 | 🟠 HIGH | Unencrypted Internal Service Communication | 2 | ✅ N/A — no microservices yet |
 | API-07 | 🟡 MEDIUM | Missing GDPR Data Subject Rights Endpoints | 3 | ✅ Done — export, erasure, DSAR, role guard, email notification |
 | API-08 | 🟡 MEDIUM | Server-Side Request Forgery (SSRF) | 3 | ✅ Done — safeUrl() allowlist |
-| API-09 | 🟡 MEDIUM | Insufficient Security Logging & Monitoring | 2 | 🟡 Partial — secLog() + auth auto-block done; SIEM ship pending |
+| API-09 | 🟡 MEDIUM | Insufficient Security Logging & Monitoring | 2 | ✅ Done — secLog() → Firebase sheqai/seclog/{uid}; auth auto-block; Settings viewer |
 | API-10 | 🟡 MEDIUM | ESG Payload Not Cryptographically Signed | 3 | ✅ Done — HMAC-SHA256 via Web Crypto |
 | API-11 | 🟡 MEDIUM | CORS Wildcard Misconfiguration | 1 | ✅ Done — CSP meta tag |
 | API-12 | 🔵 LOW | Unmanaged Legacy API Versions | 4 | ✅ N/A — single schema version |
