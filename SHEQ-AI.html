@@ -2670,7 +2670,7 @@
     <li class="nav-item"><div class="nav-link" data-page="waste"><span class="nav-icon">♻️</span><span class="nav-label">Waste Management</span></div></li>
 
     <li class="nav-section-label" data-pillar="quality" style="color:rgba(251,191,36,.75)">⭐ Quality<span class="pillar-chevron nav-label">▾</span></li>
-    <li class="nav-item"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div></li>
+    <li class="nav-item" style="position:relative"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div><span id="capa-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
     <li class="nav-item"><div class="nav-link" data-page="audits"><span class="nav-icon">📝</span><span class="nav-label">Audits &amp; Inspections</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
@@ -2681,6 +2681,7 @@
     <li class="nav-item"><div class="nav-link" data-page="wellness"><span class="nav-icon">🏥</span><span class="nav-label">Wellness &amp; Absenteeism</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="workforce"><span class="nav-icon">👥</span><span class="nav-label">Workforce Metrics</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="stakeholder"><span class="nav-icon">🤝</span><span class="nav-label">Stakeholder Engagement</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="community"><span class="nav-icon">🏘️</span><span class="nav-label">Community Register</span></div></li>
 
     <li class="nav-section-label" data-pillar="governance" style="color:rgba(167,139,250,.75)">🏛️ Governance<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">🎯</span><span class="nav-label">Risk Register</span></div></li>
@@ -2730,6 +2731,7 @@
   <div class="mobile-nav-item" data-page="wellness"><span class="nav-icon">🏥</span>Well</div>
   <div class="mobile-nav-item" data-page="workforce"><span class="nav-icon">👥</span>WF</div>
   <div class="mobile-nav-item" data-page="stakeholder"><span class="nav-icon">🤝</span>Stk</div>
+  <div class="mobile-nav-item" data-page="community"><span class="nav-icon">🏘️</span>Comm</div>
   <div class="mobile-nav-item" data-page="suppliers"><span class="nav-icon">🏭</span>Sup</div>
   <div class="mobile-nav-item" data-page="esg-board"><span class="nav-icon">📊</span>ESG</div>
 </div>
@@ -2886,7 +2888,7 @@
   <div class="toolbar">
     <input type="text" id="ptw-search" placeholder="Search permits…">
     <select id="ptw-filter-type"><option value="">All Types</option><option value="Hot Work">Hot Work</option><option value="Electrical">Electrical</option><option value="Confined Space">Confined Space</option><option value="Working at Height">Working at Height</option><option value="Line Breaking">Line Breaking</option></select>
-    <select id="ptw-filter-status"><option value="">All Statuses</option><option value="PENDING">Pending</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="CLOSED">Closed</option><option value="EXPIRED">Expired</option></select>
+    <select id="ptw-filter-status"><option value="">All Statuses</option><option value="PENDING">Pending</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="CLOSED">Closed</option></select>
   </div>
   <div class="card">
     <div class="table-wrap">
@@ -3016,6 +3018,7 @@
     <input type="text" id="risk-search" placeholder="Search risks…">
     <select id="risk-filter-rating"><option value="">All Ratings</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="CRITICAL">Critical</option></select>
     <select id="risk-filter-cat"><option value="">All Categories</option><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Health">Health</option><option value="Quality">Quality</option><option value="Security">Security</option></select>
+    <select id="risk-filter-esg"><option value="">All Risks</option><option value="esg">ESG Risks Only</option></select>
   </div>
   <div class="card">
     <div class="table-wrap">
@@ -3160,6 +3163,31 @@
       </table>
     </div>
     <div class="pagination" id="sup-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= COMMUNITY ENGAGEMENT REGISTER ======= -->
+<div id="page-community" class="page">
+  <div class="section-header">
+    <span class="section-title">🏘️ Community Engagement Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('community')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('comm-f-edit-id').value='';openModal('community-modal')">+ Log Engagement</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="comm-search" placeholder="Search community records…">
+    <select id="comm-filter-type"><option value="">All Types</option><option value="Noise">Noise</option><option value="Dust">Dust</option><option value="Traffic">Traffic</option><option value="Employment">Employment</option><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Other">Other</option></select>
+    <select id="comm-filter-status"><option value="">All Statuses</option><option value="Open">Open</option><option value="Closed">Closed</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Community</th><th>Issue Type</th><th>Description</th><th>Response</th><th>Responsible</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="comm-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="comm-pagination"></div>
   </div>
 </div>
 
@@ -4427,6 +4455,33 @@
   </div>
 </div>
 
+<!-- COMMUNITY MODAL -->
+<div class="modal-overlay" id="community-modal">
+  <div class="modal">
+    <div class="modal-title">Community Engagement Record <button class="modal-close" onclick="closeModal('community-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="comm-f-date"></div>
+      <div class="form-group"><label>Issue Type</label>
+        <select id="comm-f-type"><option value="Noise">Noise</option><option value="Dust">Dust</option><option value="Traffic">Traffic</option><option value="Employment">Employment</option><option value="Safety">Safety</option><option value="Environmental">Environmental</option><option value="Other">Other</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Community / Group</label><input type="text" id="comm-f-community" placeholder="e.g. Matola Residential Block C"></div>
+    <div class="form-group"><label>Description of Issue</label><textarea id="comm-f-description" placeholder="Describe the community concern or engagement topic…"></textarea></div>
+    <div class="form-group"><label>Response / Action Taken</label><textarea id="comm-f-response" placeholder="Describe the response, commitments made, and follow-up actions…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Responsible Person</label><input type="text" id="comm-f-responsible" placeholder="Name or role"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="comm-f-status"><option value="Open">Open</option><option value="Closed">Closed</option></select>
+      </div>
+    </div>
+    <input type="hidden" id="comm-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('community-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCommunity()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- GHG MODAL -->
 <div class="modal-overlay" id="ghg-modal">
   <div class="modal">
@@ -5663,28 +5718,28 @@ function getDefaultData() {
       {id:'PTW-006',type:'Electrical',requestor:'Ana Muchanga',activity:'Installation of additional lighting in warehouse',location:'Warehouse',from:'2026-03-21T08:00',to:'2026-03-21T16:00',precautions:'Circuit isolated and locked out, test before touch.',status:'PENDING',capa:'N',capaRef:'',hazard:'',ip:3,ii:3,iScore:9,iRating:'MEDIUM',controls:'LOTO',rp:1,ri:2,rScore:2,rRating:'LOW',ppe:['hardhat','glasses'],isolation:'Y',emergency:'N'}
     ],
     risks: [
-      {id:'RSK-001',hazard:'Rotating machinery – turbine coupling',category:'Safety',consequence:'Entanglement, amputation, fatality',ip:4,ii:5,iScore:20,iRating:'CRITICAL',controls:'Guards fitted, LOTO procedure, training.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Operations Manager',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-002',hazard:'High voltage electrical equipment',category:'Safety',consequence:'Electrocution, arc flash, fatality',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Isolation procedure, arc flash PPE, authorised persons only.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Electrical Supervisor',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-003',hazard:'Fuel gas leakage',category:'Safety',consequence:'Fire, explosion, mass casualty',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Gas detection system, ESD, no-ignition zone, PTW.',rp:2,ri:5,rScore:10,rRating:'HIGH',owner:'Process Engineer',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-004',hazard:'Working at height >2m',category:'Safety',consequence:'Fall, serious injury, fatality',ip:4,ii:4,iScore:16,iRating:'HIGH',controls:'Scaffold inspection, harness policy, exclusion zones.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'SHEQ Officer',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-005',hazard:'Chemical handling – water treatment',category:'Health',consequence:'Chemical burn, inhalation injury',ip:3,ii:3,iScore:9,iRating:'MEDIUM',controls:'SDS available, PPE, spill kit, training.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'Environmental Officer',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-006',hazard:'Oil spill to storm drain',category:'Environmental',consequence:'Soil and water contamination',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Bunded areas, oil separator, spill response plan.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'Environmental Officer',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-007',hazard:'Manual handling of heavy equipment',category:'Health',consequence:'Musculoskeletal injury',ip:4,ii:2,iScore:8,iRating:'MEDIUM',controls:'Lifting equipment, team lifts, training.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'Maintenance Supervisor',reviewDate:'2026-12-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-008',hazard:'Noise exposure in turbine hall',category:'Health',consequence:'Hearing damage (NIHL)',ip:5,ii:2,iScore:10,iRating:'HIGH',controls:'Hearing protection mandatory, audiometry programme.',rp:3,ri:2,rScore:6,rRating:'MEDIUM',owner:'Occupational Health',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-009',hazard:'Critical heat – outdoor work',category:'Health',consequence:'Heat stroke, fatality',ip:4,ii:3,iScore:12,iRating:'HIGH',controls:'Heat stress policy, hydration stations, buddy system.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'SHEQ Manager',reviewDate:'2026-03-31',status:'Open',capa:'N',capaRef:''},
-      {id:'RSK-010',hazard:'Vehicle / pedestrian interface',category:'Safety',consequence:'Struck by vehicle, fatality',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Designated walkways, speed limits, marshalls.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'Security Manager',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:''}
+      {id:'RSK-001',hazard:'Rotating machinery – turbine coupling',category:'Safety',consequence:'Entanglement, amputation, fatality',ip:4,ii:5,iScore:20,iRating:'CRITICAL',controls:'Guards fitted, LOTO procedure, training.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Operations Manager',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Social',tcfdCategory:'None'},
+      {id:'RSK-002',hazard:'High voltage electrical equipment',category:'Safety',consequence:'Electrocution, arc flash, fatality',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Isolation procedure, arc flash PPE, authorised persons only.',rp:2,ri:4,rScore:8,rRating:'MEDIUM',owner:'Electrical Supervisor',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Social',tcfdCategory:'None'},
+      {id:'RSK-003',hazard:'Fuel gas leakage',category:'Safety',consequence:'Fire, explosion, mass casualty',ip:3,ii:5,iScore:15,iRating:'HIGH',controls:'Gas detection system, ESD, no-ignition zone, PTW.',rp:2,ri:5,rScore:10,rRating:'HIGH',owner:'Process Engineer',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Environmental',tcfdCategory:'Transition Risk'},
+      {id:'RSK-004',hazard:'Working at height >2m',category:'Safety',consequence:'Fall, serious injury, fatality',ip:4,ii:4,iScore:16,iRating:'HIGH',controls:'Scaffold inspection, harness policy, exclusion zones.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'SHEQ Officer',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Social',tcfdCategory:'None'},
+      {id:'RSK-005',hazard:'Chemical handling – water treatment',category:'Health',consequence:'Chemical burn, inhalation injury',ip:3,ii:3,iScore:9,iRating:'MEDIUM',controls:'SDS available, PPE, spill kit, training.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'Environmental Officer',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Environmental',tcfdCategory:'None'},
+      {id:'RSK-006',hazard:'Oil spill to storm drain',category:'Environmental',consequence:'Soil and water contamination',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Bunded areas, oil separator, spill response plan.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'Environmental Officer',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Environmental',tcfdCategory:'Physical Risk'},
+      {id:'RSK-007',hazard:'Manual handling of heavy equipment',category:'Health',consequence:'Musculoskeletal injury',ip:4,ii:2,iScore:8,iRating:'MEDIUM',controls:'Lifting equipment, team lifts, training.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'Maintenance Supervisor',reviewDate:'2026-12-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Social',tcfdCategory:'None'},
+      {id:'RSK-008',hazard:'Noise exposure in turbine hall',category:'Health',consequence:'Hearing damage (NIHL)',ip:5,ii:2,iScore:10,iRating:'HIGH',controls:'Hearing protection mandatory, audiometry programme.',rp:3,ri:2,rScore:6,rRating:'MEDIUM',owner:'Occupational Health',reviewDate:'2026-09-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Social',tcfdCategory:'None'},
+      {id:'RSK-009',hazard:'Critical heat – outdoor work',category:'Health',consequence:'Heat stroke, fatality',ip:4,ii:3,iScore:12,iRating:'HIGH',controls:'Heat stress policy, hydration stations, buddy system.',rp:2,ri:2,rScore:4,rRating:'LOW',owner:'SHEQ Manager',reviewDate:'2026-03-31',status:'Open',capa:'N',capaRef:'',esgCategory:'Climate',tcfdCategory:'Physical Risk'},
+      {id:'RSK-010',hazard:'Vehicle / pedestrian interface',category:'Safety',consequence:'Struck by vehicle, fatality',ip:3,ii:4,iScore:12,iRating:'HIGH',controls:'Designated walkways, speed limits, marshalls.',rp:2,ri:3,rScore:6,rRating:'MEDIUM',owner:'Security Manager',reviewDate:'2026-06-01',status:'Open',capa:'N',capaRef:'',esgCategory:'Social',tcfdCategory:'None'}
     ],
     legalItems: [
-      {id:'LR-001',law:'Decreto n.º 94/2024',requirement:'Occupational risk assessment for all job functions',responsible:'SHEQ / HR',freq:'Annual',lastComplied:'2026-01-15',status:'COMPLIANT'},
-      {id:'LR-002',law:'ISO 45001:2018 (IMS)',requirement:'External surveillance audit by certification body',responsible:'SHEQ Manager',freq:'Annual',lastComplied:'2025-11-10',status:'SCHEDULED'},
-      {id:'LR-003',law:'Lei n.º 20/2014',requirement:'Environmental monitoring report and DUAT compliance',responsible:'SHEQ Officer',freq:'Semi-Annual',lastComplied:'2025-09-15',status:'COMPLIANT'},
-      {id:'LR-004',law:'Lei n.º 5/2017 (Work Safety)',requirement:'Workplace safety inspections and reports to MITESS',responsible:'SHEQ Manager',freq:'Quarterly',lastComplied:'2026-01-10',status:'PENDING'},
-      {id:'LR-005',law:'ISO 14001:2015 (IMS)',requirement:'Environmental management system audit',responsible:'SHEQ Manager',freq:'Annual',lastComplied:'2025-09-15',status:'SCHEDULED'},
-      {id:'LR-006',law:'ISO 9001:2015 (IMS)',requirement:'Quality management system audit',responsible:'SHEQ Manager',freq:'Annual',lastComplied:'2025-12-01',status:'SCHEDULED'},
-      {id:'LR-007',law:'Regulamento de Segurança Eléctrica',requirement:'Electrical installations inspection certificate',responsible:'Maintenance',freq:'Annual',lastComplied:'2025-08-01',status:'PENDING'},
-      {id:'LR-008',law:'Lei n.º 23/2007 (Labour Law)',requirement:'Maintain occupational accident register and report fatal/serious accidents within 24h.',responsible:'SHEQ Manager',freq:'Ad-hoc',lastComplied:'2026-03-01',status:'COMPLIANT'},
-      {id:'LR-009',law:'ISO 31000:2018',requirement:'Risk register formal review by management.',responsible:'SHEQ Manager',freq:'Semi-Annual',lastComplied:'2025-10-01',status:'OVERDUE'},
-      {id:'LR-010',law:'Decreto n.º 94/2024',requirement:'Wastewater effluent quality testing.',responsible:'Environmental Officer',freq:'Monthly',lastComplied:'2026-03-05',status:'COMPLIANT'}
+      {id:'LR-001',law:'Decreto n.º 94/2024',requirement:'Occupational risk assessment for all job functions',responsible:'SHEQ / HR',freq:'Annual',lastComplied:'2026-01-15',dueDate:'2027-01-15',status:'COMPLIANT'},
+      {id:'LR-002',law:'ISO 45001:2018 (IMS)',requirement:'External surveillance audit by certification body',responsible:'SHEQ Manager',freq:'Annual',lastComplied:'2025-11-10',dueDate:'2026-11-10',status:'SCHEDULED'},
+      {id:'LR-003',law:'Lei n.º 20/2014',requirement:'Environmental monitoring report and DUAT compliance',responsible:'SHEQ Officer',freq:'Semi-Annual',lastComplied:'2025-09-15',dueDate:'2026-09-15',status:'COMPLIANT'},
+      {id:'LR-004',law:'Lei n.º 5/2017 (Work Safety)',requirement:'Workplace safety inspections and reports to MITESS',responsible:'SHEQ Manager',freq:'Quarterly',lastComplied:'2026-01-10',dueDate:'2026-04-10',status:'PENDING'},
+      {id:'LR-005',law:'ISO 14001:2015 (IMS)',requirement:'Environmental management system audit',responsible:'SHEQ Manager',freq:'Annual',lastComplied:'2025-09-15',dueDate:'2026-09-15',status:'SCHEDULED'},
+      {id:'LR-006',law:'ISO 9001:2015 (IMS)',requirement:'Quality management system audit',responsible:'SHEQ Manager',freq:'Annual',lastComplied:'2025-12-01',dueDate:'2026-12-01',status:'SCHEDULED'},
+      {id:'LR-007',law:'Regulamento de Segurança Eléctrica',requirement:'Electrical installations inspection certificate',responsible:'Maintenance',freq:'Annual',lastComplied:'2025-08-01',dueDate:'2026-08-01',status:'PENDING'},
+      {id:'LR-008',law:'Lei n.º 23/2007 (Labour Law)',requirement:'Maintain occupational accident register and report fatal/serious accidents within 24h.',responsible:'SHEQ Manager',freq:'Ad-hoc',lastComplied:'2026-03-01',dueDate:'2026-09-01',status:'COMPLIANT'},
+      {id:'LR-009',law:'ISO 31000:2018',requirement:'Risk register formal review by management.',responsible:'SHEQ Manager',freq:'Semi-Annual',lastComplied:'2025-10-01',dueDate:'2026-04-01',status:'OVERDUE'},
+      {id:'LR-010',law:'Decreto n.º 94/2024',requirement:'Wastewater effluent quality testing.',responsible:'Environmental Officer',freq:'Monthly',lastComplied:'2026-03-05',dueDate:'2026-04-05',status:'PENDING'}
     ],
     capas: [
       {id:'CAPA-2026-001',source_module:'JO',source_ref:'OBS-002',what:'Provide chemical splash goggles and enforce PPE compliance at cooling tower.',who:'SHEQ Officer',when:'2026-03-20',how:'Physical inspection and observation audit.',priority:'High',status:'Open',created:'2026-03-05',closed_date:'',evidence:''},
@@ -5794,6 +5849,13 @@ function getDefaultData() {
       {id:'ENE-004',date:'2026-02-28',type:'Diesel',quantity:920,unit:'L',cost_zar:18400,supplier:'Puma Energy',meter_reading:'',notes:'Generator fuel — February'},
       {id:'ENE-005',date:'2026-03-31',type:'Electricity',quantity:13200,unit:'kWh',cost_zar:19800,supplier:'EDM — Electricidade de Moçambique',meter_reading:'04907',notes:'Main plant — March (higher — extended ops)'},
       {id:'ENE-006',date:'2026-03-31',type:'Diesel',quantity:340,unit:'L',cost_zar:6800,supplier:'Puma Energy',meter_reading:'',notes:'Light vehicles — March'}
+    ],
+    communityLog: [
+      {id:'CM-001',date:'2026-01-20',community:'Matola Residential — Block C',issue_type:'Noise',description:'Residents complained about generator noise after 22:00 during load-shedding operations.',response:'Noise curfew protocol enforced. Generator exhaust baffles inspected and adjusted. Commitments communicated to community liaison.',responsible:'Environmental Officer',status:'Closed'},
+      {id:'CM-002',date:'2026-02-05',community:'Matola Residential — Block C',issue_type:'Dust',description:'Haul road dust impact on residential properties during dry season operations.',response:'Water suppression truck deployed twice daily on haul road. Resident feedback requested at 30-day follow-up.',responsible:'Environmental Officer',status:'Open'},
+      {id:'CM-003',date:'2026-02-28',community:'Machava Ward — Informal Settlement',issue_type:'Employment',description:'Community leaders requested preferential local hiring for planned maintenance shutdown.',response:'HR confirmed 60% local labour target for shutdown. List of local contractors shared with community liaison office.',responsible:'HR Manager',status:'Closed'},
+      {id:'CM-004',date:'2026-03-15',community:'Matola Industrial Neighbours',issue_type:'Safety',description:'Neighbouring business raised concern about vehicle spillover traffic during shift change.',response:'Traffic management plan updated. Additional marshalls deployed at Gate 2 during peak hours. Review scheduled 2026-04-20.',responsible:'Security Manager',status:'Open'},
+      {id:'CM-005',date:'2026-04-01',community:'Machava Ward — Informal Settlement',issue_type:'Environmental',description:'Water discolouration reported downstream of plant drainage outlet after heavy rain event.',response:'Water quality sample collected and sent to accredited lab. Results pending. Community notified within 24 hours per protocol.',responsible:'Environmental Officer',status:'Open'}
     ],
     ghgEntries: [
       {id:'GHG-001',date:'2026-01-15',scope:'Scope 1',source:'Diesel',quantity:850,unit:'litres',tCO2e:2.278,notes:'Generator fuel — January'},
@@ -6017,7 +6079,7 @@ function autoMarkOverdue(d) {
   (d.permits||[]).forEach(p => {
     if(p.status==='CLOSED'||p.status==='SUSPENDED'||p.status==='EXPIRED') return;
     if(p.to && p.to < new Date().toISOString()){
-      p.status = 'EXPIRED';
+      p.status = 'CLOSED';
       changed = true;
       if(!p._expiredNotifiedAt || p._expiredNotifiedAt < todayStr){
         p._expiredNotifiedAt = todayStr;
@@ -6136,8 +6198,8 @@ function today(){return new Date().toISOString().substring(0,10);}
 function daysOpen(created){if(!created)return 0;return Math.floor((new Date()-new Date(created))/(1000*60*60*24));}
 function getDaysUntil(d){if(!d)return 999;return Math.floor((new Date(d)-new Date())/(1000*60*60*24));}
 function getPTWStatus(p){
-  if(p.status==='CLOSED'||p.status==='SUSPENDED') return p.status;
-  if(p.to && p.to < new Date().toISOString()) return 'EXPIRED';
+  if(p.status==='CLOSED'||p.status==='SUSPENDED'||p.status==='EXPIRED') return 'CLOSED';
+  if(p.to && p.to < new Date().toISOString()) return 'CLOSED';
   return p.status;
 }
 function capaBadge(capaRef, d){
@@ -6399,7 +6461,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -6443,6 +6505,7 @@ function navigateTo(page){
   else if(page==='esg-board')renderEsgBoard();
   else if(page==='wellness')renderWellness();
   else if(page==='suppliers')renderSuppliers();
+  else if(page==='community')renderCommunity();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>{ if(l.closest('.nav-link')?.style.cursor==='default') return; navigateTo(l.dataset.page); }));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -7406,7 +7469,7 @@ function renderPermits(page=1){
   const {items:rows,total}=paginate(items,page);
   document.getElementById('ptw-tbody').innerHTML=rows.map(p=>{
     const es=getPTWStatus(p);
-    const statusColor=es==='ACTIVE'?'#dcfce7':es==='PENDING'?'#fef3c7':es==='EXPIRED'?'#fee2e2':es==='SUSPENDED'?'#ffedd5':'#f1f5f9';
+    const statusColor=es==='ACTIVE'?'#dcfce7':es==='PENDING'?'#fef3c7':es==='SUSPENDED'?'#ffedd5':'#f1f5f9';
     return`<tr style="background:${statusColor}">
       <td data-label="ID"><strong>${p.id}</strong></td>
       <td data-label="Type">${ptwTypeIcon(p.type)}</td>
@@ -7542,9 +7605,12 @@ function renderRisks(page=1){
   const search=(document.getElementById('risk-search').value||'').toLowerCase();
   const rf=document.getElementById('risk-filter-rating').value;
   const cf=document.getElementById('risk-filter-cat').value;
+  const ef=document.getElementById('risk-filter-esg').value;
   let items=(d.risks||[]).filter(r=>{
     const ms=!search||[r.id,r.hazard,r.category,r.owner].some(v=>(v||'').toLowerCase().includes(search));
-    const mr=!rf||r.rRating===rf;const mc=!cf||r.category===cf;return ms&&mr&&mc;
+    const mr=!rf||r.rRating===rf;const mc=!cf||r.category===cf;
+    const me=!ef||ef!=='esg'||(r.esgCategory&&r.esgCategory!=='None');
+    return ms&&mr&&mc&&me;
   });
   const {items:rows,total}=paginate(items,page);
   document.getElementById('risk-tbody').innerHTML=rows.map(r=>`
@@ -7571,6 +7637,7 @@ function renderRisks(page=1){
 document.getElementById('risk-search').addEventListener('input',()=>renderRisks(1));
 document.getElementById('risk-filter-rating').addEventListener('change',()=>renderRisks(1));
 document.getElementById('risk-filter-cat').addEventListener('change',()=>renderRisks(1));
+document.getElementById('risk-filter-esg').addEventListener('change',()=>renderRisks(1));
 
 // ============================================================
 // LEGAL REGISTER
@@ -7989,14 +8056,26 @@ document.getElementById('se-filter-type').addEventListener('change',()=>renderSt
 document.getElementById('se-filter-status').addEventListener('change',()=>renderStakeholder(1));
 
 // ============================================================
+// CAPA OVERDUE BADGE
+// ============================================================
+function checkCapaBadge(){
+  const capas=getData()?.capas||[];
+  const overdue=capas.filter(c=>c.status==='Overdue').length;
+  const badge=document.getElementById('capa-badge');
+  if(badge){badge.style.display=overdue>0?'inline-block':'none';badge.textContent=overdue;}
+}
+
+// ============================================================
 // LEGAL COMPLIANCE ALERT BADGE
 // ============================================================
 function checkLegalAlerts(){
   const items=getData()?.legalItems||[];
   const now=Date.now();
   const due=items.filter(i=>{
-    const d=new Date(i.dueDate||i.lastComplied||'').getTime();
-    return d-now<=30*86400000&&d>=now&&i.status!=='COMPLIANT'&&i.status!=='Compliant';
+    if(i.status==='COMPLIANT'||i.status==='Compliant') return false;
+    if(i.status==='OVERDUE') return true;
+    const d=new Date(i.dueDate||'').getTime();
+    return !isNaN(d)&&d-now<=30*86400000&&d>=now;
   });
   const badge=document.getElementById('legal-badge');
   if(badge){badge.style.display=due.length>0?'inline-block':'none';badge.textContent=due.length;}
@@ -8282,6 +8361,87 @@ function renderSuppliers(page=1){
 }
 document.getElementById('sup-search').addEventListener('input',()=>renderSuppliers(1));
 document.getElementById('sup-filter-standing').addEventListener('change',()=>renderSuppliers(1));
+
+// ============================================================
+// COMMUNITY ENGAGEMENT REGISTER
+// ============================================================
+let communityPage=1;
+function genCommunityId(arr){const n=(arr||[]).filter(r=>r.id&&r.id.startsWith('CM-')).length+1;return'CM-'+String(n).padStart(3,'0');}
+function saveCommunity(){
+  if(!rateCheck('save-community',100))return;
+  if(!validateRequired([['comm-f-community','Community / Group'],['comm-f-description','Description']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.communityLog=d.communityLog||[];
+  const editId=document.getElementById('comm-f-edit-id').value;
+  const rec={
+    id:editId||genCommunityId(d.communityLog),
+    date:document.getElementById('comm-f-date').value||today(),
+    community:document.getElementById('comm-f-community').value||'',
+    issue_type:document.getElementById('comm-f-type').value,
+    description:document.getElementById('comm-f-description').value||'',
+    response:document.getElementById('comm-f-response').value||'',
+    responsible:document.getElementById('comm-f-responsible').value||'',
+    status:document.getElementById('comm-f-status').value
+  };
+  if(editId){const idx=d.communityLog.findIndex(x=>x.id===editId);if(idx>=0)d.communityLog[idx]=rec;else d.communityLog.push(rec);}
+  else d.communityLog.push(rec);
+  saveData(d);closeModal('community-modal');renderCommunity(1);
+}
+function deleteCommunity(id){
+  if(!requireRole('delete','Delete Community Record'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.communityLog||[]).find(x=>x.id===id);
+  if(!confirm('Delete community record '+id+(r?' — '+truncate(r.community,40):'')+'\nThis cannot be undone.'))return;
+  d.communityLog=(d.communityLog||[]).filter(x=>x.id!==id);
+  saveData(d);renderCommunity(communityPage);
+}
+function editCommunity(id){
+  const d=getData()||getDefaultData();const r=(d.communityLog||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('comm-f-edit-id').value=id;
+  document.getElementById('comm-f-date').value=r.date||'';
+  document.getElementById('comm-f-community').value=r.community||'';
+  document.getElementById('comm-f-type').value=r.issue_type||'Noise';
+  document.getElementById('comm-f-description').value=r.description||'';
+  document.getElementById('comm-f-response').value=r.response||'';
+  document.getElementById('comm-f-responsible').value=r.responsible||'';
+  document.getElementById('comm-f-status').value=r.status||'Open';
+  openModal('community-modal');
+}
+function renderCommunity(page=1){
+  communityPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('comm-search').value||'').toLowerCase();
+  const fType=document.getElementById('comm-filter-type').value;
+  const fStatus=document.getElementById('comm-filter-status').value;
+  let items=(d.communityLog||[]).filter(r=>{
+    const ms=!search||[r.id,r.community,r.issue_type,r.description,r.responsible].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fType||r.issue_type===fType)&&(!fStatus||r.status===fStatus);
+  }).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const openCount=items.filter(r=>r.status==='Open').length;
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('comm-tbody').innerHTML=rows.length?rows.map(r=>{
+    const isOverdue=r.status==='Open'&&r.date&&r.date<today();
+    return`<tr style="${isOverdue?'background:#fff7ed':''}">
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)}</td>
+      <td>${escapeHtml(r.community||'—')}</td>
+      <td><span class="pill pill-blue" style="font-size:10px">${r.issue_type}</span></td>
+      <td style="max-width:200px">${truncate(r.description,80)}</td>
+      <td style="max-width:180px">${truncate(r.response,70)||'<span style="color:var(--muted)">Pending</span>'}</td>
+      <td>${escapeHtml(r.responsible||'—')}</td>
+      <td>${statusPill(r.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editCommunity('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCommunity('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No community engagement records found</td></tr>`;
+  renderPagination('comm-pagination',total,page,renderCommunity);
+  // Update header with open count
+  const title=document.querySelector('#page-community .section-title');
+  if(title)title.textContent=`🏘️ Community Engagement Register${openCount>0?' — '+openCount+' Open':''}`;
+}
+document.getElementById('comm-search').addEventListener('input',()=>renderCommunity(1));
+document.getElementById('comm-filter-type').addEventListener('change',()=>renderCommunity(1));
+document.getElementById('comm-filter-status').addEventListener('change',()=>renderCommunity(1));
 
 // ============================================================
 // ANNUAL ESG REPORT
@@ -8989,9 +9149,9 @@ function saveCapa(){
   };
   if(editId){const idx=d.capas.findIndex(x=>x.id===editId);if(idx>=0)d.capas[idx]=rec;else d.capas.push(rec);}
   else d.capas.push(rec);
-  saveData(d);signAndUpdateRecord('capas',rec.id);closeModal('capa-modal');renderCapas(1);
+  saveData(d);signAndUpdateRecord('capas',rec.id);closeModal('capa-modal');renderCapas(1);checkCapaBadge();
 }
-function deleteCapa(id){if(!requireRole('delete','Delete CAPA'))return;const d=getData()||getDefaultData();const c=(d.capas||[]).find(x=>x.id===id);if(!confirm('Delete CAPA '+id+(c?' — '+truncate(c.what,50):'')+'\nThis cannot be undone.'))return;d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);}
+function deleteCapa(id){if(!requireRole('delete','Delete CAPA'))return;const d=getData()||getDefaultData();const c=(d.capas||[]).find(x=>x.id===id);if(!confirm('Delete CAPA '+id+(c?' — '+truncate(c.what,50):'')+'\nThis cannot be undone.'))return;d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);checkCapaBadge();}
 function renderCapas(page=1){
   capaPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('capa-search').value||'').toLowerCase();
@@ -11187,7 +11347,7 @@ function importJSON(){
         const missing=REQUIRED_KEYS.filter(k=>!(k in data));
         if(missing.length&&!data.initialized){throw new Error('Not a valid ESG Management Systems - SHEQ backup file.');}
         // API-13: per-module schema validation
-        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics','wellness','suppliers','energyLog'];
+        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics','wellness','suppliers','energyLog','communityLog'];
         for(const k of ALL_ARRAY_KEYS){
           if(!(k in data)) continue;
           const check=_validateImportModule(k,data[k]);
@@ -11351,6 +11511,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(migResult.changed){ d=migResult.data; localStorage.setItem(LS_KEY,JSON.stringify(d)); }
     autoMarkOverdue(d);
     migrateMissingCapas(d);
+    setTimeout(checkCapaBadge, 200);
     setTimeout(checkTrainingBadge, 200);
     setTimeout(checkLegalAlerts, 200);
     const k=sessionStorage.getItem('sheqai_apikey');
