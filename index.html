@@ -2664,7 +2664,8 @@
     <li class="nav-item"><div class="nav-link" data-page="inductions"><span class="nav-icon">🪪</span><span class="nav-label">Inductions</span></div></li>
 
     <li class="nav-section-label" data-pillar="environmental" style="color:rgba(74,222,128,.65)">🌿 Environmental<span class="pillar-chevron nav-label">▾</span></li>
-    <li class="nav-item"><div class="nav-link" style="opacity:.45;cursor:default" title="Coming soon"><span class="nav-icon">🌍</span><span class="nav-label">ESG Reporting <span style="font-size:9px;opacity:.7">Soon</span></span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="env-aspects"><span class="nav-icon">🌍</span><span class="nav-label">Env. Aspects &amp; Impacts</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="waste"><span class="nav-icon">♻️</span><span class="nav-label">Waste Management</span></div></li>
 
     <li class="nav-section-label" data-pillar="quality" style="color:rgba(251,191,36,.75)">⭐ Quality<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div></li>
@@ -2673,7 +2674,8 @@
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
 
     <li class="nav-section-label" data-pillar="social" style="color:rgba(96,165,250,.75)">🤝 Social<span class="pillar-chevron nav-label">▾</span></li>
-    <li class="nav-item"><div class="nav-link" style="opacity:.45;cursor:default" title="Coming soon"><span class="nav-icon">👥</span><span class="nav-label">Workforce &amp; Community <span style="font-size:9px;opacity:.7">Soon</span></span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="workforce"><span class="nav-icon">👥</span><span class="nav-label">Workforce Metrics</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="stakeholder"><span class="nav-icon">🤝</span><span class="nav-label">Stakeholder Engagement</span></div></li>
 
     <li class="nav-section-label" data-pillar="governance" style="color:rgba(167,139,250,.75)">🏛️ Governance<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">🎯</span><span class="nav-label">Risk Register</span></div></li>
@@ -2711,6 +2713,11 @@
   <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
   <div class="mobile-nav-item" data-page="report"><span class="nav-icon">📄</span>Report</div>
   <div class="mobile-nav-item" data-page="calendar"><span class="nav-icon">📅</span>Cal</div>
+  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
+  <div class="mobile-nav-item" data-page="env-aspects"><span class="nav-icon">🌍</span>Env</div>
+  <div class="mobile-nav-item" data-page="waste"><span class="nav-icon">♻️</span>Waste</div>
+  <div class="mobile-nav-item" data-page="workforce"><span class="nav-icon">👥</span>WF</div>
+  <div class="mobile-nav-item" data-page="stakeholder"><span class="nav-icon">🤝</span>Stk</div>
 </div>
 
 <!-- ===== MAIN ===== -->
@@ -3043,6 +3050,107 @@
       <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#fee2e2"></div>Missed</div>
       <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#f8fafc;border:1px dashed #cbd5e1"></div>Not Scheduled</div>
     </div>
+  </div>
+</div>
+
+<!-- ======= ENV ASPECTS & IMPACTS ======= -->
+<div id="page-env-aspects" class="page">
+  <div class="section-header">
+    <span class="section-title">🌍 Environmental Aspects &amp; Impacts Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('env-aspects')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="evClear('env-aspects');document.getElementById('ea-f-edit-id').value='';openModal('env-aspects-modal')">+ Add Aspect</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="ea-search" placeholder="Search aspects…">
+    <select id="ea-filter-sig"><option value="">All Significance</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+    <select id="ea-filter-cat"><option value="">All Categories</option><option value="Air">Air</option><option value="Water">Water</option><option value="Land">Land</option><option value="Waste">Waste</option><option value="Energy">Energy</option><option value="Biodiversity">Biodiversity</option><option value="Noise">Noise</option></select>
+    <select id="ea-filter-status"><option value="">All Statuses</option><option value="Active">Active</option><option value="Review">Review</option><option value="Closed">Closed</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Aspect</th><th>Activity</th><th>Category</th><th>Impact</th><th>Significance</th><th>Control Measure</th><th>Responsible</th><th>Review Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="ea-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="ea-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= WASTE MANAGEMENT ======= -->
+<div id="page-waste" class="page">
+  <div class="section-header">
+    <span class="section-title">♻️ Waste Management Log</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('waste')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="evClear('waste');document.getElementById('wm-f-edit-id').value='';openModal('waste-modal')">+ Log Waste</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="wm-search" placeholder="Search waste log…">
+    <select id="wm-filter-type"><option value="">All Types</option><option value="Hazardous">Hazardous</option><option value="General">General</option><option value="Recyclable">Recyclable</option><option value="E-waste">E-waste</option><option value="Medical">Medical</option><option value="Construction">Construction</option></select>
+    <select id="wm-filter-status"><option value="">All Statuses</option><option value="Disposed">Disposed</option><option value="Pending">Pending</option><option value="Non-conformance">Non-conformance</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Type</th><th>Description</th><th>Qty</th><th>Disposal Method</th><th>Contractor</th><th>Manifest #</th><th>Site</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="wm-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="wm-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= WORKFORCE METRICS ======= -->
+<div id="page-workforce" class="page">
+  <div class="section-header">
+    <span class="section-title">👥 Workforce &amp; Social Metrics</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('workforce')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="evClear('workforce');document.getElementById('wf-f-edit-id').value='';openModal('workforce-modal')">+ Add Period</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="wf-search" placeholder="Search metrics…">
+    <select id="wf-filter-status"><option value="">All Statuses</option><option value="Draft">Draft</option><option value="Submitted">Submitted</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Period</th><th>Total Staff</th><th>Male</th><th>Female</th><th>Contractors</th><th>New Hires</th><th>Exits</th><th>Training Hrs</th><th>LTIs</th><th>Community Spend</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="wf-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="wf-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= STAKEHOLDER ENGAGEMENT ======= -->
+<div id="page-stakeholder" class="page">
+  <div class="section-header">
+    <span class="section-title">🤝 Stakeholder Engagement Log</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('stakeholder')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="evClear('stakeholder');document.getElementById('se-f-edit-id').value='';openModal('stakeholder-modal')">+ Log Engagement</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="se-search" placeholder="Search engagements…">
+    <select id="se-filter-cat"><option value="">All Categories</option><option value="Community">Community</option><option value="NGO">NGO</option><option value="Government">Government</option><option value="Regulator">Regulator</option><option value="Media">Media</option><option value="Supplier">Supplier</option><option value="Employee">Employee</option></select>
+    <select id="se-filter-type"><option value="">All Types</option><option value="Meeting">Meeting</option><option value="Consultation">Consultation</option><option value="Complaint">Complaint</option><option value="Grievance">Grievance</option><option value="Report">Report</option><option value="Survey">Survey</option><option value="Site Visit">Site Visit</option></select>
+    <select id="se-filter-status"><option value="">All Statuses</option><option value="Open">Open</option><option value="Closed">Closed</option><option value="Pending">Pending</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Stakeholder</th><th>Category</th><th>Topic</th><th>Type</th><th>Outcome</th><th>Follow-up</th><th>Responsible</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="se-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="se-pagination"></div>
   </div>
 </div>
 
@@ -4013,6 +4121,172 @@
   </div>
 </div>
 
+<!-- ENV ASPECTS MODAL -->
+<div class="modal-overlay" id="env-aspects-modal">
+  <div class="modal">
+    <div class="modal-title">Environmental Aspect / Impact <button class="modal-close" onclick="closeModal('env-aspects-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Aspect</label><input type="text" id="ea-f-aspect" placeholder="e.g. Diesel fuel storage"></div>
+      <div class="form-group"><label>Activity</label><input type="text" id="ea-f-activity" placeholder="e.g. Generator operations"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label>
+        <select id="ea-f-category"><option value="Air">Air</option><option value="Water">Water</option><option value="Land">Land</option><option value="Waste">Waste</option><option value="Energy">Energy</option><option value="Biodiversity">Biodiversity</option><option value="Noise">Noise</option></select>
+      </div>
+      <div class="form-group"><label>Significance</label>
+        <select id="ea-f-significance"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Environmental Impact</label><textarea id="ea-f-impact" placeholder="Describe the potential environmental impact…"></textarea></div>
+    <div class="form-group"><label>Legal / Regulatory Requirement</label><input type="text" id="ea-f-legal" placeholder="e.g. Lei n.º 20/2014 — Environmental Framework"></div>
+    <div class="form-group"><label>Control Measure</label><textarea id="ea-f-control" placeholder="Describe controls in place to manage this aspect…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Responsible</label><input type="text" id="ea-f-responsible" placeholder="Name / Role"></div>
+      <div class="form-group"><label>Review Date</label><input type="date" id="ea-f-review"></div>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select id="ea-f-status"><option value="Active">Active</option><option value="Review">Review</option><option value="Closed">Closed</option></select>
+    </div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Evidence / Monitoring Records</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-env-aspects').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'env-aspects')">
+        <input type="file" id="ev-input-env-aspects" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'env-aspects')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach monitoring reports, permits, inspection records<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-env-aspects" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
+    <input type="hidden" id="ea-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('env-aspects-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEnvAspect()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- WASTE MODAL -->
+<div class="modal-overlay" id="waste-modal">
+  <div class="modal">
+    <div class="modal-title">Waste Management Entry <button class="modal-close" onclick="closeModal('waste-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="wm-f-date"></div>
+      <div class="form-group"><label>Waste Type</label>
+        <select id="wm-f-type"><option value="Hazardous">Hazardous</option><option value="General">General</option><option value="Recyclable">Recyclable</option><option value="E-waste">E-waste</option><option value="Medical">Medical</option><option value="Construction">Construction</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="wm-f-desc" placeholder="Describe the waste stream…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Quantity</label><input type="number" id="wm-f-qty" placeholder="0" min="0" step="0.1"></div>
+      <div class="form-group"><label>Unit</label>
+        <select id="wm-f-unit"><option value="kg">kg</option><option value="L">L</option><option value="m³">m³</option><option value="bags">bags</option><option value="drums">drums</option><option value="units">units</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Disposal Method</label>
+        <select id="wm-f-method"><option value="Landfill">Landfill</option><option value="Recycle">Recycle</option><option value="Incinerate">Incinerate</option><option value="Treatment">Treatment</option><option value="Reuse">Reuse</option><option value="Licensed contractor">Licensed contractor</option></select>
+      </div>
+      <div class="form-group"><label>Contractor</label><input type="text" id="wm-f-contractor" placeholder="Disposal contractor name"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Manifest / Waybill #</label><input type="text" id="wm-f-manifest" placeholder="e.g. EW-2026-0315"></div>
+      <div class="form-group"><label>Site / Source</label><input type="text" id="wm-f-site" placeholder="e.g. Turbine Hall"></div>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select id="wm-f-status"><option value="Disposed">Disposed</option><option value="Pending">Pending</option><option value="Non-conformance">Non-conformance</option></select>
+    </div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Waste Manifests &amp; Documentation</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-waste').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'waste')">
+        <input type="file" id="ev-input-waste" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'waste')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach waste manifests, disposal certificates, photos<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-waste" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
+    <input type="hidden" id="wm-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('waste-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWaste()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORKFORCE MODAL -->
+<div class="modal-overlay" id="workforce-modal">
+  <div class="modal">
+    <div class="modal-title">Workforce &amp; Social Metrics — Period Entry <button class="modal-close" onclick="closeModal('workforce-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Reporting Period (YYYY-MM)</label><input type="month" id="wf-f-period"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="wf-f-status"><option value="Draft">Draft</option><option value="Submitted">Submitted</option></select>
+      </div>
+    </div>
+    <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px">👥 Headcount</div>
+    <div class="form-row">
+      <div class="form-group"><label>Total Employees</label><input type="number" id="wf-f-total" placeholder="0" min="0"></div>
+      <div class="form-group"><label>Male</label><input type="number" id="wf-f-male" placeholder="0" min="0"></div>
+      <div class="form-group"><label>Female</label><input type="number" id="wf-f-female" placeholder="0" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contractors</label><input type="number" id="wf-f-contractors" placeholder="0" min="0"></div>
+      <div class="form-group"><label>New Hires</label><input type="number" id="wf-f-hires" placeholder="0" min="0"></div>
+      <div class="form-group"><label>Exits / Terminations</label><input type="number" id="wf-f-exits" placeholder="0" min="0"></div>
+    </div>
+    <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px">📊 Performance</div>
+    <div class="form-row">
+      <div class="form-group"><label>Training Hours</label><input type="number" id="wf-f-training" placeholder="0" min="0"></div>
+      <div class="form-group"><label>Lost Time Injuries (LTI)</label><input type="number" id="wf-f-lti" placeholder="0" min="0"></div>
+      <div class="form-group"><label>Community Spend (MZN)</label><input type="number" id="wf-f-community" placeholder="0" min="0"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="wf-f-notes" placeholder="Key highlights, incidents, or social initiatives this period…"></textarea></div>
+    <input type="hidden" id="wf-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('workforce-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWorkforce()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAKEHOLDER MODAL -->
+<div class="modal-overlay" id="stakeholder-modal">
+  <div class="modal">
+    <div class="modal-title">Stakeholder Engagement Entry <button class="modal-close" onclick="closeModal('stakeholder-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="se-f-date"></div>
+      <div class="form-group"><label>Stakeholder Name / Organisation</label><input type="text" id="se-f-stakeholder" placeholder="e.g. Maputo City Council"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label>
+        <select id="se-f-category"><option value="Community">Community</option><option value="NGO">NGO</option><option value="Government">Government</option><option value="Regulator">Regulator</option><option value="Media">Media</option><option value="Supplier">Supplier</option><option value="Employee">Employee</option></select>
+      </div>
+      <div class="form-group"><label>Engagement Type</label>
+        <select id="se-f-type"><option value="Meeting">Meeting</option><option value="Consultation">Consultation</option><option value="Complaint">Complaint</option><option value="Grievance">Grievance</option><option value="Report">Report</option><option value="Survey">Survey</option><option value="Site Visit">Site Visit</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Topic / Subject</label><input type="text" id="se-f-topic" placeholder="Brief topic of the engagement"></div>
+    <div class="form-group"><label>Summary</label><textarea id="se-f-summary" placeholder="Summarise what was discussed or raised…"></textarea></div>
+    <div class="form-group"><label>Outcome / Response</label><textarea id="se-f-outcome" placeholder="What was agreed, committed, or resolved…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Follow-up Action</label><input type="text" id="se-f-followup" placeholder="e.g. Site visit scheduled for 2026-04-20"></div>
+      <div class="form-group"><label>Responsible</label><input type="text" id="se-f-responsible" placeholder="Name / Role"></div>
+    </div>
+    <div class="form-group"><label>Status</label>
+      <select id="se-f-status"><option value="Open">Open</option><option value="Closed">Closed</option><option value="Pending">Pending</option></select>
+    </div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Engagement Evidence</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-stakeholder').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'stakeholder')">
+        <input type="file" id="ev-input-stakeholder" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip" style="display:none" onchange="evFilePicked(this,'stakeholder')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach meeting minutes, letters, photos, sign-in sheets<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-stakeholder" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
+    <input type="hidden" id="se-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('stakeholder-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStakeholder()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- CAPA MODAL -->
 <div class="modal-overlay" id="capa-modal">
   <div class="modal">
@@ -4691,6 +4965,10 @@ const _SEARCH_MODULES = [
   { key:'inductions',    label:'Induction',     icon:'🎓',  nav:'inductions',    fields:['id','name','company','type'] },
   { key:'emergencyContacts', label:'Emergency', icon:'🚑',  nav:'emergency',     fields:['id','name','role','phone'] },
   { key:'assets',        label:'Asset',         icon:'🔧',  nav:'assets',        fields:['id','name','type','location','status'] },
+  { key:'envAspects',    label:'Env. Aspect',   icon:'🌍',  nav:'env-aspects',   fields:['id','aspect','activity','category','impact','significance','responsible','status'] },
+  { key:'wasteLog',      label:'Waste',         icon:'♻️',  nav:'waste',         fields:['id','wasteType','description','contractor','manifest','site','status'] },
+  { key:'workforceMetrics', label:'Workforce',  icon:'👥',  nav:'workforce',     fields:['id','period','notes','status'] },
+  { key:'stakeholders',  label:'Stakeholder',   icon:'🤝',  nav:'stakeholder',   fields:['id','stakeholder','category','topic','type','responsible','status'] },
 ];
 
 function openGlobalSearch(){
@@ -5050,7 +5328,32 @@ function getDefaultData() {
       {id:'AUD-2026-003',template:'PTW Compliance',title:'PTW Compliance Spot-Check — March 2026',auditor:'João Machava',date:'2026-03-17',location:'All Areas',status:'Complete',score:91,passes:10,fails:1,critFails:0,capaRefs:[],notes:'Strong compliance overall. Permit archiving process to be improved.',
         answers:{'PT-1':{result:'Pass',notes:''},'PT-2':{result:'Pass',notes:''},'PT-3':{result:'Pass',notes:''},'PT-4':{result:'Pass',notes:''},'PT-5':{result:'Pass',notes:''},'PT-6':{result:'Pass',notes:''},'PT-7':{result:'Pass',notes:''},'PT-8':{result:'Pass',notes:''},'PT-9':{result:'Fail',notes:'2 expired permits not formally closed in register.'},'PT-10':{result:'Pass',notes:''},'PT-11':{result:'Pass',notes:''}}}
     ],
-    calendar: buildDefaultCalendar()
+    calendar: buildDefaultCalendar(),
+    envAspects: [
+      {id:'EA-001',aspect:'Diesel fuel storage',activity:'Generator & vehicle operations',category:'Water',impact:'Soil and groundwater contamination from spills',significance:'High',legalReq:'Lei n.º 20/2014 — Environmental Framework',control:'Bunded storage tank, weekly inspection log, spill kit staged on site',responsible:'Site Manager',reviewDate:'2026-06-30',status:'Active'},
+      {id:'EA-002',aspect:'Dust generation',activity:'Earthworks and road use',category:'Air',impact:'Dust fallout on neighbouring community',significance:'Medium',legalReq:'Regulamento de Gestão de Resíduos Sólidos Urbanos',control:'Water suppression truck, speed limit 20 km/h, wind monitoring',responsible:'Environmental Officer',reviewDate:'2026-09-30',status:'Active'},
+      {id:'EA-003',aspect:'Wastewater discharge',activity:'Workshop washing and ablutions',category:'Water',impact:'Nutrient loading and pathogen risk to drainage channel',significance:'High',legalReq:'Lei n.º 16/2014 — Water Law',control:'Septic system with interceptor, quarterly discharge monitoring',responsible:'SHEQ Officer',reviewDate:'2026-06-30',status:'Active'},
+      {id:'EA-004',aspect:'Vegetation clearing',activity:'Site preparation',category:'Biodiversity',impact:'Loss of indigenous ground cover and habitat',significance:'Medium',legalReq:'Lei n.º 10/1999 — Forests and Wildlife',control:'Clearing limited to footprint, replanting plan submitted',responsible:'Project Manager',reviewDate:'2026-12-31',status:'Review'},
+      {id:'EA-005',aspect:'Generator noise',activity:'Night-time standby generation',category:'Noise',impact:'Sleep disturbance for adjacent residential area',significance:'Low',legalReq:'Regulamento sobre Poluição Sonora',control:'Acoustic enclosure, operations capped 22:00–06:00',responsible:'Facilities Manager',reviewDate:'2026-09-30',status:'Active'}
+    ],
+    wasteLog: [
+      {id:'WM-001',date:'2026-03-15',wasteType:'Hazardous',description:'Used oil filters, oily rags, contaminated absorbents',quantity:45,unit:'kg',disposalMethod:'Licensed contractor',contractor:'EcoWaste Solutions Lda',manifest:'EW-2026-0315',site:'Turbine Hall',status:'Disposed'},
+      {id:'WM-002',date:'2026-03-20',wasteType:'General',description:'Office waste — paper, food packaging',quantity:120,unit:'kg',disposalMethod:'Landfill',contractor:'City Municipality',manifest:'',site:'Admin Block',status:'Disposed'},
+      {id:'WM-003',date:'2026-03-28',wasteType:'Recyclable',description:'Cardboard boxes, plastic containers, scrap aluminium',quantity:80,unit:'kg',disposalMethod:'Recycle',contractor:'GreenLoop Recycling',manifest:'GL-2026-0328',site:'Warehouse',status:'Disposed'},
+      {id:'WM-004',date:'2026-04-02',wasteType:'E-waste',description:'3× old laptops and monitors for decommissioning',quantity:18,unit:'kg',disposalMethod:'Licensed contractor',contractor:'TechRecycle Moz',manifest:'TR-2026-0402',site:'IT Store',status:'Pending'},
+      {id:'WM-005',date:'2026-04-05',wasteType:'Hazardous',description:'Expired chemical reagents from lab — disposal required',quantity:12,unit:'L',disposalMethod:'Treatment',contractor:'ChemSafe Africa',manifest:'',site:'Laboratory',status:'Pending'}
+    ],
+    workforceMetrics: [
+      {id:'WF-2026-01',period:'2026-01',totalEmployees:120,male:95,female:25,contractors:15,newHires:2,terminations:0,trainingHours:240,communitySpend:12000,ltiCount:0,notes:'Year started well. Safety inductions completed for all new starters.',status:'Submitted'},
+      {id:'WF-2026-02',period:'2026-02',totalEmployees:122,male:96,female:26,contractors:17,newHires:4,terminations:2,trainingHours:310,communitySpend:12000,ltiCount:0,notes:'2 exits — one retirement, one resignation. 4 new technicians onboarded.',status:'Submitted'},
+      {id:'WF-2026-03',period:'2026-03',totalEmployees:124,male:98,female:26,contractors:18,newHires:3,terminations:1,trainingHours:312,communitySpend:15000,ltiCount:1,notes:'1 LTI recorded (scaffold incident — see INC-003). Community bursary Q1 payment processed.',status:'Submitted'}
+    ],
+    stakeholders: [
+      {id:'SE-001',date:'2026-02-14',stakeholder:'Maputo City Council',category:'Government',topic:'Environmental permits renewal for 2026–2027',type:'Meeting',summary:'Discussed permit conditions for the upcoming operating period.',outcome:'Permit renewal application submitted. Response expected within 30 days.',followUp:'Follow up by 2026-03-15 if no response',responsible:'SHEQ Manager',status:'Closed'},
+      {id:'SE-002',date:'2026-03-05',stakeholder:'Community Development Forum — Matola',category:'Community',topic:'Dust and noise impact on residential area',type:'Consultation',summary:'Community representatives raised concerns about dust from haul road and generator noise at night.',outcome:'Commitments made: water suppression upgraded, noise curfew 22:00–06:00 enforced.',followUp:'Site visit with community leader scheduled 2026-04-20',responsible:'Environmental Officer',status:'Open'},
+      {id:'SE-003',date:'2026-03-18',stakeholder:'National Environmental Agency (MITADER)',category:'Regulator',topic:'Annual environmental compliance inspection',type:'Site Visit',summary:'Inspector visited site; reviewed waste manifests, discharge monitoring records, and fuel bunding.',outcome:'Minor non-conformance: wastewater monitoring frequency to increase from quarterly to monthly.',followUp:'Submit corrective action plan by 2026-04-18',responsible:'SHEQ Officer',status:'Open'},
+      {id:'SE-004',date:'2026-04-01',stakeholder:'Local Supplier — Mboane Construção',category:'Supplier',topic:'SHEQ pre-qualification assessment',type:'Survey',summary:'Supplier completed SHEQ pre-qualification questionnaire.',outcome:'Score: 72/100 — Conditional approval. Must complete safety induction before site access.',followUp:'Induction to be scheduled within 14 days',responsible:'Procurement',status:'Pending'}
+    ]
   };
 }
 
@@ -5591,7 +5894,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -5624,6 +5927,10 @@ function navigateTo(page){
   else if(page==='moc')renderMoc();
   else if(page==='assets')renderAssets();
   else if(page==='audits')renderAudits();
+  else if(page==='env-aspects')renderEnvAspects();
+  else if(page==='waste')renderWaste();
+  else if(page==='workforce')renderWorkforce();
+  else if(page==='stakeholder')renderStakeholder();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>{ if(l.closest('.nav-link')?.style.cursor==='default') return; navigateTo(l.dataset.page); }));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -5770,6 +6077,24 @@ function renderDashboard(){
   const _mocPending=_mocs.filter(m=>m.status==='Pending Approval').length;
   const _mocCompleted=_mocs.filter(m=>m.status==='Completed').length;
 
+  // --- Environmental ---
+  const _envA=(d.envAspects||[]);
+  const _envHigh=_envA.filter(r=>r.significance==='High'&&r.status==='Active').length;
+  const _envMed=_envA.filter(r=>r.significance==='Medium'&&r.status==='Active').length;
+  const _envReview=_envA.filter(r=>r.status==='Review').length;
+  const _waste=(d.wasteLog||[]).filter(r=>inPeriod(r.date));
+  const _wasteHaz=_waste.filter(r=>r.wasteType==='Hazardous').length;
+  const _wastePending=_waste.filter(r=>r.status==='Pending').length;
+  const _wasteNC=_waste.filter(r=>r.status==='Non-conformance').length;
+
+  // --- Social ---
+  const _wfAll=(d.workforceMetrics||[]).sort((a,b)=>b.period.localeCompare(a.period));
+  const _wfLatest=_wfAll[0]||null;
+  const _seAll=(d.stakeholders||[]).filter(r=>inPeriod(r.date));
+  const _seOpen=_seAll.filter(r=>r.status==='Open').length;
+  const _seComplaints=_seAll.filter(r=>r.type==='Complaint'||r.type==='Grievance').length;
+  const _seClosed=_seAll.filter(r=>r.status==='Closed').length;
+
   document.getElementById('dash-kpi-row').innerHTML=`
     <div class="kpi-card" style="--kpi-color:var(--accent)" onclick="navigateTo('observations')" title="Go to Job Observations">
       <div class="kpi-label">Observations</div>
@@ -5860,6 +6185,50 @@ function renderDashboard(){
         <span class="kpib kpib-orange">Open: ${_mocOpen}</span>
         <span class="kpib kpib-yellow">Pending: ${_mocPending}</span>
         <span class="kpib kpib-green">Done: ${_mocCompleted}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_envHigh>0?'var(--red)':'rgba(74,222,128,.9)'}" onclick="navigateTo('env-aspects')" title="Go to Environmental Aspects">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">Env. Aspects</div>
+      <div class="kpi-value">${_envA.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-red">High: ${_envHigh}</span>
+        <span class="kpib kpib-yellow">Med: ${_envMed}</span>
+        <span class="kpib kpib-orange">Review: ${_envReview}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_wasteNC>0?'var(--red)':_wastePending>0?'var(--orange)':'rgba(74,222,128,.9)'}" onclick="navigateTo('waste')" title="Go to Waste Management">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#15803d,#22c55e)"></div>
+      <div class="kpi-label">Waste Log</div>
+      <div class="kpi-value">${_waste.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-red">Hazardous: ${_wasteHaz}</span>
+        <span class="kpib kpib-yellow">Pending: ${_wastePending}</span>
+        <span class="kpib ${_wasteNC>0?'kpib-red':'kpib-gray'}">NC: ${_wasteNC}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:rgba(96,165,250,.9)" onclick="navigateTo('workforce')" title="Go to Workforce Metrics">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#2563eb,#60a5fa)"></div>
+      <div class="kpi-label">Workforce</div>
+      <div class="kpi-value">${_wfLatest?_wfLatest.totalEmployees:'—'}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-blue">${_wfLatest?_wfLatest.period:'No data'}</span>
+        <span class="kpib ${_wfLatest&&_wfLatest.ltiCount>0?'kpib-red':'kpib-green'}">LTI: ${_wfLatest?_wfLatest.ltiCount:0}</span>
+        <span class="kpib kpib-teal">${_wfLatest?_wfLatest.trainingHours+'h train':'—'}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_seComplaints>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('stakeholder')" title="Go to Stakeholder Engagement">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#93c5fd)"></div>
+      <div class="kpi-label">Stakeholders</div>
+      <div class="kpi-value">${_seAll.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-orange">Open: ${_seOpen}</span>
+        <span class="kpib ${_seComplaints>0?'kpib-red':'kpib-gray'}">Complaints: ${_seComplaints}</span>
+        <span class="kpib kpib-green">Closed: ${_seClosed}</span>
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
@@ -6671,6 +7040,357 @@ function renderLegal(page=1){
 }
 document.getElementById('legal-search').addEventListener('input',()=>renderLegal(1));
 document.getElementById('legal-filter-status').addEventListener('change',()=>renderLegal(1));
+
+// ============================================================
+// ENVIRONMENTAL ASPECTS & IMPACTS
+// ============================================================
+let eaPage=1;
+function saveEnvAspect(){
+  if(!rateCheck('save-ea',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.envAspects=d.envAspects||[];
+  const editId=document.getElementById('ea-f-edit-id').value;
+  const rec={
+    id:editId||genId('EA',d.envAspects),
+    aspect:document.getElementById('ea-f-aspect').value||'',
+    activity:document.getElementById('ea-f-activity').value||'',
+    category:document.getElementById('ea-f-category').value,
+    impact:document.getElementById('ea-f-impact').value||'',
+    significance:document.getElementById('ea-f-significance').value,
+    legalReq:document.getElementById('ea-f-legal').value||'',
+    control:document.getElementById('ea-f-control').value||'',
+    responsible:document.getElementById('ea-f-responsible').value||'',
+    reviewDate:document.getElementById('ea-f-review').value||'',
+    status:document.getElementById('ea-f-status').value,
+    evidenceFiles:evCollect('env-aspects')
+  };
+  if(!validateRequired([{id:'ea-f-aspect',label:'Aspect'},{id:'ea-f-impact',label:'Impact'}]))return;
+  if(editId){const idx=d.envAspects.findIndex(x=>x.id===editId);if(idx>=0)d.envAspects[idx]=rec;}
+  else d.envAspects.push(rec);
+  secLog('DATA_WRITE',{module:'envAspects',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('env-aspects-modal');renderEnvAspects(1);
+}
+function deleteEnvAspect(id){
+  if(!requireRole('delete','Delete Environmental Aspect'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.envAspects||[]).find(x=>x.id===id);
+  if(!confirm('Delete aspect '+id+(r?' — '+truncate(r.aspect,50):'')+'\nThis cannot be undone.'))return;
+  d.envAspects=(d.envAspects||[]).filter(x=>x.id!==id);
+  saveData(d);renderEnvAspects(eaPage);
+}
+function editEnvAspect(id){
+  const d=getData()||getDefaultData();const r=(d.envAspects||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('ea-f-edit-id').value=id;
+  document.getElementById('ea-f-aspect').value=r.aspect||'';
+  document.getElementById('ea-f-activity').value=r.activity||'';
+  document.getElementById('ea-f-category').value=r.category||'Water';
+  document.getElementById('ea-f-impact').value=r.impact||'';
+  document.getElementById('ea-f-significance').value=r.significance||'Medium';
+  document.getElementById('ea-f-legal').value=r.legalReq||'';
+  document.getElementById('ea-f-control').value=r.control||'';
+  document.getElementById('ea-f-responsible').value=r.responsible||'';
+  document.getElementById('ea-f-review').value=r.reviewDate||'';
+  document.getElementById('ea-f-status').value=r.status||'Active';
+  evLoad('env-aspects',r.evidenceFiles||[]);
+  openModal('env-aspects-modal');
+}
+function renderEnvAspects(page=1){
+  eaPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('ea-search').value||'').toLowerCase();
+  const fSig=document.getElementById('ea-filter-sig').value;
+  const fCat=document.getElementById('ea-filter-cat').value;
+  const fSt=document.getElementById('ea-filter-status').value;
+  const SIG_COLOR={High:'kpib-red',Medium:'kpib-yellow',Low:'kpib-green'};
+  let items=(d.envAspects||[]).filter(r=>{
+    const ms=!search||[r.id,r.aspect,r.activity,r.impact,r.responsible].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fSig||r.significance===fSig)&&(!fCat||r.category===fCat)&&(!fSt||r.status===fSt);
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('ea-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${r.aspect}</td>
+      <td>${r.activity||'—'}</td>
+      <td><span class="badge" style="background:rgba(74,222,128,.15);color:#15803d">${r.category}</span></td>
+      <td>${truncate(r.impact,45)}</td>
+      <td><span class="kpib ${SIG_COLOR[r.significance]||'kpib-gray'}">${r.significance}</span></td>
+      <td>${truncate(r.control,40)}</td>
+      <td>${r.responsible||'—'}</td>
+      <td>${fmtDate(r.reviewDate)||'—'}</td>
+      <td>${statusPill(r.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editEnvAspect('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteEnvAspect('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('ea-pagination',total,page,renderEnvAspects);
+}
+document.getElementById('ea-search').addEventListener('input',()=>renderEnvAspects(1));
+document.getElementById('ea-filter-sig').addEventListener('change',()=>renderEnvAspects(1));
+document.getElementById('ea-filter-cat').addEventListener('change',()=>renderEnvAspects(1));
+document.getElementById('ea-filter-status').addEventListener('change',()=>renderEnvAspects(1));
+
+// ============================================================
+// WASTE MANAGEMENT
+// ============================================================
+let wmPage=1;
+function saveWaste(){
+  if(!rateCheck('save-waste',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.wasteLog=d.wasteLog||[];
+  const editId=document.getElementById('wm-f-edit-id').value;
+  const rec={
+    id:editId||genId('WM',d.wasteLog),
+    date:document.getElementById('wm-f-date').value||'',
+    wasteType:document.getElementById('wm-f-type').value,
+    description:document.getElementById('wm-f-desc').value||'',
+    quantity:parseFloat(document.getElementById('wm-f-qty').value)||0,
+    unit:document.getElementById('wm-f-unit').value,
+    disposalMethod:document.getElementById('wm-f-method').value,
+    contractor:document.getElementById('wm-f-contractor').value||'',
+    manifest:document.getElementById('wm-f-manifest').value||'',
+    site:document.getElementById('wm-f-site').value||'',
+    status:document.getElementById('wm-f-status').value,
+    evidenceFiles:evCollect('waste')
+  };
+  if(!validateRequired([{id:'wm-f-date',label:'Date'},{id:'wm-f-desc',label:'Description'}]))return;
+  if(editId){const idx=d.wasteLog.findIndex(x=>x.id===editId);if(idx>=0)d.wasteLog[idx]=rec;}
+  else d.wasteLog.push(rec);
+  secLog('DATA_WRITE',{module:'wasteLog',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('waste-modal');renderWaste(1);
+}
+function deleteWaste(id){
+  if(!requireRole('delete','Delete Waste Entry'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.wasteLog||[]).find(x=>x.id===id);
+  if(!confirm('Delete waste entry '+id+(r?' — '+truncate(r.description,50):'')+'\nThis cannot be undone.'))return;
+  d.wasteLog=(d.wasteLog||[]).filter(x=>x.id!==id);
+  saveData(d);renderWaste(wmPage);
+}
+function editWaste(id){
+  const d=getData()||getDefaultData();const r=(d.wasteLog||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('wm-f-edit-id').value=id;
+  document.getElementById('wm-f-date').value=r.date||'';
+  document.getElementById('wm-f-type').value=r.wasteType||'General';
+  document.getElementById('wm-f-desc').value=r.description||'';
+  document.getElementById('wm-f-qty').value=r.quantity||0;
+  document.getElementById('wm-f-unit').value=r.unit||'kg';
+  document.getElementById('wm-f-method').value=r.disposalMethod||'Landfill';
+  document.getElementById('wm-f-contractor').value=r.contractor||'';
+  document.getElementById('wm-f-manifest').value=r.manifest||'';
+  document.getElementById('wm-f-site').value=r.site||'';
+  document.getElementById('wm-f-status').value=r.status||'Disposed';
+  evLoad('waste',r.evidenceFiles||[]);
+  openModal('waste-modal');
+}
+const WASTE_COLORS={Hazardous:'kpib-red',General:'kpib-gray','E-waste':'kpib-orange',Medical:'kpib-red',Recyclable:'kpib-green',Construction:'kpib-yellow'};
+function renderWaste(page=1){
+  wmPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('wm-search').value||'').toLowerCase();
+  const fType=document.getElementById('wm-filter-type').value;
+  const fSt=document.getElementById('wm-filter-status').value;
+  let items=(d.wasteLog||[]).filter(r=>{
+    const ms=!search||[r.id,r.wasteType,r.description,r.contractor,r.manifest,r.site].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fType||r.wasteType===fType)&&(!fSt||r.status===fSt);
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('wm-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)||'—'}</td>
+      <td><span class="kpib ${WASTE_COLORS[r.wasteType]||'kpib-gray'}">${r.wasteType}</span></td>
+      <td>${truncate(r.description,40)}</td>
+      <td>${r.quantity} ${r.unit}</td>
+      <td>${r.disposalMethod}</td>
+      <td>${r.contractor||'—'}</td>
+      <td>${r.manifest||'—'}</td>
+      <td>${r.site||'—'}</td>
+      <td>${statusPill(r.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editWaste('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteWaste('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('wm-pagination',total,page,renderWaste);
+}
+document.getElementById('wm-search').addEventListener('input',()=>renderWaste(1));
+document.getElementById('wm-filter-type').addEventListener('change',()=>renderWaste(1));
+document.getElementById('wm-filter-status').addEventListener('change',()=>renderWaste(1));
+
+// ============================================================
+// WORKFORCE METRICS
+// ============================================================
+let wfPage=1;
+function saveWorkforce(){
+  if(!rateCheck('save-workforce',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.workforceMetrics=d.workforceMetrics||[];
+  const editId=document.getElementById('wf-f-edit-id').value;
+  const period=document.getElementById('wf-f-period').value||'';
+  const rec={
+    id:editId||(period?'WF-'+period:genId('WF',d.workforceMetrics)),
+    period,
+    totalEmployees:parseInt(document.getElementById('wf-f-total').value)||0,
+    male:parseInt(document.getElementById('wf-f-male').value)||0,
+    female:parseInt(document.getElementById('wf-f-female').value)||0,
+    contractors:parseInt(document.getElementById('wf-f-contractors').value)||0,
+    newHires:parseInt(document.getElementById('wf-f-hires').value)||0,
+    terminations:parseInt(document.getElementById('wf-f-exits').value)||0,
+    trainingHours:parseInt(document.getElementById('wf-f-training').value)||0,
+    ltiCount:parseInt(document.getElementById('wf-f-lti').value)||0,
+    communitySpend:parseFloat(document.getElementById('wf-f-community').value)||0,
+    notes:document.getElementById('wf-f-notes').value||'',
+    status:document.getElementById('wf-f-status').value
+  };
+  if(!validateRequired([{id:'wf-f-period',label:'Reporting Period'}]))return;
+  if(editId){const idx=d.workforceMetrics.findIndex(x=>x.id===editId);if(idx>=0)d.workforceMetrics[idx]=rec;}
+  else d.workforceMetrics.push(rec);
+  secLog('DATA_WRITE',{module:'workforceMetrics',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('workforce-modal');renderWorkforce(1);
+}
+function deleteWorkforce(id){
+  if(!requireRole('delete','Delete Workforce Entry'))return;
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete workforce entry '+id+'?\nThis cannot be undone.'))return;
+  d.workforceMetrics=(d.workforceMetrics||[]).filter(x=>x.id!==id);
+  saveData(d);renderWorkforce(wfPage);
+}
+function editWorkforce(id){
+  const d=getData()||getDefaultData();const r=(d.workforceMetrics||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('wf-f-edit-id').value=id;
+  document.getElementById('wf-f-period').value=r.period||'';
+  document.getElementById('wf-f-total').value=r.totalEmployees||0;
+  document.getElementById('wf-f-male').value=r.male||0;
+  document.getElementById('wf-f-female').value=r.female||0;
+  document.getElementById('wf-f-contractors').value=r.contractors||0;
+  document.getElementById('wf-f-hires').value=r.newHires||0;
+  document.getElementById('wf-f-exits').value=r.terminations||0;
+  document.getElementById('wf-f-training').value=r.trainingHours||0;
+  document.getElementById('wf-f-lti').value=r.ltiCount||0;
+  document.getElementById('wf-f-community').value=r.communitySpend||0;
+  document.getElementById('wf-f-notes').value=r.notes||'';
+  document.getElementById('wf-f-status').value=r.status||'Draft';
+  openModal('workforce-modal');
+}
+function renderWorkforce(page=1){
+  wfPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('wf-search').value||'').toLowerCase();
+  const fSt=document.getElementById('wf-filter-status').value;
+  let items=(d.workforceMetrics||[]).filter(r=>{
+    const ms=!search||[r.id,r.period,r.notes].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fSt||r.status===fSt);
+  }).sort((a,b)=>b.period.localeCompare(a.period));
+  const {items:rows,total}=paginate(items,page);
+  const fmtNum=n=>(n||0).toLocaleString();
+  document.getElementById('wf-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${r.period||'—'}</td>
+      <td>${fmtNum(r.totalEmployees)}</td>
+      <td>${fmtNum(r.male)}</td>
+      <td>${fmtNum(r.female)}</td>
+      <td>${fmtNum(r.contractors)}</td>
+      <td><span class="kpib kpib-green">+${fmtNum(r.newHires)}</span></td>
+      <td><span class="kpib ${r.terminations>0?'kpib-orange':'kpib-gray'}">-${fmtNum(r.terminations)}</span></td>
+      <td>${fmtNum(r.trainingHours)} h</td>
+      <td><span class="kpib ${r.ltiCount>0?'kpib-red':'kpib-green'}">${r.ltiCount}</span></td>
+      <td>${fmtNum(r.communitySpend)} MZN</td>
+      <td>${statusPill(r.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editWorkforce('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteWorkforce('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('wf-pagination',total,page,renderWorkforce);
+}
+document.getElementById('wf-search').addEventListener('input',()=>renderWorkforce(1));
+document.getElementById('wf-filter-status').addEventListener('change',()=>renderWorkforce(1));
+
+// ============================================================
+// STAKEHOLDER ENGAGEMENT
+// ============================================================
+let sePage=1;
+function saveStakeholder(){
+  if(!rateCheck('save-se',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.stakeholders=d.stakeholders||[];
+  const editId=document.getElementById('se-f-edit-id').value;
+  const rec={
+    id:editId||genId('SE',d.stakeholders),
+    date:document.getElementById('se-f-date').value||'',
+    stakeholder:document.getElementById('se-f-stakeholder').value||'',
+    category:document.getElementById('se-f-category').value,
+    type:document.getElementById('se-f-type').value,
+    topic:document.getElementById('se-f-topic').value||'',
+    summary:document.getElementById('se-f-summary').value||'',
+    outcome:document.getElementById('se-f-outcome').value||'',
+    followUp:document.getElementById('se-f-followup').value||'',
+    responsible:document.getElementById('se-f-responsible').value||'',
+    status:document.getElementById('se-f-status').value,
+    evidenceFiles:evCollect('stakeholder')
+  };
+  if(!validateRequired([{id:'se-f-stakeholder',label:'Stakeholder'},{id:'se-f-topic',label:'Topic'}]))return;
+  if(editId){const idx=d.stakeholders.findIndex(x=>x.id===editId);if(idx>=0)d.stakeholders[idx]=rec;}
+  else d.stakeholders.push(rec);
+  secLog('DATA_WRITE',{module:'stakeholders',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('stakeholder-modal');renderStakeholder(1);
+}
+function deleteStakeholder(id){
+  if(!requireRole('delete','Delete Stakeholder Entry'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.stakeholders||[]).find(x=>x.id===id);
+  if(!confirm('Delete stakeholder entry '+id+(r?' — '+truncate(r.stakeholder,50):'')+'\nThis cannot be undone.'))return;
+  d.stakeholders=(d.stakeholders||[]).filter(x=>x.id!==id);
+  saveData(d);renderStakeholder(sePage);
+}
+function editStakeholder(id){
+  const d=getData()||getDefaultData();const r=(d.stakeholders||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('se-f-edit-id').value=id;
+  document.getElementById('se-f-date').value=r.date||'';
+  document.getElementById('se-f-stakeholder').value=r.stakeholder||'';
+  document.getElementById('se-f-category').value=r.category||'Community';
+  document.getElementById('se-f-type').value=r.type||'Meeting';
+  document.getElementById('se-f-topic').value=r.topic||'';
+  document.getElementById('se-f-summary').value=r.summary||'';
+  document.getElementById('se-f-outcome').value=r.outcome||'';
+  document.getElementById('se-f-followup').value=r.followUp||'';
+  document.getElementById('se-f-responsible').value=r.responsible||'';
+  document.getElementById('se-f-status').value=r.status||'Open';
+  evLoad('stakeholder',r.evidenceFiles||[]);
+  openModal('stakeholder-modal');
+}
+const SE_CAT_COLOR={Community:'kpib-blue',NGO:'kpib-teal',Government:'kpib-orange',Regulator:'kpib-red',Media:'kpib-yellow',Supplier:'kpib-gray',Employee:'kpib-green'};
+const SE_TYPE_ICON={Meeting:'🤝',Consultation:'💬',Complaint:'⚠️',Grievance:'🚨',Report:'📄',Survey:'📋','Site Visit':'🔍'};
+function renderStakeholder(page=1){
+  sePage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('se-search').value||'').toLowerCase();
+  const fCat=document.getElementById('se-filter-cat').value;
+  const fType=document.getElementById('se-filter-type').value;
+  const fSt=document.getElementById('se-filter-status').value;
+  let items=(d.stakeholders||[]).filter(r=>{
+    const ms=!search||[r.id,r.stakeholder,r.topic,r.responsible,r.outcome].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fCat||r.category===fCat)&&(!fType||r.type===fType)&&(!fSt||r.status===fSt);
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('se-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)||'—'}</td>
+      <td>${r.stakeholder}</td>
+      <td><span class="kpib ${SE_CAT_COLOR[r.category]||'kpib-gray'}">${r.category}</span></td>
+      <td>${truncate(r.topic,35)}</td>
+      <td>${SE_TYPE_ICON[r.type]||''} ${r.type}</td>
+      <td>${truncate(r.outcome,40)}</td>
+      <td>${truncate(r.followUp,35)||'—'}</td>
+      <td>${r.responsible||'—'}</td>
+      <td>${statusPill(r.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editStakeholder('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteStakeholder('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('se-pagination',total,page,renderStakeholder);
+}
+document.getElementById('se-search').addEventListener('input',()=>renderStakeholder(1));
+document.getElementById('se-filter-cat').addEventListener('change',()=>renderStakeholder(1));
+document.getElementById('se-filter-type').addEventListener('change',()=>renderStakeholder(1));
+document.getElementById('se-filter-status').addEventListener('change',()=>renderStakeholder(1));
 
 // ============================================================
 // SHEQ CALENDAR
@@ -8984,7 +9704,7 @@ function importJSON(){
         const missing=REQUIRED_KEYS.filter(k=>!(k in data));
         if(missing.length&&!data.initialized){throw new Error('Not a valid ESG Management Systems - SHEQ backup file.');}
         // API-13: per-module schema validation
-        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits'];
+        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders'];
         for(const k of ALL_ARRAY_KEYS){
           if(!(k in data)) continue;
           const check=_validateImportModule(k,data[k]);
