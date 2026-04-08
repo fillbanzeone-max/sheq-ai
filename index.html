@@ -2664,6 +2664,8 @@
     <li class="nav-item"><div class="nav-link" data-page="inductions"><span class="nav-icon">🪪</span><span class="nav-label">Inductions</span></div></li>
 
     <li class="nav-section-label" data-pillar="environmental" style="color:rgba(74,222,128,.65)">🌿 Environmental<span class="pillar-chevron nav-label">▾</span></li>
+    <li class="nav-item"><div class="nav-link" data-page="ghg"><span class="nav-icon">🌱</span><span class="nav-label">GHG Tracker</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="water"><span class="nav-icon">💧</span><span class="nav-label">Water Register</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="env-aspects"><span class="nav-icon">🌍</span><span class="nav-label">Env. Aspects &amp; Impacts</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="waste"><span class="nav-icon">♻️</span><span class="nav-label">Waste Management</span></div></li>
 
@@ -2674,12 +2676,15 @@
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
 
     <li class="nav-section-label" data-pillar="social" style="color:rgba(96,165,250,.75)">🤝 Social<span class="pillar-chevron nav-label">▾</span></li>
+    <li class="nav-item" style="position:relative"><div class="nav-link" data-page="training"><span class="nav-icon">🎓</span><span class="nav-label">Training Register</span></div><span id="training-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
+    <li class="nav-item"><div class="nav-link" data-page="dei"><span class="nav-icon">🌈</span><span class="nav-label">DEI Metrics</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="workforce"><span class="nav-icon">👥</span><span class="nav-label">Workforce Metrics</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="stakeholder"><span class="nav-icon">🤝</span><span class="nav-label">Stakeholder Engagement</span></div></li>
 
     <li class="nav-section-label" data-pillar="governance" style="color:rgba(167,139,250,.75)">🏛️ Governance<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">🎯</span><span class="nav-label">Risk Register</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="esg-board"><span class="nav-icon">📊</span><span class="nav-label">ESG Board Dashboard</span></div></li>
 
     <li class="nav-section-label" data-pillar="reports">📁 Reports<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📄</span><span class="nav-label">Monthly Report</span></div></li>
@@ -2714,10 +2719,15 @@
   <div class="mobile-nav-item" data-page="report"><span class="nav-icon">📄</span>Report</div>
   <div class="mobile-nav-item" data-page="calendar"><span class="nav-icon">📅</span>Cal</div>
   <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
+  <div class="mobile-nav-item" data-page="ghg"><span class="nav-icon">🌱</span>GHG</div>
+  <div class="mobile-nav-item" data-page="water"><span class="nav-icon">💧</span>H₂O</div>
   <div class="mobile-nav-item" data-page="env-aspects"><span class="nav-icon">🌍</span>Env</div>
   <div class="mobile-nav-item" data-page="waste"><span class="nav-icon">♻️</span>Waste</div>
+  <div class="mobile-nav-item" data-page="training"><span class="nav-icon">🎓</span>Train</div>
+  <div class="mobile-nav-item" data-page="dei"><span class="nav-icon">🌈</span>DEI</div>
   <div class="mobile-nav-item" data-page="workforce"><span class="nav-icon">👥</span>WF</div>
   <div class="mobile-nav-item" data-page="stakeholder"><span class="nav-icon">🤝</span>Stk</div>
+  <div class="mobile-nav-item" data-page="esg-board"><span class="nav-icon">📊</span>ESG</div>
 </div>
 
 <!-- ===== MAIN ===== -->
@@ -3051,6 +3061,129 @@
       <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#f8fafc;border:1px dashed #cbd5e1"></div>Not Scheduled</div>
     </div>
   </div>
+</div>
+
+<!-- ======= GHG TRACKER ======= -->
+<div id="page-ghg" class="page">
+  <div class="section-header">
+    <span class="section-title">🌱 GHG Emissions Tracker</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('ghg')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('ghg-f-edit-id').value='';document.getElementById('ghg-f-tco2e').value='';openModal('ghg-modal')">+ Log Emission</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="ghg-search" placeholder="Search GHG entries…">
+    <select id="ghg-filter-scope"><option value="">All Scopes</option><option value="Scope 1">Scope 1</option><option value="Scope 2">Scope 2</option><option value="Scope 3">Scope 3</option></select>
+    <select id="ghg-filter-source"><option value="">All Sources</option><option value="Diesel">Diesel</option><option value="Petrol">Petrol</option><option value="Electricity">Electricity</option><option value="Travel">Travel</option><option value="Natural Gas">Natural Gas</option><option value="Other">Other</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Scope</th><th>Source</th><th>Quantity</th><th>Unit</th><th>tCO₂e</th><th>Notes</th><th>Actions</th></tr></thead>
+        <tbody id="ghg-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="ghg-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= WATER REGISTER ======= -->
+<div id="page-water" class="page">
+  <div class="section-header">
+    <span class="section-title">💧 Water Consumption Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('water')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('wr-f-edit-id').value='';openModal('water-modal')">+ Log Reading</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="wr-search" placeholder="Search water log…">
+    <select id="wr-filter-source"><option value="">All Sources</option><option value="Municipal">Municipal</option><option value="Borehole">Borehole</option><option value="Rainwater">Rainwater</option><option value="Recycled">Recycled</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Source</th><th>Volume (kL)</th><th>Location</th><th>Meter Reading</th><th>Notes</th><th>Actions</th></tr></thead>
+        <tbody id="wr-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="wr-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= TRAINING REGISTER ======= -->
+<div id="page-training" class="page">
+  <div class="section-header">
+    <span class="section-title">🎓 Training &amp; Competency Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('training')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="evClear('training');document.getElementById('tr-f-edit-id').value='';openModal('training-modal')">+ Add Training</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="tr-search" placeholder="Search training records…">
+    <select id="tr-filter-type"><option value="">All Types</option><option value="Induction">Induction</option><option value="Safety">Safety</option><option value="Quality">Quality</option><option value="Environmental">Environmental</option><option value="Regulatory">Regulatory</option><option value="Emergency">Emergency</option></select>
+    <select id="tr-filter-status"><option value="">All Statuses</option><option value="Valid">Valid</option><option value="Expiring">Expiring</option><option value="Expired">Expired</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Employee</th><th>ID</th><th>Training Type</th><th>Provider</th><th>Hours</th><th>Certificate #</th><th>Expiry</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="tr-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="tr-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= DEI METRICS ======= -->
+<div id="page-dei" class="page">
+  <div class="section-header">
+    <span class="section-title">🌈 DEI Metrics Dashboard</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('dei')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('dei-f-edit-id').value='';openModal('dei-modal')">+ Add Record</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="dei-search" placeholder="Search DEI records…">
+    <select id="dei-filter-dept"><option value="">All Departments</option></select>
+    <select id="dei-filter-gender"><option value="">All Genders</option><option value="Male">Male</option><option value="Female">Female</option><option value="Non-binary">Non-binary</option><option value="Prefer not to say">Prefer not to say</option></select>
+    <select id="dei-filter-level"><option value="">All Levels</option><option value="Exec">Exec</option><option value="Senior">Senior</option><option value="Middle">Middle</option><option value="Junior">Junior</option><option value="Operator">Operator</option></select>
+  </div>
+  <div class="charts-row" id="dei-charts-row" style="margin-bottom:var(--sp-3)">
+    <div class="card"><div class="card-title">👫 Gender Distribution</div><div class="chart-wrap"><canvas id="chart-dei-gender"></canvas></div></div>
+    <div class="card"><div class="card-title">🏷️ Race Group Distribution</div><div class="chart-wrap"><canvas id="chart-dei-race"></canvas></div></div>
+    <div class="card"><div class="card-title">📈 Role Level by Gender</div><div class="chart-wrap"><canvas id="chart-dei-level"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Department</th><th>Gender</th><th>Race Group</th><th>Role Level</th><th>Disability</th><th>Age Group</th><th>Actions</th></tr></thead>
+        <tbody id="dei-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="dei-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= ESG BOARD DASHBOARD ======= -->
+<div id="page-esg-board" class="page">
+  <div class="section-header">
+    <span class="section-title">📊 ESG Board Dashboard</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Export PDF</button>
+    </div>
+  </div>
+  <div class="toolbar" style="margin-bottom:var(--sp-3)">
+    <span style="font-size:12px;color:var(--muted);font-weight:600">Period:</span>
+    <button id="esg-btn-month" class="btn btn-primary btn-sm" onclick="setEsgPeriod('month')">This Month</button>
+    <button id="esg-btn-quarter" class="btn btn-ghost btn-sm" onclick="setEsgPeriod('quarter')">This Quarter</button>
+    <button id="esg-btn-year" class="btn btn-ghost btn-sm" onclick="setEsgPeriod('year')">This Year</button>
+    <button id="esg-btn-all" class="btn btn-ghost btn-sm" onclick="setEsgPeriod('all')">All Time</button>
+  </div>
+  <div id="esg-board-content"></div>
 </div>
 
 <!-- ======= ENV ASPECTS & IMPACTS ======= -->
@@ -4076,6 +4209,15 @@
         <div class="form-group"><label>WHEN – Target Date</label><input type="date" id="risk-f-capa-when"></div>
       </div>
     </div>
+    <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px">🌍 ESG &amp; TCFD Classification</div>
+    <div class="form-row">
+      <div class="form-group"><label>ESG Category</label>
+        <select id="risk-f-esg"><option value="None">None</option><option value="Environmental">Environmental</option><option value="Social">Social</option><option value="Governance">Governance</option><option value="Climate">Climate</option><option value="Compliance">Compliance</option></select>
+      </div>
+      <div class="form-group"><label>TCFD Category</label>
+        <select id="risk-f-tcfd"><option value="None">None</option><option value="Physical Risk">Physical Risk</option><option value="Transition Risk">Transition Risk</option></select>
+      </div>
+    </div>
     <input type="hidden" id="risk-f-edit-id">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('risk-modal')">Cancel</button>
@@ -4117,6 +4259,138 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('legal-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveLegal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- GHG MODAL -->
+<div class="modal-overlay" id="ghg-modal">
+  <div class="modal">
+    <div class="modal-title">GHG Emission Entry <button class="modal-close" onclick="closeModal('ghg-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="ghg-f-date"></div>
+      <div class="form-group"><label>Scope</label>
+        <select id="ghg-f-scope"><option value="Scope 1">Scope 1 — Direct (fuel, vehicles, process)</option><option value="Scope 2">Scope 2 — Electricity &amp; purchased energy</option><option value="Scope 3">Scope 3 — Indirect (travel, supply chain)</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Source</label>
+        <select id="ghg-f-source" onchange="ghgAutoCalc()"><option value="Diesel">Diesel (2.68 kgCO₂e/L)</option><option value="Petrol">Petrol (2.31 kgCO₂e/L)</option><option value="Electricity">Electricity (0.90 kgCO₂e/kWh)</option><option value="Travel">Travel (0.21 kgCO₂e/km)</option><option value="Natural Gas">Natural Gas (2.04 kgCO₂e/m³)</option><option value="Other">Other (manual entry)</option></select>
+      </div>
+      <div class="form-group"><label>Unit</label>
+        <select id="ghg-f-unit" onchange="ghgAutoCalc()"><option value="litres">litres</option><option value="kWh">kWh</option><option value="km">km</option><option value="m³">m³</option><option value="kg">kg</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Quantity</label><input type="number" id="ghg-f-qty" placeholder="0" min="0" step="0.01" oninput="ghgAutoCalc()"></div>
+      <div class="form-group"><label>tCO₂e <span style="font-size:10px;color:var(--muted)">(auto-calculated)</span></label><input type="number" id="ghg-f-tco2e" placeholder="0.000" step="0.001" style="background:var(--card2)"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="ghg-f-notes" placeholder="e.g. Generator fuel — January"></textarea></div>
+    <input type="hidden" id="ghg-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('ghg-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGhg()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- WATER MODAL -->
+<div class="modal-overlay" id="water-modal">
+  <div class="modal">
+    <div class="modal-title">Water Consumption Entry <button class="modal-close" onclick="closeModal('water-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="wr-f-date"></div>
+      <div class="form-group"><label>Water Source</label>
+        <select id="wr-f-source"><option value="Municipal">Municipal</option><option value="Borehole">Borehole</option><option value="Rainwater">Rainwater</option><option value="Recycled">Recycled</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Volume (kL)</label><input type="number" id="wr-f-volume" placeholder="0.0" min="0" step="0.1"></div>
+      <div class="form-group"><label>Location / Point of Use</label><input type="text" id="wr-f-location" placeholder="e.g. Main Plant, Site Camp"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Meter Reading</label><input type="text" id="wr-f-meter" placeholder="e.g. 04521"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="wr-f-notes" placeholder="Additional context…"></textarea></div>
+    <input type="hidden" id="wr-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('water-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWater()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRAINING MODAL -->
+<div class="modal-overlay" id="training-modal">
+  <div class="modal">
+    <div class="modal-title">Training &amp; Competency Record <button class="modal-close" onclick="closeModal('training-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Training Date</label><input type="date" id="tr-f-date"></div>
+      <div class="form-group"><label>Training Type</label>
+        <select id="tr-f-type"><option value="Induction">Induction</option><option value="Safety">Safety</option><option value="Quality">Quality</option><option value="Environmental">Environmental</option><option value="Regulatory">Regulatory</option><option value="Emergency">Emergency</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Employee Name</label><input type="text" id="tr-f-name" placeholder="Full name"></div>
+      <div class="form-group"><label>Employee ID</label><input type="text" id="tr-f-empid" placeholder="e.g. EMP-021"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Training Provider</label><input type="text" id="tr-f-provider" placeholder="Internal / External provider"></div>
+      <div class="form-group"><label>Duration (hours)</label><input type="number" id="tr-f-hours" placeholder="0" min="0.5" step="0.5"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Certificate #</label><input type="text" id="tr-f-cert" placeholder="Certificate or reference number"></div>
+      <div class="form-group"><label>Expiry Date</label><input type="date" id="tr-f-expiry"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="tr-f-notes" placeholder="Additional notes…"></textarea></div>
+    <div class="ev-group">
+      <div style="font-size:var(--fs-xs);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📎 Training Certificates &amp; Evidence</div>
+      <div class="ev-drop" onclick="document.getElementById('ev-input-training').click()" ondragover="event.preventDefault()" ondrop="evDrop(event,'training')">
+        <input type="file" id="ev-input-training" multiple accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="evFilePicked(this,'training')">
+        <span style="color:var(--muted);font-size:13px">📁 Attach training certificates, attendance records<br><small>Max 5MB per file · 25MB total</small></span>
+      </div>
+      <div id="ev-list-training" style="margin-top:6px"><span style="color:var(--muted);font-size:12px">No attachments yet.</span></div>
+    </div>
+    <input type="hidden" id="tr-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('training-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTraining()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DEI MODAL -->
+<div class="modal-overlay" id="dei-modal">
+  <div class="modal">
+    <div class="modal-title">DEI Employee Record <button class="modal-close" onclick="closeModal('dei-modal')">✕</button></div>
+    <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#b91c1c;margin-bottom:12px">🔒 Privacy: This data is strictly confidential. Access is restricted to authorised HR / Privacy Officer roles.</div>
+    <div class="form-row">
+      <div class="form-group"><label>Date (snapshot period)</label><input type="date" id="dei-f-date"></div>
+      <div class="form-group"><label>Department</label><input type="text" id="dei-f-dept" placeholder="e.g. Operations, Finance"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Gender</label>
+        <select id="dei-f-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Non-binary">Non-binary</option><option value="Prefer not to say">Prefer not to say</option></select>
+      </div>
+      <div class="form-group"><label>Race Group (EE Act)</label>
+        <select id="dei-f-race"><option value="African">African</option><option value="Coloured">Coloured</option><option value="Indian">Indian</option><option value="White">White</option><option value="Foreign National">Foreign National</option><option value="Prefer not to say">Prefer not to say</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Role Level</label>
+        <select id="dei-f-level"><option value="Exec">Exec</option><option value="Senior">Senior</option><option value="Middle">Middle</option><option value="Junior">Junior</option><option value="Operator">Operator</option></select>
+      </div>
+      <div class="form-group"><label>Age Group</label>
+        <select id="dei-f-age"><option value="18–25">18–25</option><option value="26–35">26–35</option><option value="36–45">36–45</option><option value="46–55">46–55</option><option value="56+">56+</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Disability</label>
+      <select id="dei-f-disability"><option value="No">No</option><option value="Yes">Yes</option><option value="Prefer not to say">Prefer not to say</option></select>
+    </div>
+    <input type="hidden" id="dei-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('dei-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDei()">Save</button>
     </div>
   </div>
 </div>
@@ -4969,6 +5243,10 @@ const _SEARCH_MODULES = [
   { key:'wasteLog',      label:'Waste',         icon:'♻️',  nav:'waste',         fields:['id','wasteType','description','contractor','manifest','site','status'] },
   { key:'workforceMetrics', label:'Workforce',  icon:'👥',  nav:'workforce',     fields:['id','period','notes','status'] },
   { key:'stakeholders',  label:'Stakeholder',   icon:'🤝',  nav:'stakeholder',   fields:['id','stakeholder','category','topic','type','responsible','status'] },
+  { key:'ghgEntries',    label:'GHG Entry',     icon:'🌱',  nav:'ghg',           fields:['id','scope','source','quantity','unit','tCO2e','notes'] },
+  { key:'waterReg',      label:'Water',         icon:'💧',  nav:'water',         fields:['id','source','volume_kl','location','meter_reading','notes'] },
+  { key:'trainingReg',   label:'Training',      icon:'🎓',  nav:'training',      fields:['id','employee_name','employee_id','training_type','provider','certificate_no','status'] },
+  { key:'deiMetrics',    label:'DEI Record',    icon:'🌈',  nav:'dei',           fields:['id','department','gender','role_level','age_group'] },
 ];
 
 function openGlobalSearch(){
@@ -5327,6 +5605,44 @@ function getDefaultData() {
         answers:{'HK-1':{result:'Pass',notes:''},'HK-2':{result:'Fail',notes:'Work bench surfaces cluttered with returned stock.'},'HK-3':{result:'Pass',notes:''},'HK-4':{result:'Fail',notes:'Two bins overflowing on south side.'},'HK-5':{result:'Pass',notes:''},'HK-6':{result:'Pass',notes:''},'HK-7':{result:'Fail',notes:'Drinking water cooler empty — not restocked.'},'HK-8':{result:'Pass',notes:''},'HK-9':{result:'Pass',notes:''},'HK-10':{result:'Pass',notes:''},'HK-11':{result:'Pass',notes:''}}},
       {id:'AUD-2026-003',template:'PTW Compliance',title:'PTW Compliance Spot-Check — March 2026',auditor:'João Machava',date:'2026-03-17',location:'All Areas',status:'Complete',score:91,passes:10,fails:1,critFails:0,capaRefs:[],notes:'Strong compliance overall. Permit archiving process to be improved.',
         answers:{'PT-1':{result:'Pass',notes:''},'PT-2':{result:'Pass',notes:''},'PT-3':{result:'Pass',notes:''},'PT-4':{result:'Pass',notes:''},'PT-5':{result:'Pass',notes:''},'PT-6':{result:'Pass',notes:''},'PT-7':{result:'Pass',notes:''},'PT-8':{result:'Pass',notes:''},'PT-9':{result:'Fail',notes:'2 expired permits not formally closed in register.'},'PT-10':{result:'Pass',notes:''},'PT-11':{result:'Pass',notes:''}}}
+    ],
+    ghgEntries: [
+      {id:'GHG-001',date:'2026-01-15',scope:'Scope 1',source:'Diesel',quantity:850,unit:'litres',tCO2e:2.278,notes:'Generator fuel — January'},
+      {id:'GHG-002',date:'2026-01-31',scope:'Scope 2',source:'Electricity',quantity:12400,unit:'kWh',tCO2e:11.16,notes:'Grid electricity — January'},
+      {id:'GHG-003',date:'2026-02-15',scope:'Scope 1',source:'Diesel',quantity:920,unit:'litres',tCO2e:2.466,notes:'Generator fuel — February'},
+      {id:'GHG-004',date:'2026-02-28',scope:'Scope 2',source:'Electricity',quantity:11800,unit:'kWh',tCO2e:10.62,notes:'Grid electricity — February'},
+      {id:'GHG-005',date:'2026-03-10',scope:'Scope 1',source:'Petrol',quantity:340,unit:'litres',tCO2e:0.785,notes:'Light vehicles — March'},
+      {id:'GHG-006',date:'2026-03-31',scope:'Scope 2',source:'Electricity',quantity:13200,unit:'kWh',tCO2e:11.88,notes:'Grid electricity — March'},
+      {id:'GHG-007',date:'2026-03-20',scope:'Scope 3',source:'Travel',quantity:2800,unit:'km',tCO2e:0.588,notes:'Business travel — Maputo to Beira return x4'}
+    ],
+    waterReg: [
+      {id:'WR-001',date:'2026-01-31',source:'Municipal',volume_kl:185,location:'Main Plant',meter_reading:'04521',notes:'January meter reading'},
+      {id:'WR-002',date:'2026-01-31',source:'Borehole',volume_kl:42,location:'Site Camp',meter_reading:'00897',notes:'January borehole draw'},
+      {id:'WR-003',date:'2026-02-28',source:'Municipal',volume_kl:178,location:'Main Plant',meter_reading:'04706',notes:'February meter reading'},
+      {id:'WR-004',date:'2026-02-28',source:'Borehole',volume_kl:38,location:'Site Camp',meter_reading:'00935',notes:'February borehole draw'},
+      {id:'WR-005',date:'2026-03-31',source:'Municipal',volume_kl:201,location:'Main Plant',meter_reading:'04907',notes:'March meter reading — higher due to washdown ops'},
+      {id:'WR-006',date:'2026-03-31',source:'Borehole',volume_kl:45,location:'Site Camp',meter_reading:'00980',notes:'March borehole draw'}
+    ],
+    trainingReg: [
+      {id:'TR-001',date:'2026-01-10',employee_name:'João Machava',employee_id:'EMP-021',training_type:'Safety',provider:'SHEQ Manager',duration_hours:8,certificate_no:'SAFE-2026-021',expiry_date:'2027-01-10',notes:'Annual safety refresher'},
+      {id:'TR-002',date:'2026-01-10',employee_name:'Ricardo Guambe',employee_id:'EMP-014',training_type:'Emergency',provider:'Red Cross Mozambique',duration_hours:16,certificate_no:'FA-2026-014',expiry_date:'2028-01-10',notes:'First Aid Level 2'},
+      {id:'TR-003',date:'2026-02-05',employee_name:'Ana Sitoe',employee_id:'EMP-033',training_type:'Environmental',provider:'External Consultant',duration_hours:4,certificate_no:'ENV-2026-033',expiry_date:'2027-02-05',notes:'ISO 14001 awareness'},
+      {id:'TR-004',date:'2026-02-20',employee_name:'Carlos Nhantumbo',employee_id:'EMP-008',training_type:'Quality',provider:'SHEQ Manager',duration_hours:8,certificate_no:'QMS-2026-008',expiry_date:'2027-02-20',notes:'ISO 9001 internal auditor refresher'},
+      {id:'TR-005',date:'2025-03-15',employee_name:'Fatima Mondlane',employee_id:'EMP-017',training_type:'Regulatory',provider:'INSS Mozambique',duration_hours:4,certificate_no:'REG-2025-017',expiry_date:'2026-03-15',notes:'Workplace health legislation — EXPIRED'},
+      {id:'TR-006',date:'2026-03-01',employee_name:'Paulo Chissano',employee_id:'EMP-041',training_type:'Induction',provider:'HR Department',duration_hours:8,certificate_no:'IND-2026-041',expiry_date:'2027-03-01',notes:'New employee site induction'},
+      {id:'TR-007',date:'2025-12-10',employee_name:'Maria Bila',employee_id:'EMP-029',training_type:'Safety',provider:'External Safety Trainer',duration_hours:24,certificate_no:'SAFE-2025-029',expiry_date:'2026-04-25',notes:'Working at heights — expiring soon'}
+    ],
+    deiMetrics: [
+      {id:'DEI-001',date:'2026-03-31',department:'Operations',gender:'Male',race_group:'African',role_level:'Operator',disability:'No',age_group:'26–35'},
+      {id:'DEI-002',date:'2026-03-31',department:'Operations',gender:'Male',race_group:'African',role_level:'Operator',disability:'No',age_group:'36–45'},
+      {id:'DEI-003',date:'2026-03-31',department:'SHEQ',gender:'Female',race_group:'African',role_level:'Middle',disability:'No',age_group:'26–35'},
+      {id:'DEI-004',date:'2026-03-31',department:'Engineering',gender:'Male',race_group:'African',role_level:'Senior',disability:'No',age_group:'36–45'},
+      {id:'DEI-005',date:'2026-03-31',department:'Finance',gender:'Female',race_group:'African',role_level:'Middle',disability:'No',age_group:'26–35'},
+      {id:'DEI-006',date:'2026-03-31',department:'HR',gender:'Female',race_group:'African',role_level:'Senior',disability:'No',age_group:'46–55'},
+      {id:'DEI-007',date:'2026-03-31',department:'Management',gender:'Male',race_group:'White',role_level:'Exec',disability:'No',age_group:'46–55'},
+      {id:'DEI-008',date:'2026-03-31',department:'Operations',gender:'Male',race_group:'African',role_level:'Junior',disability:'Yes',age_group:'18–25'},
+      {id:'DEI-009',date:'2026-03-31',department:'Engineering',gender:'Female',race_group:'African',role_level:'Junior',disability:'No',age_group:'26–35'},
+      {id:'DEI-010',date:'2026-03-31',department:'Operations',gender:'Male',race_group:'African',role_level:'Operator',disability:'No',age_group:'26–35'}
     ],
     calendar: buildDefaultCalendar(),
     envAspects: [
@@ -5894,7 +6210,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -5931,6 +6247,11 @@ function navigateTo(page){
   else if(page==='waste')renderWaste();
   else if(page==='workforce')renderWorkforce();
   else if(page==='stakeholder')renderStakeholder();
+  else if(page==='ghg')renderGhg();
+  else if(page==='water')renderWater();
+  else if(page==='training'){renderTraining();checkTrainingBadge();}
+  else if(page==='dei')renderDei();
+  else if(page==='esg-board')renderEsgBoard();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>{ if(l.closest('.nav-link')?.style.cursor==='default') return; navigateTo(l.dataset.page); }));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -6077,6 +6398,20 @@ function renderDashboard(){
   const _mocPending=_mocs.filter(m=>m.status==='Pending Approval').length;
   const _mocCompleted=_mocs.filter(m=>m.status==='Completed').length;
 
+  // --- GHG / Water / Training pre-compute ---
+  const _ghg=(d.ghgEntries||[]).filter(r=>inPeriod(r.date));
+  const _ghgCO2=_ghg.reduce((s,r)=>s+(r.tCO2e||0),0);
+  const _ghgS1=_ghg.filter(r=>r.scope==='Scope 1').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const _ghgS2=_ghg.filter(r=>r.scope==='Scope 2').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const _ghgS3=_ghg.filter(r=>r.scope==='Scope 3').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const _water=(d.waterReg||[]).filter(r=>inPeriod(r.date));
+  const _waterKL=_water.reduce((s,r)=>s+(r.volume_kl||0),0);
+  const _tr=(d.trainingReg||[]).map(r=>({...r,_st:getTrainingStatus(r.expiry_date)}));
+  const _trValid=_tr.filter(r=>r._st==='Valid').length;
+  const _trExpiring=_tr.filter(r=>r._st==='Expiring').length;
+  const _trExpired=_tr.filter(r=>r._st==='Expired').length;
+  const _trPct=_tr.length>0?Math.round(_trValid/_tr.length*100):0;
+
   // --- Environmental ---
   const _envA=(d.envAspects||[]);
   const _envHigh=_envA.filter(r=>r.significance==='High'&&r.status==='Active').length;
@@ -6185,6 +6520,38 @@ function renderDashboard(){
         <span class="kpib kpib-orange">Open: ${_mocOpen}</span>
         <span class="kpib kpib-yellow">Pending: ${_mocPending}</span>
         <span class="kpib kpib-green">Done: ${_mocCompleted}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:rgba(74,222,128,.9)" onclick="navigateTo('ghg')" title="Go to GHG Tracker">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#15803d,#4ade80)"></div>
+      <div class="kpi-label">GHG Emissions</div>
+      <div class="kpi-value">${_ghgCO2.toFixed(2)}</div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">tCO₂e</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-red">S1: ${_ghgS1.toFixed(1)}</span>
+        <span class="kpib kpib-orange">S2: ${_ghgS2.toFixed(1)}</span>
+        <span class="kpib kpib-yellow">S3: ${_ghgS3.toFixed(1)}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:#2563eb" onclick="navigateTo('water')" title="Go to Water Register">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#60a5fa)"></div>
+      <div class="kpi-label">Water Usage</div>
+      <div class="kpi-value">${_waterKL.toFixed(1)}</div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">kL total</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-blue">${_water.length} readings</span></div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_trExpired>0?'var(--red)':_trExpiring>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('training')" title="Go to Training Register">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,${_trExpired>0?'#ef4444,#dc2626':_trExpiring>0?'#f59e0b,#d97706':'#22c55e,#15803d'})"></div>
+      <div class="kpi-label">Training</div>
+      <div class="kpi-value">${_trPct}%</div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">valid records</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">Valid: ${_trValid}</span>
+        <span class="kpib kpib-yellow">Expiring: ${_trExpiring}</span>
+        <span class="kpib kpib-red">Expired: ${_trExpired}</span>
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
@@ -6900,7 +7267,9 @@ function saveRisk(){
     rcaWho:document.getElementById('risk-f-capa-who').value||'',
     rcaWhen:document.getElementById('risk-f-capa-when').value||'',
     capaRef:'',
-    createdBy:currentUser?.email||''
+    createdBy:currentUser?.email||'',
+    esgCategory:document.getElementById('risk-f-esg')?.value||'None',
+    tcfdCategory:document.getElementById('risk-f-tcfd')?.value||'None'
   };
   if(editId){
     const idx=d.risks.findIndex(x=>x.id===editId);
@@ -6937,6 +7306,8 @@ function editRisk(id){
   document.getElementById('risk-f-capa-what').value=r.rcaWhat||'';
   document.getElementById('risk-f-capa-who').value=r.rcaWho||'';
   document.getElementById('risk-f-capa-when').value=r.rcaWhen||'';
+  if(document.getElementById('risk-f-esg'))document.getElementById('risk-f-esg').value=r.esgCategory||'None';
+  if(document.getElementById('risk-f-tcfd'))document.getElementById('risk-f-tcfd').value=r.tcfdCategory||'None';
   selP=r.ip||null;selI=r.ii||null;renderRiskMatrix();
   openModal('risk-modal');
 }
@@ -7391,6 +7762,501 @@ document.getElementById('se-search').addEventListener('input',()=>renderStakehol
 document.getElementById('se-filter-cat').addEventListener('change',()=>renderStakeholder(1));
 document.getElementById('se-filter-type').addEventListener('change',()=>renderStakeholder(1));
 document.getElementById('se-filter-status').addEventListener('change',()=>renderStakeholder(1));
+
+// ============================================================
+// GHG EMISSIONS TRACKER
+// ============================================================
+const GHG_FACTORS={'Diesel':2.68,'Petrol':2.31,'Electricity':0.9,'Travel':0.21,'Natural Gas':2.04};
+function ghgAutoCalc(){
+  const source=document.getElementById('ghg-f-source')?.value||'';
+  const qty=parseFloat(document.getElementById('ghg-f-qty')?.value)||0;
+  const factor=GHG_FACTORS[source];
+  if(factor&&qty>0){
+    document.getElementById('ghg-f-tco2e').value=((qty*factor)/1000).toFixed(3);
+  }
+}
+let ghgPage=1;
+function saveGhg(){
+  if(!rateCheck('save-ghg',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.ghgEntries=d.ghgEntries||[];
+  const editId=document.getElementById('ghg-f-edit-id').value;
+  if(!validateRequired([{id:'ghg-f-date',label:'Date'},{id:'ghg-f-qty',label:'Quantity'}]))return;
+  const source=document.getElementById('ghg-f-source').value;
+  const qty=parseFloat(document.getElementById('ghg-f-qty').value)||0;
+  const tco2e=parseFloat(document.getElementById('ghg-f-tco2e').value)||((qty*(GHG_FACTORS[source]||0))/1000);
+  const rec={
+    id:editId||genId('GHG',d.ghgEntries),
+    date:document.getElementById('ghg-f-date').value,
+    scope:document.getElementById('ghg-f-scope').value,
+    source,
+    quantity:qty,
+    unit:document.getElementById('ghg-f-unit').value,
+    tCO2e:parseFloat(tco2e.toFixed(3)),
+    notes:document.getElementById('ghg-f-notes').value||''
+  };
+  if(editId){const idx=d.ghgEntries.findIndex(x=>x.id===editId);if(idx>=0)d.ghgEntries[idx]=rec;}
+  else d.ghgEntries.push(rec);
+  secLog('DATA_WRITE',{module:'ghgEntries',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('ghg-modal');renderGhg(1);
+}
+function deleteGhg(id){
+  if(!requireRole('delete','Delete GHG Entry'))return;
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete GHG entry '+id+'?\nThis cannot be undone.'))return;
+  d.ghgEntries=(d.ghgEntries||[]).filter(x=>x.id!==id);
+  saveData(d);renderGhg(ghgPage);
+}
+function editGhg(id){
+  const d=getData()||getDefaultData();const r=(d.ghgEntries||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('ghg-f-edit-id').value=id;
+  document.getElementById('ghg-f-date').value=r.date||'';
+  document.getElementById('ghg-f-scope').value=r.scope||'Scope 1';
+  document.getElementById('ghg-f-source').value=r.source||'Diesel';
+  document.getElementById('ghg-f-qty').value=r.quantity||0;
+  document.getElementById('ghg-f-unit').value=r.unit||'litres';
+  document.getElementById('ghg-f-tco2e').value=r.tCO2e||0;
+  document.getElementById('ghg-f-notes').value=r.notes||'';
+  openModal('ghg-modal');
+}
+const GHG_SCOPE_COLOR={'Scope 1':'kpib-red','Scope 2':'kpib-orange','Scope 3':'kpib-yellow'};
+function renderGhg(page=1){
+  ghgPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('ghg-search').value||'').toLowerCase();
+  const fScope=document.getElementById('ghg-filter-scope').value;
+  const fSource=document.getElementById('ghg-filter-source').value;
+  let items=(d.ghgEntries||[]).filter(r=>{
+    const ms=!search||[r.id,r.scope,r.source,r.notes].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fScope||r.scope===fScope)&&(!fSource||r.source===fSource);
+  });
+  const totalCO2=items.reduce((s,r)=>s+(r.tCO2e||0),0);
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('ghg-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)||'—'}</td>
+      <td><span class="kpib ${GHG_SCOPE_COLOR[r.scope]||'kpib-gray'}">${r.scope}</span></td>
+      <td>${r.source}</td>
+      <td>${r.quantity.toLocaleString()}</td>
+      <td>${r.unit}</td>
+      <td><strong>${r.tCO2e}</strong></td>
+      <td>${truncate(r.notes,40)||'—'}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editGhg('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteGhg('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('ghg-pagination',total,page,renderGhg);
+}
+document.getElementById('ghg-search').addEventListener('input',()=>renderGhg(1));
+document.getElementById('ghg-filter-scope').addEventListener('change',()=>renderGhg(1));
+document.getElementById('ghg-filter-source').addEventListener('change',()=>renderGhg(1));
+
+// ============================================================
+// WATER REGISTER
+// ============================================================
+let wrPage=1;
+function saveWater(){
+  if(!rateCheck('save-water',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.waterReg=d.waterReg||[];
+  const editId=document.getElementById('wr-f-edit-id').value;
+  if(!validateRequired([{id:'wr-f-date',label:'Date'},{id:'wr-f-volume',label:'Volume'}]))return;
+  const rec={
+    id:editId||genId('WR',d.waterReg),
+    date:document.getElementById('wr-f-date').value,
+    source:document.getElementById('wr-f-source').value,
+    volume_kl:parseFloat(document.getElementById('wr-f-volume').value)||0,
+    location:document.getElementById('wr-f-location').value||'',
+    meter_reading:document.getElementById('wr-f-meter').value||'',
+    notes:document.getElementById('wr-f-notes').value||''
+  };
+  if(editId){const idx=d.waterReg.findIndex(x=>x.id===editId);if(idx>=0)d.waterReg[idx]=rec;}
+  else d.waterReg.push(rec);
+  secLog('DATA_WRITE',{module:'waterReg',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('water-modal');renderWater(1);
+}
+function deleteWater(id){
+  if(!requireRole('delete','Delete Water Entry'))return;
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete water entry '+id+'?\nThis cannot be undone.'))return;
+  d.waterReg=(d.waterReg||[]).filter(x=>x.id!==id);
+  saveData(d);renderWater(wrPage);
+}
+function editWater(id){
+  const d=getData()||getDefaultData();const r=(d.waterReg||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('wr-f-edit-id').value=id;
+  document.getElementById('wr-f-date').value=r.date||'';
+  document.getElementById('wr-f-source').value=r.source||'Municipal';
+  document.getElementById('wr-f-volume').value=r.volume_kl||0;
+  document.getElementById('wr-f-location').value=r.location||'';
+  document.getElementById('wr-f-meter').value=r.meter_reading||'';
+  document.getElementById('wr-f-notes').value=r.notes||'';
+  openModal('water-modal');
+}
+const WR_SRC_COLOR={Municipal:'kpib-blue',Borehole:'kpib-teal',Rainwater:'kpib-green',Recycled:'kpib-yellow'};
+function renderWater(page=1){
+  wrPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('wr-search').value||'').toLowerCase();
+  const fSrc=document.getElementById('wr-filter-source').value;
+  let items=(d.waterReg||[]).filter(r=>{
+    const ms=!search||[r.id,r.source,r.location,r.meter_reading,r.notes].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fSrc||r.source===fSrc);
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('wr-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)||'—'}</td>
+      <td><span class="kpib ${WR_SRC_COLOR[r.source]||'kpib-gray'}">${r.source}</span></td>
+      <td><strong>${r.volume_kl}</strong> kL</td>
+      <td>${r.location||'—'}</td>
+      <td>${r.meter_reading||'—'}</td>
+      <td>${truncate(r.notes,40)||'—'}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editWater('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteWater('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('wr-pagination',total,page,renderWater);
+}
+document.getElementById('wr-search').addEventListener('input',()=>renderWater(1));
+document.getElementById('wr-filter-source').addEventListener('change',()=>renderWater(1));
+
+// ============================================================
+// TRAINING & COMPETENCY REGISTER
+// ============================================================
+function getTrainingStatus(expiry_date){
+  if(!expiry_date)return'Valid';
+  const diff=new Date(expiry_date)-new Date();
+  if(diff<0)return'Expired';
+  if(diff<30*86400000)return'Expiring';
+  return'Valid';
+}
+function checkTrainingBadge(){
+  const d=getData()||getDefaultData();
+  const alerts=(d.trainingReg||[]).filter(r=>getTrainingStatus(r.expiry_date)!=='Valid').length;
+  const badge=document.getElementById('training-badge');
+  if(badge){badge.style.display=alerts>0?'inline-block':'none';badge.textContent=alerts;}
+}
+let trPage=1;
+function saveTraining(){
+  if(!rateCheck('save-training',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.trainingReg=d.trainingReg||[];
+  const editId=document.getElementById('tr-f-edit-id').value;
+  if(!validateRequired([{id:'tr-f-name',label:'Employee Name'},{id:'tr-f-date',label:'Training Date'}]))return;
+  const expiry=document.getElementById('tr-f-expiry').value||'';
+  const rec={
+    id:editId||genId('TR',d.trainingReg),
+    date:document.getElementById('tr-f-date').value,
+    employee_name:document.getElementById('tr-f-name').value||'',
+    employee_id:document.getElementById('tr-f-empid').value||'',
+    training_type:document.getElementById('tr-f-type').value,
+    provider:document.getElementById('tr-f-provider').value||'',
+    duration_hours:parseFloat(document.getElementById('tr-f-hours').value)||0,
+    certificate_no:document.getElementById('tr-f-cert').value||'',
+    expiry_date:expiry,
+    notes:document.getElementById('tr-f-notes').value||'',
+    evidenceFiles:evCollect('training')
+  };
+  if(editId){const idx=d.trainingReg.findIndex(x=>x.id===editId);if(idx>=0)d.trainingReg[idx]=rec;}
+  else d.trainingReg.push(rec);
+  secLog('DATA_WRITE',{module:'trainingReg',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('training-modal');renderTraining(1);checkTrainingBadge();
+}
+function deleteTraining(id){
+  if(!requireRole('delete','Delete Training Record'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.trainingReg||[]).find(x=>x.id===id);
+  if(!confirm('Delete training record '+id+(r?' — '+r.employee_name:'')+'\nThis cannot be undone.'))return;
+  d.trainingReg=(d.trainingReg||[]).filter(x=>x.id!==id);
+  saveData(d);renderTraining(trPage);checkTrainingBadge();
+}
+function editTraining(id){
+  const d=getData()||getDefaultData();const r=(d.trainingReg||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('tr-f-edit-id').value=id;
+  document.getElementById('tr-f-date').value=r.date||'';
+  document.getElementById('tr-f-name').value=r.employee_name||'';
+  document.getElementById('tr-f-empid').value=r.employee_id||'';
+  document.getElementById('tr-f-type').value=r.training_type||'Safety';
+  document.getElementById('tr-f-provider').value=r.provider||'';
+  document.getElementById('tr-f-hours').value=r.duration_hours||0;
+  document.getElementById('tr-f-cert').value=r.certificate_no||'';
+  document.getElementById('tr-f-expiry').value=r.expiry_date||'';
+  document.getElementById('tr-f-notes').value=r.notes||'';
+  evLoad('training',r.evidenceFiles||[]);
+  openModal('training-modal');
+}
+const TR_STATUS_COLOR={Valid:'kpib-green',Expiring:'kpib-yellow',Expired:'kpib-red'};
+const TR_TYPE_ICON={Induction:'🪪',Safety:'⛑️',Quality:'⭐',Environmental:'🌿',Regulatory:'⚖️',Emergency:'🚨'};
+function renderTraining(page=1){
+  trPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('tr-search').value||'').toLowerCase();
+  const fType=document.getElementById('tr-filter-type').value;
+  const fSt=document.getElementById('tr-filter-status').value;
+  let items=(d.trainingReg||[]).map(r=>({...r,_status:getTrainingStatus(r.expiry_date)})).filter(r=>{
+    const ms=!search||[r.id,r.employee_name,r.employee_id,r.training_type,r.provider,r.certificate_no].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fType||r.training_type===fType)&&(!fSt||r._status===fSt);
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('tr-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)||'—'}</td>
+      <td>${maskPII?r.employee_name.replace(/(?<=.{2}).(?=.*\s)/g,'*'):r.employee_name}</td>
+      <td>${r.employee_id||'—'}</td>
+      <td>${TR_TYPE_ICON[r.training_type]||''} ${r.training_type}</td>
+      <td>${r.provider||'—'}</td>
+      <td>${r.duration_hours}h</td>
+      <td>${r.certificate_no||'—'}</td>
+      <td>${fmtDate(r.expiry_date)||'—'}</td>
+      <td><span class="kpib ${TR_STATUS_COLOR[r._status]||'kpib-gray'}">${r._status}</span></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editTraining('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTraining('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('tr-pagination',total,page,renderTraining);
+}
+document.getElementById('tr-search').addEventListener('input',()=>renderTraining(1));
+document.getElementById('tr-filter-type').addEventListener('change',()=>renderTraining(1));
+document.getElementById('tr-filter-status').addEventListener('change',()=>renderTraining(1));
+
+// ============================================================
+// DEI METRICS DASHBOARD
+// ============================================================
+let deiPage=1;
+let deiGenderChart=null,deiRaceChart=null,deiLevelChart=null;
+function saveDei(){
+  if(!rateCheck('save-dei',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.deiMetrics=d.deiMetrics||[];
+  const editId=document.getElementById('dei-f-edit-id').value;
+  if(!validateRequired([{id:'dei-f-date',label:'Date'},{id:'dei-f-dept',label:'Department'}]))return;
+  const rec={
+    id:editId||genId('DEI',d.deiMetrics),
+    date:document.getElementById('dei-f-date').value,
+    department:document.getElementById('dei-f-dept').value||'',
+    gender:document.getElementById('dei-f-gender').value,
+    race_group:document.getElementById('dei-f-race').value,
+    role_level:document.getElementById('dei-f-level').value,
+    disability:document.getElementById('dei-f-disability').value,
+    age_group:document.getElementById('dei-f-age').value
+  };
+  if(editId){const idx=d.deiMetrics.findIndex(x=>x.id===editId);if(idx>=0)d.deiMetrics[idx]=rec;}
+  else d.deiMetrics.push(rec);
+  // Privacy: never log DEI record fields individually
+  secLog('DATA_WRITE',{module:'deiMetrics',id:rec.id,classification:'Restricted'});
+  saveData(d);closeModal('dei-modal');renderDei(1);
+}
+function deleteDei(id){
+  if(!requireRole('delete','Delete DEI Record'))return;
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete DEI record '+id+'?\nThis cannot be undone.'))return;
+  d.deiMetrics=(d.deiMetrics||[]).filter(x=>x.id!==id);
+  saveData(d);renderDei(deiPage);
+}
+function editDei(id){
+  const d=getData()||getDefaultData();const r=(d.deiMetrics||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('dei-f-edit-id').value=id;
+  document.getElementById('dei-f-date').value=r.date||'';
+  document.getElementById('dei-f-dept').value=r.department||'';
+  document.getElementById('dei-f-gender').value=r.gender||'Male';
+  document.getElementById('dei-f-race').value=r.race_group||'African';
+  document.getElementById('dei-f-level').value=r.role_level||'Operator';
+  document.getElementById('dei-f-disability').value=r.disability||'No';
+  document.getElementById('dei-f-age').value=r.age_group||'26–35';
+  openModal('dei-modal');
+}
+function renderDei(page=1){
+  deiPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('dei-search').value||'').toLowerCase();
+  const fDept=document.getElementById('dei-filter-dept').value;
+  const fGender=document.getElementById('dei-filter-gender').value;
+  const fLevel=document.getElementById('dei-filter-level').value;
+  let items=(d.deiMetrics||[]).filter(r=>{
+    const ms=!search||[r.id,r.department,r.role_level,r.age_group].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fDept||r.department===fDept)&&(!fGender||r.gender===fGender)&&(!fLevel||r.role_level===fLevel);
+  });
+  // Populate dept filter dynamically
+  const depts=[...new Set((d.deiMetrics||[]).map(r=>r.department))].sort();
+  const deptSel=document.getElementById('dei-filter-dept');
+  const curDept=deptSel.value;
+  deptSel.innerHTML='<option value="">All Departments</option>'+depts.map(dep=>`<option value="${dep}"${curDept===dep?' selected':''}>${dep}</option>`).join('');
+  // Charts — destroy before recreate
+  if(deiGenderChart){deiGenderChart.destroy();deiGenderChart=null;}
+  if(deiRaceChart){deiRaceChart.destroy();deiRaceChart=null;}
+  if(deiLevelChart){deiLevelChart.destroy();deiLevelChart=null;}
+  const all=d.deiMetrics||[];
+  const gCount={};all.forEach(r=>{gCount[r.gender]=(gCount[r.gender]||0)+1;});
+  const rCount={};all.forEach(r=>{rCount[r.race_group]=(rCount[r.race_group]||0)+1;});
+  const levels=['Exec','Senior','Middle','Junior','Operator'];
+  const mData=levels.map(l=>all.filter(r=>r.role_level===l&&r.gender==='Male').length);
+  const fData=levels.map(l=>all.filter(r=>r.role_level===l&&r.gender==='Female').length);
+  const GENDER_COLORS=['#2563eb','#ec4899','#8b5cf6','#94a3b8'];
+  const RACE_COLORS=['#16a34a','#d97706','#7c3aed','#64748b','#0891b2'];
+  deiGenderChart=new Chart(document.getElementById('chart-dei-gender').getContext('2d'),{type:'pie',data:{labels:Object.keys(gCount),datasets:[{data:Object.values(gCount),backgroundColor:GENDER_COLORS,borderWidth:2,borderColor:'#fff',hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,font:{size:11}}}}}});
+  deiRaceChart=new Chart(document.getElementById('chart-dei-race').getContext('2d'),{type:'pie',data:{labels:Object.keys(rCount),datasets:[{data:Object.values(rCount),backgroundColor:RACE_COLORS,borderWidth:2,borderColor:'#fff',hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,font:{size:11}}}}}});
+  deiLevelChart=new Chart(document.getElementById('chart-dei-level').getContext('2d'),{type:'bar',data:{labels:levels,datasets:[{label:'Male',data:mData,backgroundColor:'#2563eb'},{label:'Female',data:fData,backgroundColor:'#ec4899'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,font:{size:11}}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{stepSize:1}}}}});
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('dei-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)||'—'}</td>
+      <td>${r.department}</td>
+      <td>${r.gender}</td>
+      <td>${r.race_group}</td>
+      <td>${r.role_level}</td>
+      <td>${r.disability==='Yes'?'<span class="kpib kpib-blue">Yes</span>':r.disability}</td>
+      <td>${r.age_group}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editDei('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteDei('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('dei-pagination',total,page,renderDei);
+}
+document.getElementById('dei-search').addEventListener('input',()=>renderDei(1));
+document.getElementById('dei-filter-dept').addEventListener('change',()=>renderDei(1));
+document.getElementById('dei-filter-gender').addEventListener('change',()=>renderDei(1));
+document.getElementById('dei-filter-level').addEventListener('change',()=>renderDei(1));
+
+// ============================================================
+// ESG BOARD DASHBOARD
+// ============================================================
+let esgPeriod='month';
+function setEsgPeriod(p){
+  esgPeriod=p;
+  ['month','quarter','year','all'].forEach(k=>{
+    const btn=document.getElementById('esg-btn-'+k);
+    if(btn){btn.className=k===p?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';}
+  });
+  renderEsgBoard();
+}
+function renderEsgBoard(){
+  const d=getData()||getDefaultData();
+  const now=new Date();
+  let cutoff=null;
+  if(esgPeriod==='month') cutoff=new Date(now.getFullYear(),now.getMonth(),1).toISOString().substring(0,10);
+  else if(esgPeriod==='quarter') cutoff=new Date(now.getFullYear(),now.getMonth()-2,1).toISOString().substring(0,10);
+  else if(esgPeriod==='year') cutoff=new Date(now.getFullYear(),0,1).toISOString().substring(0,10);
+  const inP=date=>!cutoff||!date||(date>=cutoff);
+  // --- Environmental ---
+  const ghg=(d.ghgEntries||[]).filter(r=>inP(r.date));
+  const totalCO2=ghg.reduce((s,r)=>s+(r.tCO2e||0),0);
+  const s1=ghg.filter(r=>r.scope==='Scope 1').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const s2=ghg.filter(r=>r.scope==='Scope 2').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const s3=ghg.filter(r=>r.scope==='Scope 3').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const water=(d.waterReg||[]).filter(r=>inP(r.date));
+  const totalWater=water.reduce((s,r)=>s+(r.volume_kl||0),0);
+  const waste=(d.wasteLog||[]).filter(r=>inP(r.date));
+  const wasteTotal=waste.reduce((s,r)=>s+(r.quantity||0),0);
+  const wasteLandfill=waste.filter(r=>r.disposalMethod==='Landfill').reduce((s,r)=>s+(r.quantity||0),0);
+  const wasteDivPct=wasteTotal>0?Math.round((wasteTotal-wasteLandfill)/wasteTotal*100):0;
+  // --- Social ---
+  const incs=(d.incidents||[]).filter(r=>inP(r.date));
+  const ltiCount=incs.filter(r=>(r.type||'').toLowerCase().includes('lti')||(r.desc||'').toLowerCase().includes('lost time')).length;
+  const nmAll=(d.nearMisses||[]).filter(r=>inP(r.date));
+  const training=(d.trainingReg||[]).map(r=>({...r,_st:getTrainingStatus(r.expiry_date)}));
+  const trValid=training.filter(r=>r._st==='Valid').length;
+  const trTotal=training.length;
+  const trPct=trTotal>0?Math.round(trValid/trTotal*100):0;
+  const dei=(d.deiMetrics||[]);
+  const deiMale=dei.filter(r=>r.gender==='Male').length;
+  const deiTotal=dei.length;
+  const femalePct=deiTotal>0?Math.round(dei.filter(r=>r.gender==='Female').length/deiTotal*100):0;
+  // --- Governance ---
+  const capas=(d.capas||[]).filter(r=>inP(r.created));
+  const capaTotal=capas.length;
+  const capaClosed=capas.filter(r=>r.status==='Closed').length;
+  const capaClosePct=capaTotal>0?Math.round(capaClosed/capaTotal*100):0;
+  const legal=(d.legalItems||[]);
+  const legalNC=legal.filter(r=>r.status==='OVERDUE'||r.status==='Non-Compliant').length;
+  const risks=(d.risks||[]);
+  const esgRisks=risks.filter(r=>r.esgCategory&&r.esgCategory!=='None').length;
+  const climateRisks=risks.filter(r=>r.tcfdCategory&&r.tcfdCategory!=='None').length;
+  const periodLabel={'month':'This Month','quarter':'This Quarter','year':'This Year','all':'All Time'}[esgPeriod];
+  document.getElementById('esg-board-content').innerHTML=`
+    <div style="margin-bottom:var(--sp-3)">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(74,222,128,.9);margin-bottom:var(--sp-2)">🌿 Environmental — ${periodLabel}</div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color:rgba(74,222,128,.9)" onclick="navigateTo('ghg')">
+          <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+          <div class="kpi-label">GHG Emissions</div>
+          <div class="kpi-value" style="font-size:1.4rem">${totalCO2.toFixed(2)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">tCO₂e total</div>
+          <div class="kpi-breakdown">
+            <span class="kpib kpib-red">S1: ${s1.toFixed(1)}</span>
+            <span class="kpib kpib-orange">S2: ${s2.toFixed(1)}</span>
+            <span class="kpib kpib-yellow">S3: ${s3.toFixed(1)}</span>
+          </div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:#2563eb" onclick="navigateTo('water')">
+          <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#60a5fa)"></div>
+          <div class="kpi-label">Water Consumption</div>
+          <div class="kpi-value" style="font-size:1.4rem">${totalWater.toFixed(1)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">kilolitres</div>
+          <div class="kpi-breakdown"><span class="kpib kpib-blue">${water.length} readings</span></div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:rgba(74,222,128,.9)" onclick="navigateTo('waste')">
+          <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#15803d,#22c55e)"></div>
+          <div class="kpi-label">Waste Diversion</div>
+          <div class="kpi-value" style="font-size:1.4rem">${wasteDivPct}%</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">diverted from landfill</div>
+          <div class="kpi-breakdown"><span class="kpib kpib-green">${wasteTotal.toFixed(0)} kg total</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:var(--sp-3)">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(96,165,250,.9);margin-bottom:var(--sp-2)">🤝 Social — ${periodLabel}</div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color:${ltiCount>0?'var(--red)':'var(--green)'}" onclick="navigateTo('incidents')">
+          <div class="kpi-label">Lost Time Injuries</div>
+          <div class="kpi-value" style="font-size:1.4rem">${ltiCount}</div>
+          <div class="kpi-breakdown"><span class="kpib ${ltiCount===0?'kpib-green':'kpib-red'}">${ltiCount===0?'Zero LTIs':'LTI recorded'}</span><span class="kpib kpib-orange">NM: ${nmAll.length}</span></div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:${trPct<80?'var(--orange)':'var(--green)'}" onclick="navigateTo('training')">
+          <div class="kpi-label">Training Compliance</div>
+          <div class="kpi-value" style="font-size:1.4rem">${trPct}%</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">valid certifications</div>
+          <div class="kpi-breakdown"><span class="kpib kpib-green">Valid: ${trValid}</span><span class="kpib kpib-yellow">Expiring: ${training.filter(r=>r._st==='Expiring').length}</span><span class="kpib kpib-red">Expired: ${training.filter(r=>r._st==='Expired').length}</span></div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:rgba(96,165,250,.9)" onclick="navigateTo('dei')">
+          <div class="kpi-label">Gender Diversity</div>
+          <div class="kpi-value" style="font-size:1.4rem">${femalePct}%</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">female representation</div>
+          <div class="kpi-breakdown"><span class="kpib kpib-blue">Total: ${deiTotal} records</span></div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:${capaClosePct<70?'var(--orange)':'var(--green)'}" onclick="navigateTo('capa')">
+          <div class="kpi-label">CAPA Closure Rate</div>
+          <div class="kpi-value" style="font-size:1.4rem">${capaClosePct}%</div>
+          <div class="kpi-breakdown"><span class="kpib kpib-green">Closed: ${capaClosed}</span><span class="kpib kpib-orange">Open: ${capaTotal-capaClosed}</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(167,139,250,.9);margin-bottom:var(--sp-2)">🏛️ Governance — ${periodLabel}</div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="--kpi-color:${legalNC>0?'var(--red)':'var(--green)'}" onclick="navigateTo('legal')">
+          <div class="kpi-label">Legal Compliance</div>
+          <div class="kpi-value" style="font-size:1.4rem">${legal.length>0?Math.round((legal.length-legalNC)/legal.length*100):0}%</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">compliant items</div>
+          <div class="kpi-breakdown"><span class="kpib kpib-red">Non-Compliant: ${legalNC}</span><span class="kpib kpib-green">Total: ${legal.length}</span></div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:${esgRisks>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('risks')">
+          <div class="kpi-label">ESG Risks Tracked</div>
+          <div class="kpi-value" style="font-size:1.4rem">${esgRisks}</div>
+          <div class="kpi-breakdown"><span class="kpib kpib-orange">Climate: ${climateRisks}</span><span class="kpib kpib-gray">Total risks: ${risks.length}</span></div>
+        </div>
+        <div class="kpi-card" style="--kpi-color:rgba(167,139,250,.9)" onclick="navigateTo('audits')">
+          <div class="kpi-label">Internal Audits</div>
+          <div class="kpi-value" style="font-size:1.4rem">${(d.audits||[]).filter(r=>inP(r.date)).length}</div>
+          <div class="kpi-breakdown"><span class="kpib kpib-green">Complete: ${(d.audits||[]).filter(r=>inP(r.date)&&r.status==='Complete').length}</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:var(--sp-3);padding:var(--sp-2);background:var(--card2);border-radius:var(--radius-sm);font-size:11px;color:var(--muted)">
+      📋 <strong>GRI Framework alignment:</strong> GHG → GRI 305 | Water → GRI 303 | Waste → GRI 306 | Training → GRI 404 | DEI → GRI 405 | Legal → GRI 307 | CAPA → ISO 9001 cl.10.2 | Audits → ISO 9001 cl.9.2
+      &nbsp;|&nbsp; Generated: ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
+    </div>`;
+}
 
 // ============================================================
 // SHEQ CALENDAR
@@ -9704,7 +10570,7 @@ function importJSON(){
         const missing=REQUIRED_KEYS.filter(k=>!(k in data));
         if(missing.length&&!data.initialized){throw new Error('Not a valid ESG Management Systems - SHEQ backup file.');}
         // API-13: per-module schema validation
-        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders'];
+        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics'];
         for(const k of ALL_ARRAY_KEYS){
           if(!(k in data)) continue;
           const check=_validateImportModule(k,data[k]);
@@ -9868,6 +10734,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(migResult.changed){ d=migResult.data; localStorage.setItem(LS_KEY,JSON.stringify(d)); }
     autoMarkOverdue(d);
     migrateMissingCapas(d);
+    setTimeout(checkTrainingBadge, 200);
     const k=sessionStorage.getItem('sheqai_apikey');
     if(k)document.getElementById('api-key-input').value=k;
     updateSyncStatus();
