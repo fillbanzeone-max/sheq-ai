@@ -2523,6 +2523,23 @@
     box-shadow: 0 0 0 3px rgba(220,38,38,.15) !important;
   }
 
+  /* ── Record print mode (printRecord()) ───────────────────── */
+  body.printing-record > *:not(#view-modal) { display: none !important; }
+  body.printing-record #view-modal {
+    position: static !important;
+    background: none !important;
+    display: block !important;
+  }
+  body.printing-record #view-modal .modal {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  body.printing-record .modal-actions,
+  body.printing-record .modal-close { display: none !important; }
+
   /* ── #8 Enhanced print stylesheet ────────────────────────── */
   @media print {
     @page { margin: 18mm 14mm; }
@@ -2657,6 +2674,7 @@
     <span id="sync-status" class="loading">⬤ Loading…</span>
     <span id="topbar-user" style="font-size:.78rem;color:var(--muted);display:none"></span>
     <span id="topbar-role-badge" style="font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid;letter-spacing:.05em;display:none"></span>
+    <button class="btn btn-ghost btn-sm" onclick="openGlobalSearch()" title="Search all modules (Ctrl+K)">🔍</button>
     <button class="btn btn-ghost btn-sm" onclick="navigateTo('emergency')" title="Emergency Contacts" style="color:#dc2626;font-size:1.1rem">🚑</button>
     <button class="btn btn-ghost btn-sm" id="settings-btn-top" onclick="loadNotifSettings();openModal('settings-modal')">⚙️</button>
     <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="logOut()" title="Sign out" style="display:none">⏏ Sign Out</button>
@@ -2690,7 +2708,9 @@
   <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:var(--sp-2);gap:var(--sp-1)">
     <span style="font-size:var(--fs-xs);color:var(--muted);font-weight:600">VIEW:</span>
     <button id="dash-toggle-all" class="btn btn-primary btn-sm" onclick="setDashPeriod('all')">All Time</button>
-    <button id="dash-toggle-30" class="btn btn-ghost btn-sm" onclick="setDashPeriod('30')">Last 30 Days</button>
+    <button id="dash-toggle-30" class="btn btn-ghost btn-sm" onclick="setDashPeriod('30')">30 Days</button>
+    <button id="dash-toggle-90" class="btn btn-ghost btn-sm" onclick="setDashPeriod('90')">90 Days</button>
+    <button id="dash-toggle-year" class="btn btn-ghost btn-sm" onclick="setDashPeriod('year')">This Year</button>
   </div>
   <div class="kpi-grid" id="dash-kpi-row"></div>
   <div class="charts-row">
@@ -3515,6 +3535,22 @@
   </div>
 </div>
 
+<!-- GLOBAL SEARCH MODAL -->
+<div class="modal-overlay" id="gsearch-modal" style="align-items:flex-start;padding-top:80px">
+  <div class="modal" style="max-width:600px;max-height:70vh;display:flex;flex-direction:column">
+    <div style="padding:var(--sp-1) var(--sp-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+      <span style="font-size:1.1rem;opacity:.5">🔍</span>
+      <input type="text" id="gsearch-input" placeholder="Search across all modules…"
+        style="flex:1;border:none;outline:none;font-size:15px;background:transparent"
+        oninput="runGlobalSearch(this.value)">
+      <button class="modal-close" onclick="closeModal('gsearch-modal')" style="flex-shrink:0">✕</button>
+    </div>
+    <div id="gsearch-results" style="overflow-y:auto;flex:1;padding:var(--sp-1) 0">
+      <p style="text-align:center;color:var(--muted);font-size:13px;padding:var(--sp-2)">Start typing to search…</p>
+    </div>
+  </div>
+</div>
+
 <!-- ONBOARDING MODAL -->
 <div class="modal-overlay" id="onboarding-modal" style="z-index:10000">
   <div class="modal" style="max-width:460px">
@@ -4109,6 +4145,7 @@
     <div class="modal-actions">
       <button id="view-modal-raise-capa" class="btn btn-primary" style="display:none">+ Raise CAPA</button>
       <button id="view-modal-raise-inv" class="btn btn-ghost" style="display:none">🔍 Start Investigation</button>
+      <button class="btn btn-ghost" onclick="printRecord()" title="Print or save as PDF">🖨 Print / PDF</button>
       <button class="btn btn-ghost" onclick="closeModal('view-modal')">Close</button>
     </div>
   </div>
@@ -4562,6 +4599,69 @@ function showOverdueBanner(count){
     sessionStorage.removeItem('sheqai_banner_dismissed');
   }
 }
+
+// ============================================================
+// GLOBAL SEARCH
+// ============================================================
+const _SEARCH_MODULES = [
+  { key:'observations',  label:'Observation',   icon:'👁',  nav:'observations',  fields:['id','observer','location','activity','desc','type'] },
+  { key:'nearMisses',    label:'Near Miss',     icon:'⚠️',  nav:'nearmiss',      fields:['id','reporter','location','desc','status'] },
+  { key:'incidents',     label:'Incident',      icon:'🚨',  nav:'incidents',     fields:['id','person','location','desc','type','status'] },
+  { key:'permits',       label:'PTW',           icon:'📋',  nav:'permits',       fields:['id','requestor','location','activity','status'] },
+  { key:'risks',         label:'Risk',          icon:'🎯',  nav:'risks',         fields:['id','hazard','location','control','rating'] },
+  { key:'legalItems',    label:'Legal',         icon:'⚖️',  nav:'legal',         fields:['id','requirement','reference','status'] },
+  { key:'capas',         label:'CAPA',          icon:'✅',  nav:'capa',          fields:['id','what','who','status','priority'] },
+  { key:'mocs',          label:'MoC',           icon:'🔄',  nav:'moc',           fields:['id','title','requestor','status'] },
+  { key:'audits',        label:'Audit',         icon:'📊',  nav:'audit',         fields:['id','type','location','status'] },
+  { key:'toolboxTalks',  label:'Toolbox',       icon:'📝',  nav:'toolbox',       fields:['id','topic','facilitator','location'] },
+  { key:'inductions',    label:'Induction',     icon:'🎓',  nav:'inductions',    fields:['id','name','company','type'] },
+  { key:'emergencyContacts', label:'Emergency', icon:'🚑',  nav:'emergency',     fields:['id','name','role','phone'] },
+  { key:'assets',        label:'Asset',         icon:'🔧',  nav:'assets',        fields:['id','name','type','location','status'] },
+];
+
+function openGlobalSearch(){
+  openModal('gsearch-modal');
+  setTimeout(()=>document.getElementById('gsearch-input')?.focus(), 80);
+}
+
+function runGlobalSearch(q){
+  const query=(q||'').trim().toLowerCase();
+  const el=document.getElementById('gsearch-results');
+  if(!query){ el.innerHTML='<p style="text-align:center;color:var(--muted);font-size:13px;padding:var(--sp-2)">Start typing to search…</p>'; return; }
+  const d=getData()||getDefaultData();
+  let hits=[];
+  _SEARCH_MODULES.forEach(mod=>{
+    (d[mod.key]||[]).forEach(rec=>{
+      const match=mod.fields.some(f=>(rec[f]||'').toLowerCase().includes(query));
+      if(match) hits.push({mod, rec});
+    });
+  });
+  if(!hits.length){ el.innerHTML='<p style="text-align:center;color:var(--muted);font-size:13px;padding:var(--sp-2)">No results found.</p>'; return; }
+  // Group by module
+  const groups={};
+  hits.forEach(h=>{ (groups[h.mod.label]=groups[h.mod.label]||{mod:h.mod,items:[]}).items.push(h.rec); });
+  let html='';
+  Object.values(groups).forEach(g=>{
+    html+=`<div style="padding:6px 16px 2px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${g.mod.icon} ${g.mod.label}</div>`;
+    g.items.slice(0,8).forEach(rec=>{
+      const primary=rec.desc||rec.hazard||rec.what||rec.requirement||rec.topic||rec.name||rec.activity||rec.title||'—';
+      const secondary=rec.location||rec.date||rec.status||'';
+      html+=`<div class="gsearch-result-item" onclick="closeModal('gsearch-modal');navigateTo('${g.mod.nav}');" style="padding:8px 16px;cursor:pointer;border-radius:6px;margin:1px 8px;display:flex;align-items:center;gap:10px" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">
+        <span style="font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--card2);color:var(--accent);white-space:nowrap">${escapeHtml(rec.id||'')}</span>
+        <span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(primary)}</span>
+        ${secondary?`<span style="font-size:11px;color:var(--muted);white-space:nowrap">${escapeHtml(secondary)}</span>`:''}
+      </div>`;
+    });
+    if(g.items.length>8) html+=`<p style="font-size:11px;color:var(--muted);padding:2px 16px 6px">+${g.items.length-8} more in ${g.mod.label}</p>`;
+  });
+  html+=`<p style="font-size:11px;color:var(--muted);text-align:center;padding:8px">${hits.length} result${hits.length!==1?'s':''} across ${Object.keys(groups).length} module${Object.keys(groups).length!==1?'s':''}</p>`;
+  el.innerHTML=html;
+}
+
+// Ctrl+K shortcut
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openGlobalSearch(); }
+});
 
 // ============================================================
 // FIRST-RUN ONBOARDING
@@ -5385,6 +5485,14 @@ function validateRequired(fields){
 // ============================================================
 function openModal(id){const el=document.getElementById(id);if(el){el.classList.add('open');el.style.display='flex';}}
 function closeModal(id){const el=document.getElementById(id);if(el){el.classList.remove('open');el.style.display='none';}}
+function printRecord(){
+  const title=document.getElementById('view-modal-title')?.textContent?.replace('✕','').trim()||'Record';
+  document.title=title;
+  document.body.classList.add('printing-record');
+  window.print();
+  document.body.classList.remove('printing-record');
+  document.title='ESG Management Systems - SHEQ';
+}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>{m.classList.remove('open');m.style.display='none';});});
 // Overlay click intentionally disabled — modals must be closed via ✕ or Cancel only.
 
@@ -5459,18 +5567,23 @@ let trendChart,ratioChart,riskChart;
 let dashPeriod='all';
 function setDashPeriod(p){
   dashPeriod=p;
-  document.getElementById('dash-toggle-all').className='btn btn-sm '+(p==='all'?'btn-primary':'btn-ghost');
-  document.getElementById('dash-toggle-30').className='btn btn-sm '+(p==='30'?'btn-primary':'btn-ghost');
+  ['all','30','90','year'].forEach(k=>{
+    const el=document.getElementById('dash-toggle-'+k);
+    if(el) el.className='btn btn-sm '+(p===k?'btn-primary':'btn-ghost');
+  });
   renderDashboard();
 }
 function renderDashboard(){
   const d=getData()||getDefaultData();
   const now=new Date();
 
-  // Period filter — cutoff date for Last 30 Days mode
-  const cutoff=dashPeriod==='30'?new Date(now.getFullYear(),now.getMonth(),now.getDate()-30).toISOString().substring(0,10):null;
+  // Period filter — cutoff date
+  let cutoff=null;
+  if(dashPeriod==='30') cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-30).toISOString().substring(0,10);
+  else if(dashPeriod==='90') cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-90).toISOString().substring(0,10);
+  else if(dashPeriod==='year') cutoff=new Date(now.getFullYear(),0,1).toISOString().substring(0,10);
   const inPeriod=date=>!cutoff||!date||(date>=cutoff);
-  const periodLabel=cutoff?'Last 30 Days':'All Time';
+  const periodLabel=dashPeriod==='30'?'Last 30 Days':dashPeriod==='90'?'Last 90 Days':dashPeriod==='year'?'This Year':'All Time';
 
   // --- Observations ---
   const obsAll=d.observations||[];
