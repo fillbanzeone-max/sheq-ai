@@ -3506,7 +3506,43 @@
       <button class="btn btn-primary btn-sm" id="pwa-install-btn" style="display:none" onclick="installPwa()">📲 Install App on This Device</button>
       <span style="font-size:12px;color:var(--muted);align-self:center" id="pwa-install-hint">If the Install button is not visible, open this app in Chrome / Edge and look for the install icon in the address bar.</span>
     </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:var(--sp-2) 0">
+    <div class="card-title">👥 User Management</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Users appear here after their first login. Assign roles and deactivate accounts. Role changes take effect on the user's next login.</p>
+    <div id="user-mgmt-list" style="margin-bottom:var(--sp-1)"><p style="font-size:13px;color:var(--muted)">Click Refresh to load users.</p></div>
+    <button class="btn btn-ghost btn-sm" onclick="loadUserManagement()">🔄 Refresh Users</button>
     <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal('settings-modal')">Close</button></div>
+  </div>
+</div>
+
+<!-- ONBOARDING MODAL -->
+<div class="modal-overlay" id="onboarding-modal" style="z-index:10000">
+  <div class="modal" style="max-width:460px">
+    <div style="text-align:center;padding:var(--sp-3) var(--sp-3) var(--sp-1)">
+      <div style="font-size:52px;margin-bottom:8px">🛡</div>
+      <h2 style="margin:0 0 6px;font-size:1.4rem">Welcome to ESG Management Systems</h2>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 var(--sp-2)">Quick setup — takes 30 seconds.</p>
+    </div>
+    <div style="padding:0 var(--sp-3) var(--sp-3)">
+      <div class="form-group">
+        <label>Company / Organisation Name <span style="color:var(--red)">*</span></label>
+        <input type="text" id="onboard-company" placeholder="e.g. Acme Mining Ltd" style="font-size:15px">
+      </div>
+      <div class="form-group">
+        <label>SHEQ Team Email <span style="font-weight:400;color:var(--muted)">(receives all notifications)</span></label>
+        <input type="email" id="onboard-email" placeholder="sheq@company.com">
+      </div>
+      <div class="form-group">
+        <label>Your Role</label>
+        <select id="onboard-role">
+          <option value="admin">Admin</option>
+          <option value="sheq_manager">SHEQ Manager</option>
+          <option value="reporter">Reporter</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-top:var(--sp-1);font-size:15px" onclick="completeOnboarding()">🚀 Launch My Workspace</button>
+    </div>
   </div>
 </div>
 
@@ -4235,11 +4271,14 @@ function getCurrentRole(){
   return localStorage.getItem(ROLE_KEY) || 'admin'; // default admin for single-user setup
 }
 
-function setRole(role){
+function setRole(role, persistToFirebase=true){
   if(!ROLES.includes(role)) return;
   localStorage.setItem(ROLE_KEY, role);
   secLog('ROLE_CHANGED', { role, classification:'Internal' });
   _refreshRoleUI();
+  if(persistToFirebase && currentUser){
+    _db.ref(`${USERS_FB_PATH}/${currentUser.uid}/role`).set(role).catch(()=>{});
+  }
 }
 
 function can(permission){
@@ -4417,6 +4456,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const _db = firebase.database();
 const FB_PATH = 'sheqai/data';
+const USERS_FB_PATH = 'sheqai/users';
 const FB_REST = 'https://ctrg-sheq-ai-default-rtdb.firebaseio.com/' + FB_PATH + '.json';
 let _fbConnected = false;
 let _fbReady = false;
@@ -4521,6 +4561,43 @@ function showOverdueBanner(count){
     b.style.display='none';
     sessionStorage.removeItem('sheqai_banner_dismissed');
   }
+}
+
+// ============================================================
+// FIRST-RUN ONBOARDING
+// ============================================================
+function checkFirstRun(d){
+  if(d && d.companySetupDone) return;
+  // Pre-fill role with current role
+  const roleEl = document.getElementById('onboard-role');
+  if(roleEl) roleEl.value = getCurrentRole();
+  const m = document.getElementById('onboarding-modal');
+  if(m){ m.style.display='flex'; m.classList.add('open'); }
+}
+
+function completeOnboarding(){
+  const name = (document.getElementById('onboard-company').value||'').trim();
+  if(!name){ showToast('Company name is required.','warn'); return; }
+  const email = (document.getElementById('onboard-email').value||'').trim();
+  const role  = document.getElementById('onboard-role').value;
+
+  const d = getData()||getDefaultData();
+  d.companyName = name;
+  d.companySetupDone = true;
+  saveData(d);
+
+  // Persist chosen role
+  setRole(role);
+
+  // Pre-populate SHEQ team email in notification settings if provided
+  if(email){
+    const cfg = JSON.parse(localStorage.getItem(NOTIF_KEY)||'{}');
+    if(!cfg.sheqEmails) cfg.sheqEmails = email;
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(cfg));
+  }
+
+  closeModal('onboarding-modal');
+  showToast(`Welcome, ${name}! Your SHEQ workspace is ready.`,'success',5000);
 }
 
 function checkBackupReminder(){
@@ -4893,15 +4970,18 @@ function autoCreateCapa(d, sourceModule, sourceRef, what, who, when, how, priori
   return id;
 }
 
+function _daysSince(dateStr){ return Math.floor((Date.now()-new Date(dateStr))/(1000*60*60*24)); }
+
 function autoMarkOverdue(d) {
   const todayStr = new Date().toISOString().substring(0,10);
   const priorityOrder = ['Low','Medium','High','Critical'];
   let changed = false;
+
+  // ── CAPAs: auto-overdue + priority escalation ────────────
   (d.capas||[]).forEach(c => {
     if(c.status === 'Closed') return;
     if(c.when && c.when < todayStr) {
       c.status = 'Overdue';
-      // Escalation: promote priority based on days overdue
       const daysLate = Math.floor((new Date(todayStr) - new Date(c.when)) / (1000*60*60*24));
       const curIdx = priorityOrder.indexOf(c.priority||'Medium');
       let newIdx = curIdx;
@@ -4909,21 +4989,63 @@ function autoMarkOverdue(d) {
       else if(daysLate >= 7 && curIdx < 3) newIdx = Math.min(curIdx + 1, 3);
       if(newIdx > curIdx){
         c.priority = priorityOrder[newIdx];
-        // Send escalation email once per day per CAPA
         if(!c._escalatedAt || c._escalatedAt < todayStr){
           c._escalatedAt = todayStr;
           c._escalationNote = `Priority auto-escalated to ${c.priority} — ${daysLate} days overdue.`;
-          sendNotificationEmail(
-            '⚡ CAPA Escalation Alert',
-            {id:c.id, date:c.when, location:'', desc:c.what, priority:c.priority},
-            c.who,
-            `CAPA ${c.id} is ${daysLate} days overdue. Priority has been auto-escalated to ${c.priority}. Immediate action required.`
-          );
+          sendNotificationEmail('⚡ CAPA Escalation Alert',
+            {id:c.id, date:c.when, location:'', desc:c.what, priority:c.priority}, c.who,
+            `CAPA ${c.id} is ${daysLate} days overdue. Priority auto-escalated to ${c.priority}. Immediate action required.`);
         }
       }
       changed = true;
     }
   });
+
+  // ── Near Misses: overdue if open > 7 days ────────────────
+  (d.nearMisses||[]).forEach(nm => {
+    if(nm.status==='Closed'||nm.status==='Overdue') return;
+    if(nm.date && _daysSince(nm.date) > 7){
+      nm.status = 'Overdue';
+      changed = true;
+      if(!nm._overdueNotifiedAt || nm._overdueNotifiedAt < todayStr){
+        nm._overdueNotifiedAt = todayStr;
+        sendNotificationEmail('⚠️ Near Miss — Overdue',
+          {id:nm.id, date:nm.date, location:nm.location, desc:nm.desc, priority:'High'}, nm.reporter,
+          `Near Miss ${nm.id} has been open for more than 7 days without closure. Immediate follow-up required.`);
+      }
+    }
+  });
+
+  // ── Incidents: overdue if open > 14 days ─────────────────
+  (d.incidents||[]).forEach(inc => {
+    if(inc.status==='Closed'||inc.status==='Overdue') return;
+    if(inc.date && _daysSince(inc.date) > 14){
+      inc.status = 'Overdue';
+      changed = true;
+      if(!inc._overdueNotifiedAt || inc._overdueNotifiedAt < todayStr){
+        inc._overdueNotifiedAt = todayStr;
+        sendNotificationEmail('🚨 Incident — Overdue',
+          {id:inc.id, date:inc.date, location:inc.location, desc:inc.desc, priority:'Critical'}, inc.person,
+          `Incident ${inc.id} has been open for more than 14 days without closure. Regulatory reporting obligations may apply.`);
+      }
+    }
+  });
+
+  // ── Permits: email on expiry (once per day per PTW) ──────
+  (d.permits||[]).forEach(p => {
+    if(p.status==='CLOSED'||p.status==='SUSPENDED'||p.status==='EXPIRED') return;
+    if(p.to && p.to < new Date().toISOString()){
+      p.status = 'EXPIRED';
+      changed = true;
+      if(!p._expiredNotifiedAt || p._expiredNotifiedAt < todayStr){
+        p._expiredNotifiedAt = todayStr;
+        sendNotificationEmail('📋 Permit to Work — Expired',
+          {id:p.id, date:p.to, location:p.location, desc:p.activity, priority:'High'}, p.requestor,
+          `PTW ${p.id} has expired and requires immediate review, extension or closure.`);
+      }
+    }
+  });
+
   if(changed) saveData(d);
 }
 
@@ -8499,6 +8621,60 @@ function gdprSubmitDsar(){
   document.getElementById('gdpr-dsar-subject').value='';
   document.getElementById('gdpr-dsar-notes').value='';
 }
+// ============================================================
+// USER ACCOUNT MANAGEMENT
+// ============================================================
+async function loadUserManagement(){
+  if(!can('admin_settings')){ document.getElementById('user-mgmt-list').innerHTML='<p style="color:var(--muted);font-size:13px">Admin access required.</p>'; return; }
+  document.getElementById('user-mgmt-list').innerHTML='<p style="color:var(--muted);font-size:13px">Loading…</p>';
+  try{
+    const snap = await _db.ref(USERS_FB_PATH).once('value');
+    const users = snap.val()||{};
+    const roleLabels = {admin:'Admin',sheq_manager:'SHEQ Manager',privacy_officer:'Privacy Officer',reporter:'Reporter',viewer:'Viewer'};
+    if(!Object.keys(users).length){
+      document.getElementById('user-mgmt-list').innerHTML='<p style="color:var(--muted);font-size:13px">No users found. Users appear here after their first login.</p>';
+      return;
+    }
+    let rows='';
+    Object.entries(users).forEach(([uid,u])=>{
+      const isMe = currentUser?.uid===uid;
+      const active = u.active!==false;
+      const roleOpts = Object.keys(roleLabels).map(r=>`<option value="${r}"${r===u.role?' selected':''}>${roleLabels[r]}</option>`).join('');
+      rows+=`<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:7px 8px;font-size:13px">${u.email||'—'}${isMe?' <span style="font-size:10px;color:var(--accent);font-weight:600">(you)</span>':''}</td>
+        <td style="padding:7px 8px"><select style="font-size:12px;padding:2px 6px" onchange="saveUserRole('${uid}',this.value)"${isMe?' disabled':''}>${roleOpts}</select></td>
+        <td style="padding:7px 8px;font-size:11px;color:var(--muted)">${u.lastLogin?new Date(u.lastLogin).toLocaleDateString('en-GB'):'-'}</td>
+        <td style="padding:7px 8px"><span style="font-size:11px;font-weight:600;color:${active?'var(--green)':'var(--red)'}">${active?'Active':'Inactive'}</span></td>
+        <td style="padding:7px 8px">${!isMe?`<button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="toggleUserActive('${uid}',${active})">${active?'Deactivate':'Activate'}</button>`:''}</td>
+      </tr>`;
+    });
+    document.getElementById('user-mgmt-list').innerHTML=`
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:var(--card2);font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">
+          <th style="padding:6px 8px;text-align:left;font-weight:600">Email</th>
+          <th style="padding:6px 8px;text-align:left;font-weight:600">Role</th>
+          <th style="padding:6px 8px;text-align:left;font-weight:600">Last Login</th>
+          <th style="padding:6px 8px;text-align:left;font-weight:600">Status</th>
+          <th style="padding:6px 8px"></th>
+        </tr></thead><tbody>${rows}</tbody>
+      </table>`;
+  }catch(e){ document.getElementById('user-mgmt-list').innerHTML='<p style="color:var(--red);font-size:13px">Failed to load users.</p>'; }
+}
+
+async function saveUserRole(uid, role){
+  if(!can('admin_settings')) return;
+  await _db.ref(`${USERS_FB_PATH}/${uid}/role`).set(role).catch(()=>{});
+  showToast('Role updated.','success',2500);
+}
+
+async function toggleUserActive(uid, currentlyActive){
+  if(!can('admin_settings')) return;
+  if(currentlyActive && !confirm('Deactivate this user? They will be signed out on their next login.')) return;
+  await _db.ref(`${USERS_FB_PATH}/${uid}/active`).set(!currentlyActive).catch(()=>{});
+  showToast(currentlyActive?'User deactivated.':'User activated.','success',2500);
+  loadUserManagement();
+}
+
 // API-13: Per-module JSON schema validators
 const _IMPORT_SCHEMA = {
   observations:      r => typeof r.id==='string' && typeof r.date==='string' && typeof r.desc==='string',
@@ -8715,6 +8891,41 @@ window.addEventListener('DOMContentLoaded',()=>{
 
     // Backup reminder (once per session)
     checkBackupReminder();
+
+    // User account management — read role + check active status from Firebase
+    _db.ref(`${USERS_FB_PATH}/${user.uid}`).once('value').then(snap=>{
+      const rec = snap.val();
+      if(rec){
+        if(rec.active===false){
+          firebase.auth().signOut();
+          showToast('Your account has been deactivated. Contact your administrator.','error',9000);
+          return;
+        }
+        if(rec.role && ROLES.includes(rec.role)) setRole(rec.role, false);
+      } else {
+        // First login for this user — determine default role
+        _db.ref(USERS_FB_PATH).once('value').then(allSnap=>{
+          const isFirst = !allSnap.val() || Object.keys(allSnap.val()).length===0;
+          const defaultRole = isFirst ? 'admin' : 'reporter';
+          setRole(defaultRole, false);
+          _db.ref(`${USERS_FB_PATH}/${user.uid}`).set({
+            email: user.email||'',
+            role: defaultRole,
+            active: true,
+            joinedAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          }).catch(()=>{});
+          // Show onboarding only for the very first user
+          if(isFirst){ const dNow=getData()||getDefaultData(); checkFirstRun(dNow); }
+        });
+        return;
+      }
+      // Update lastLogin timestamp
+      _db.ref(`${USERS_FB_PATH}/${user.uid}/lastLogin`).set(new Date().toISOString()).catch(()=>{});
+    }).catch(()=>{});
+
+    // First-run onboarding check (for existing data without companySetupDone)
+    if(d && !d.companySetupDone) checkFirstRun(d);
 
     if(_firebaseListenersStarted)return;
     _firebaseListenersStarted=true;
