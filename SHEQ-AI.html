@@ -5389,7 +5389,7 @@ function renderDashboard(){
   const capaOverdue=capas.filter(c=>c.status==='Overdue').length;
   const capaClosed=capas.filter(c=>c.status==='Closed').length;
 
-  // Pre-compute Toolbox & Induction stats for KPI cards
+  // Pre-compute stats needed by KPI cards (must be before innerHTML assignment)
   const _tbt=(d.toolboxTalks||[]).filter(t=>inPeriod(t.date));
   const _tbtCompleted=_tbt.filter(t=>t.status==='Completed').length;
   const _tbtPlanned=_tbt.filter(t=>t.status==='Planned').length;
@@ -5397,6 +5397,10 @@ function renderDashboard(){
   const _indValid=_ind.filter(i=>i.status==='Valid').length;
   const _indExpiring=_ind.filter(i=>i.status==='Expiring Soon').length;
   const _indExpired=_ind.filter(i=>i.status==='Expired').length;
+  const _mocs=(d.mocs||[]).filter(m=>inPeriod(m.date));
+  const _mocOpen=_mocs.filter(m=>!['Completed','Rejected','Cancelled'].includes(m.status)).length;
+  const _mocPending=_mocs.filter(m=>m.status==='Pending Approval').length;
+  const _mocCompleted=_mocs.filter(m=>m.status==='Completed').length;
 
   document.getElementById('dash-kpi-row').innerHTML=`
     <div class="kpi-card" style="--kpi-color:var(--accent)" onclick="navigateTo('observations')" title="Go to Job Observations">
@@ -5480,14 +5484,14 @@ function renderDashboard(){
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:${mocPending>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('moc')" title="Go to Management of Change">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,${mocPending>0?'#f59e0b,#d97706':'#2563eb,#7c3aed'})"></div>
+    <div class="kpi-card" style="--kpi-color:${_mocPending>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('moc')" title="Go to Management of Change">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,${_mocPending>0?'#f59e0b,#d97706':'#2563eb,#7c3aed'})"></div>
       <div class="kpi-label">Mgmt of Change</div>
-      <div class="kpi-value">${mocs.length}</div>
+      <div class="kpi-value">${_mocs.length}</div>
       <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">Open: ${mocOpen}</span>
-        <span class="kpib kpib-yellow">Pending: ${mocPending}</span>
-        <span class="kpib kpib-green">Done: ${mocCompleted}</span>
+        <span class="kpib kpib-orange">Open: ${_mocOpen}</span>
+        <span class="kpib kpib-yellow">Pending: ${_mocPending}</span>
+        <span class="kpib kpib-green">Done: ${_mocCompleted}</span>
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
