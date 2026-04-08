@@ -8,6 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -8532,9 +8533,6 @@ function lookupSupervisorEmail(personName){
 async function sendNotificationEmail(moduleName, rec, reporter, extraDetails){
   try{
     const cfg=JSON.parse(localStorage.getItem(NOTIF_KEY)||'{}');
-    if(!cfg.pubkey||!cfg.service||!cfg.template) return; // not configured
-    emailjs.init(cfg.pubkey);
-
     const supervisorEmail = lookupSupervisorEmail(reporter);
     const sheqEmails = (cfg.sheqEmails||'').split(',').map(e=>e.trim()).filter(Boolean);
     const toList = [...new Set([supervisorEmail,...sheqEmails].filter(Boolean))];
@@ -8555,20 +8553,31 @@ async function sendNotificationEmail(moduleName, rec, reporter, extraDetails){
         <tr style="background:#f8fafc"><td colspan="2" style="padding:8px 18px;font-size:11px;color:#666">Logged by ${currentUser?.email||'System'} on ${new Date().toLocaleString()}. This is an automated notification from ESG Management Systems - SHEQ.</td></tr>
       </table>`;
 
-    for(const toEmail of toList){
-      await emailjs.send(cfg.service, cfg.template, {
-        to_email:   toEmail,
-        subject,
-        module:     moduleName,
-        record_id:  rec.id,
-        reporter:   reporter||'—',
-        date:       rec.date||rec.from||today(),
-        location:   rec.location||'—',
-        description:rec.desc||rec.hazard||rec.activity||'—',
-        priority:   rec.priority||sevLabel[rec.sev]||'—',
-        logged_by:  currentUser?.email||'System',
-        message_html: msgHtml
-      });
+    // Prefer Cloud Function (server-side, no exposed keys); fall back to EmailJS
+    const _fnSend = async () => {
+      const sendEmailFn = firebase.functions().httpsCallable('sendEmail');
+      await sendEmailFn({ to: toList, subject, html: msgHtml });
+    };
+    const _emailjsSend = async () => {
+      if(!cfg.pubkey||!cfg.service||!cfg.template) return;
+      emailjs.init(cfg.pubkey);
+      for(const toEmail of toList){
+        await emailjs.send(cfg.service, cfg.template, {
+          to_email: toEmail, subject, module: moduleName, record_id: rec.id,
+          reporter: reporter||'—', date: rec.date||rec.from||today(),
+          location: rec.location||'—', description: rec.desc||rec.hazard||rec.activity||'—',
+          priority: rec.priority||sevLabel[rec.sev]||'—',
+          logged_by: currentUser?.email||'System', message_html: msgHtml
+        });
+      }
+    };
+
+    try {
+      await _fnSend();  // try Cloud Function first
+    } catch(cfErr) {
+      // Cloud Function not deployed yet — fall back to EmailJS
+      if(cfg.pubkey && cfg.service && cfg.template) await _emailjsSend();
+      else console.warn('Email: Cloud Function unavailable and EmailJS not configured.', cfErr?.message);
     }
   }catch(e){
     console.warn('SHEQ-AI email notification failed:',e?.text||e?.message||e);
