@@ -2678,12 +2678,14 @@
     <li class="nav-section-label" data-pillar="social" style="color:rgba(96,165,250,.75)">🤝 Social<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item" style="position:relative"><div class="nav-link" data-page="training"><span class="nav-icon">🎓</span><span class="nav-label">Training Register</span></div><span id="training-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
     <li class="nav-item"><div class="nav-link" data-page="dei"><span class="nav-icon">🌈</span><span class="nav-label">DEI Metrics</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="wellness"><span class="nav-icon">🏥</span><span class="nav-label">Wellness &amp; Absenteeism</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="workforce"><span class="nav-icon">👥</span><span class="nav-label">Workforce Metrics</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="stakeholder"><span class="nav-icon">🤝</span><span class="nav-label">Stakeholder Engagement</span></div></li>
 
     <li class="nav-section-label" data-pillar="governance" style="color:rgba(167,139,250,.75)">🏛️ Governance<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">🎯</span><span class="nav-label">Risk Register</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div></li>
+    <li class="nav-item" style="position:relative"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div><span id="legal-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
+    <li class="nav-item"><div class="nav-link" data-page="suppliers"><span class="nav-icon">🏭</span><span class="nav-label">Supplier Scorecard</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="esg-board"><span class="nav-icon">📊</span><span class="nav-label">ESG Board Dashboard</span></div></li>
 
     <li class="nav-section-label" data-pillar="reports">📁 Reports<span class="pillar-chevron nav-label">▾</span></li>
@@ -2725,8 +2727,10 @@
   <div class="mobile-nav-item" data-page="waste"><span class="nav-icon">♻️</span>Waste</div>
   <div class="mobile-nav-item" data-page="training"><span class="nav-icon">🎓</span>Train</div>
   <div class="mobile-nav-item" data-page="dei"><span class="nav-icon">🌈</span>DEI</div>
+  <div class="mobile-nav-item" data-page="wellness"><span class="nav-icon">🏥</span>Well</div>
   <div class="mobile-nav-item" data-page="workforce"><span class="nav-icon">👥</span>WF</div>
   <div class="mobile-nav-item" data-page="stakeholder"><span class="nav-icon">🤝</span>Stk</div>
+  <div class="mobile-nav-item" data-page="suppliers"><span class="nav-icon">🏭</span>Sup</div>
   <div class="mobile-nav-item" data-page="esg-board"><span class="nav-icon">📊</span>ESG</div>
 </div>
 
@@ -3066,25 +3070,96 @@
 <!-- ======= GHG TRACKER ======= -->
 <div id="page-ghg" class="page">
   <div class="section-header">
-    <span class="section-title">🌱 GHG Emissions Tracker</span>
+    <span class="section-title">🌱 GHG &amp; Energy Tracker</span>
     <div class="section-header-right">
-      <button class="btn btn-ghost btn-sm" onclick="exportCSV('ghg')">⬇ CSV</button>
-      <button class="btn btn-primary" onclick="document.getElementById('ghg-f-edit-id').value='';document.getElementById('ghg-f-tco2e').value='';openModal('ghg-modal')">+ Log Emission</button>
+      <button class="btn btn-ghost btn-sm" id="ghg-export-btn" onclick="exportCSV('ghg')">⬇ CSV</button>
+      <button class="btn btn-primary" id="ghg-add-btn" onclick="document.getElementById('ghg-f-edit-id').value='';document.getElementById('ghg-f-tco2e').value='';openModal('ghg-modal')">+ Log Emission</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:4px;margin-bottom:var(--sp-2)">
+    <button id="ghg-tab-emissions" class="btn btn-primary btn-sm" onclick="switchGhgTab('emissions')">📊 Emissions</button>
+    <button id="ghg-tab-energy" class="btn btn-ghost btn-sm" onclick="switchGhgTab('energy')">⚡ Energy</button>
+  </div>
+  <!-- Emissions tab -->
+  <div id="ghg-panel-emissions">
+    <div class="toolbar">
+      <input type="text" id="ghg-search" placeholder="Search GHG entries…">
+      <select id="ghg-filter-scope"><option value="">All Scopes</option><option value="Scope 1">Scope 1</option><option value="Scope 2">Scope 2</option><option value="Scope 3">Scope 3</option></select>
+      <select id="ghg-filter-source"><option value="">All Sources</option><option value="Diesel">Diesel</option><option value="Petrol">Petrol</option><option value="Electricity">Electricity</option><option value="Travel">Travel</option><option value="Natural Gas">Natural Gas</option><option value="Other">Other</option></select>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ref</th><th>Date</th><th>Scope</th><th>Source</th><th>Quantity</th><th>Unit</th><th>tCO₂e</th><th>Notes</th><th>Actions</th></tr></thead>
+          <tbody id="ghg-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="ghg-pagination"></div>
+    </div>
+  </div>
+  <!-- Energy tab -->
+  <div id="ghg-panel-energy" style="display:none">
+    <div class="toolbar">
+      <input type="text" id="ene-search" placeholder="Search energy log…">
+      <select id="ene-filter-type"><option value="">All Types</option><option value="Electricity">Electricity</option><option value="Diesel">Diesel</option><option value="Petrol">Petrol</option><option value="Natural Gas">Natural Gas</option><option value="LPG">LPG</option><option value="Solar">Solar</option></select>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ref</th><th>Date</th><th>Type</th><th>Quantity</th><th>Unit</th><th>Cost (MZN)</th><th>Supplier</th><th>Meter</th><th>tCO₂e</th><th>Actions</th></tr></thead>
+          <tbody id="ene-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="ene-pagination"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= WELLNESS & ABSENTEEISM ======= -->
+<div id="page-wellness" class="page">
+  <div class="section-header">
+    <span class="section-title">🏥 Wellness &amp; Absenteeism Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('wellness')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('wel-f-edit-id').value='';openModal('wellness-modal')">+ Log Absence</button>
     </div>
   </div>
   <div class="toolbar">
-    <input type="text" id="ghg-search" placeholder="Search GHG entries…">
-    <select id="ghg-filter-scope"><option value="">All Scopes</option><option value="Scope 1">Scope 1</option><option value="Scope 2">Scope 2</option><option value="Scope 3">Scope 3</option></select>
-    <select id="ghg-filter-source"><option value="">All Sources</option><option value="Diesel">Diesel</option><option value="Petrol">Petrol</option><option value="Electricity">Electricity</option><option value="Travel">Travel</option><option value="Natural Gas">Natural Gas</option><option value="Other">Other</option></select>
+    <input type="text" id="wel-search" placeholder="Search absences…">
+    <select id="wel-filter-reason"><option value="">All Reasons</option><option value="Sick">Sick</option><option value="Injury">Injury</option><option value="Personal">Personal</option><option value="Family">Family</option><option value="Other">Other</option></select>
   </div>
   <div class="card">
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Ref</th><th>Date</th><th>Scope</th><th>Source</th><th>Quantity</th><th>Unit</th><th>tCO₂e</th><th>Notes</th><th>Actions</th></tr></thead>
-        <tbody id="ghg-tbody"></tbody>
+        <thead><tr><th>Ref</th><th>Date</th><th>Employee</th><th>ID</th><th>Reason</th><th>Days Lost</th><th>Return Date</th><th>Notes</th><th>Actions</th></tr></thead>
+        <tbody id="wel-tbody"></tbody>
       </table>
     </div>
-    <div class="pagination" id="ghg-pagination"></div>
+    <div class="pagination" id="wel-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= SUPPLIER SCORECARD ======= -->
+<div id="page-suppliers" class="page">
+  <div class="section-header">
+    <span class="section-title">🏭 Supplier Safety Scorecard</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('suppliers')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('sup-f-edit-id').value='';openModal('supplier-modal')">+ Add Supplier</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="sup-search" placeholder="Search suppliers…">
+    <select id="sup-filter-standing"><option value="">All Standing</option><option value="Approved">Approved</option><option value="Conditional">Conditional</option><option value="Suspended">Suspended</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Supplier</th><th>Service Type</th><th>Contact</th><th>Last Audit</th><th>Safety Score</th><th>Insurance Expiry</th><th>Standing</th><th>Warnings</th><th>Actions</th></tr></thead>
+        <tbody id="sup-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="sup-pagination"></div>
   </div>
 </div>
 
@@ -3173,6 +3248,7 @@
   <div class="section-header">
     <span class="section-title">📊 ESG Board Dashboard</span>
     <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="renderEsgAnnualReport()">📄 Annual Report</button>
       <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Export PDF</button>
     </div>
   </div>
@@ -4263,6 +4339,94 @@
   </div>
 </div>
 
+<!-- ENERGY MODAL -->
+<div class="modal-overlay" id="energy-modal">
+  <div class="modal">
+    <div class="modal-title">Energy Consumption Entry <button class="modal-close" onclick="closeModal('energy-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="ene-f-date"></div>
+      <div class="form-group"><label>Energy Type</label>
+        <select id="ene-f-type"><option value="Electricity">Electricity</option><option value="Diesel">Diesel</option><option value="Petrol">Petrol</option><option value="Natural Gas">Natural Gas</option><option value="LPG">LPG</option><option value="Solar">Solar</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Quantity</label><input type="number" id="ene-f-qty" placeholder="0" min="0" step="0.01"></div>
+      <div class="form-group"><label>Unit</label>
+        <select id="ene-f-unit"><option value="kWh">kWh</option><option value="L">L</option><option value="m³">m³</option><option value="kg">kg</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Cost (MZN)</label><input type="number" id="ene-f-cost" placeholder="0.00" min="0" step="0.01"></div>
+      <div class="form-group"><label>Supplier / Utility</label><input type="text" id="ene-f-supplier" placeholder="e.g. EDM, Puma Energy"></div>
+    </div>
+    <div class="form-group"><label>Meter Reading</label><input type="text" id="ene-f-meter" placeholder="e.g. 04521"></div>
+    <div class="form-group"><label>Notes</label><textarea id="ene-f-notes" placeholder="Additional context…"></textarea></div>
+    <input type="hidden" id="ene-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('energy-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEnergy()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- WELLNESS MODAL -->
+<div class="modal-overlay" id="wellness-modal">
+  <div class="modal">
+    <div class="modal-title">Absence / Wellness Entry <button class="modal-close" onclick="closeModal('wellness-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date of Absence</label><input type="date" id="wel-f-date"></div>
+      <div class="form-group"><label>Reason</label>
+        <select id="wel-f-reason"><option value="Sick">Sick</option><option value="Injury">Injury</option><option value="Personal">Personal</option><option value="Family">Family</option><option value="Other">Other</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Employee Name</label><input type="text" id="wel-f-name" placeholder="Full name"></div>
+      <div class="form-group"><label>Employee ID</label><input type="text" id="wel-f-empid" placeholder="e.g. EMP-021"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Days Lost</label><input type="number" id="wel-f-days" placeholder="0" min="0.5" step="0.5"></div>
+      <div class="form-group"><label>Return Date</label><input type="date" id="wel-f-return"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="wel-f-notes" placeholder="Medical certificate ref, context…"></textarea></div>
+    <input type="hidden" id="wel-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('wellness-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWellness()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPPLIER MODAL -->
+<div class="modal-overlay" id="supplier-modal">
+  <div class="modal">
+    <div class="modal-title">Supplier Safety Record <button class="modal-close" onclick="closeModal('supplier-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Supplier Name</label><input type="text" id="sup-f-name" placeholder="Company name"></div>
+      <div class="form-group"><label>Service Type</label><input type="text" id="sup-f-service" placeholder="e.g. Civil Construction"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contact Name</label><input type="text" id="sup-f-contact" placeholder="Primary contact"></div>
+      <div class="form-group"><label>Contact Email</label><input type="email" id="sup-f-email" placeholder="email@supplier.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Last Audit Date</label><input type="date" id="sup-f-audit"></div>
+      <div class="form-group"><label>Safety Score (0–100)</label><input type="number" id="sup-f-score" placeholder="0" min="0" max="100"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Insurance Expiry</label><input type="date" id="sup-f-insurance"></div>
+      <div class="form-group"><label>Standing</label>
+        <select id="sup-f-standing"><option value="Approved">Approved</option><option value="Conditional">Conditional</option><option value="Suspended">Suspended</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="sup-f-notes" placeholder="Pre-qualification notes, conditions, actions required…"></textarea></div>
+    <input type="hidden" id="sup-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('supplier-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSupplier()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- GHG MODAL -->
 <div class="modal-overlay" id="ghg-modal">
   <div class="modal">
@@ -5247,6 +5411,9 @@ const _SEARCH_MODULES = [
   { key:'waterReg',      label:'Water',         icon:'💧',  nav:'water',         fields:['id','source','volume_kl','location','meter_reading','notes'] },
   { key:'trainingReg',   label:'Training',      icon:'🎓',  nav:'training',      fields:['id','employee_name','employee_id','training_type','provider','certificate_no','status'] },
   { key:'deiMetrics',    label:'DEI Record',    icon:'🌈',  nav:'dei',           fields:['id','department','gender','role_level','age_group'] },
+  { key:'wellness',      label:'Wellness',      icon:'🏥',  nav:'wellness',      fields:['id','employee_name','employee_id','reason','days_lost','return_date'] },
+  { key:'suppliers',     label:'Supplier',      icon:'🏭',  nav:'suppliers',     fields:['id','supplier_name','service_type','contact_name','standing'] },
+  { key:'energyLog',     label:'Energy',        icon:'⚡',  nav:'ghg',           fields:['id','type','quantity','unit','supplier','meter_reading'] },
 ];
 
 function openGlobalSearch(){
@@ -5605,6 +5772,28 @@ function getDefaultData() {
         answers:{'HK-1':{result:'Pass',notes:''},'HK-2':{result:'Fail',notes:'Work bench surfaces cluttered with returned stock.'},'HK-3':{result:'Pass',notes:''},'HK-4':{result:'Fail',notes:'Two bins overflowing on south side.'},'HK-5':{result:'Pass',notes:''},'HK-6':{result:'Pass',notes:''},'HK-7':{result:'Fail',notes:'Drinking water cooler empty — not restocked.'},'HK-8':{result:'Pass',notes:''},'HK-9':{result:'Pass',notes:''},'HK-10':{result:'Pass',notes:''},'HK-11':{result:'Pass',notes:''}}},
       {id:'AUD-2026-003',template:'PTW Compliance',title:'PTW Compliance Spot-Check — March 2026',auditor:'João Machava',date:'2026-03-17',location:'All Areas',status:'Complete',score:91,passes:10,fails:1,critFails:0,capaRefs:[],notes:'Strong compliance overall. Permit archiving process to be improved.',
         answers:{'PT-1':{result:'Pass',notes:''},'PT-2':{result:'Pass',notes:''},'PT-3':{result:'Pass',notes:''},'PT-4':{result:'Pass',notes:''},'PT-5':{result:'Pass',notes:''},'PT-6':{result:'Pass',notes:''},'PT-7':{result:'Pass',notes:''},'PT-8':{result:'Pass',notes:''},'PT-9':{result:'Fail',notes:'2 expired permits not formally closed in register.'},'PT-10':{result:'Pass',notes:''},'PT-11':{result:'Pass',notes:''}}}
+    ],
+    wellness: [
+      {id:'WEL-001',date:'2026-01-08',employee_name:'Fatima Mondlane',employee_id:'EMP-017',reason:'Sick',days_lost:3,return_date:'2026-01-13',notes:'Flu — GP certificate provided'},
+      {id:'WEL-002',date:'2026-02-03',employee_name:'Carlos Nhantumbo',employee_id:'EMP-008',reason:'Injury',days_lost:5,return_date:'2026-02-10',notes:'Sprained ankle — non-work-related'},
+      {id:'WEL-003',date:'2026-02-17',employee_name:'Ana Sitoe',employee_id:'EMP-033',reason:'Family',days_lost:2,return_date:'2026-02-20',notes:'Family bereavement'},
+      {id:'WEL-004',date:'2026-03-04',employee_name:'João Machava',employee_id:'EMP-021',reason:'Sick',days_lost:1,return_date:'2026-03-05',notes:'Medical appointment'},
+      {id:'WEL-005',date:'2026-03-10',employee_name:'Paulo Chissano',employee_id:'EMP-041',reason:'Injury',days_lost:14,return_date:'2026-03-28',notes:'Scaffold fall (LTI — see INC-003) — physio clearance required'}
+    ],
+    suppliers: [
+      {id:'SUP-001',supplier_name:'EcoWaste Solutions Lda',service_type:'Hazardous Waste Disposal',contact_name:'Manuel Sitoe',contact_email:'m.sitoe@ecowaste.co.mz',last_audit_date:'2026-02-15',safety_score:82,insurance_expiry:'2026-12-31',standing:'Approved',notes:'Annual pre-qualification passed. Next audit due Feb 2027.'},
+      {id:'SUP-002',supplier_name:'Mboane Construção',service_type:'Civil Construction',contact_name:'Abilio Mboane',contact_email:'abilio@mboane.co.mz',last_audit_date:'2026-03-01',safety_score:72,insurance_expiry:'2026-09-30',standing:'Conditional',notes:'Score improved from 65. Safety induction required before next site mobilisation.'},
+      {id:'SUP-003',supplier_name:'TechRecycle Moz',service_type:'E-Waste Recycling',contact_name:'Sara Guambe',contact_email:'sara@techrecycle.mz',last_audit_date:'2025-11-10',safety_score:55,insurance_expiry:'2026-04-15',standing:'Conditional',notes:'Low safety score — must submit improvement plan within 30 days.'},
+      {id:'SUP-004',supplier_name:'PowerGen Services',service_type:'Generator Maintenance',contact_name:'Rui Ferreira',contact_email:'rui@powergen.co.mz',last_audit_date:'2026-01-20',safety_score:90,insurance_expiry:'2026-11-30',standing:'Approved',notes:'Excellent safety record. Preferred supplier status.'},
+      {id:'SUP-005',supplier_name:'Limpeza Total',service_type:'Cleaning & Facilities',contact_name:'Alice Cossa',contact_email:'alice@limpezatotal.mz',last_audit_date:'2025-06-15',safety_score:48,insurance_expiry:'2025-12-31',standing:'Suspended',notes:'Insurance expired — access suspended until renewal confirmed.'}
+    ],
+    energyLog: [
+      {id:'ENE-001',date:'2026-01-31',type:'Electricity',quantity:12400,unit:'kWh',cost_zar:18600,supplier:'EDM — Electricidade de Moçambique',meter_reading:'04521',notes:'Main plant — January'},
+      {id:'ENE-002',date:'2026-01-31',type:'Diesel',quantity:850,unit:'L',cost_zar:17000,supplier:'Puma Energy',meter_reading:'',notes:'Generator fuel — January'},
+      {id:'ENE-003',date:'2026-02-28',type:'Electricity',quantity:11800,unit:'kWh',cost_zar:17700,supplier:'EDM — Electricidade de Moçambique',meter_reading:'04706',notes:'Main plant — February'},
+      {id:'ENE-004',date:'2026-02-28',type:'Diesel',quantity:920,unit:'L',cost_zar:18400,supplier:'Puma Energy',meter_reading:'',notes:'Generator fuel — February'},
+      {id:'ENE-005',date:'2026-03-31',type:'Electricity',quantity:13200,unit:'kWh',cost_zar:19800,supplier:'EDM — Electricidade de Moçambique',meter_reading:'04907',notes:'Main plant — March (higher — extended ops)'},
+      {id:'ENE-006',date:'2026-03-31',type:'Diesel',quantity:340,unit:'L',cost_zar:6800,supplier:'Puma Energy',meter_reading:'',notes:'Light vehicles — March'}
     ],
     ghgEntries: [
       {id:'GHG-001',date:'2026-01-15',scope:'Scope 1',source:'Diesel',quantity:850,unit:'litres',tCO2e:2.278,notes:'Generator fuel — January'},
@@ -6210,7 +6399,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -6252,6 +6441,8 @@ function navigateTo(page){
   else if(page==='training'){renderTraining();checkTrainingBadge();}
   else if(page==='dei')renderDei();
   else if(page==='esg-board')renderEsgBoard();
+  else if(page==='wellness')renderWellness();
+  else if(page==='suppliers')renderSuppliers();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>{ if(l.closest('.nav-link')?.style.cursor==='default') return; navigateTo(l.dataset.page); }));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -6430,6 +6621,20 @@ function renderDashboard(){
   const _seComplaints=_seAll.filter(r=>r.type==='Complaint'||r.type==='Grievance').length;
   const _seClosed=_seAll.filter(r=>r.status==='Closed').length;
 
+  // --- Wellness ---
+  const _wellMo=(d.wellness||[]).filter(r=>inPeriod(r.date));
+  const _wellDays=_wellMo.reduce((s,r)=>s+(parseFloat(r.days_lost)||0),0);
+  const _wellCount=_wellMo.length;
+
+  // --- Suppliers ---
+  const _suppAll=d.suppliers||[];
+  const _suppWarn=_suppAll.filter(s=>{
+    const insuranceExpired=s.insurance_expiry&&new Date(s.insurance_expiry)<new Date();
+    const lowScore=(s.safety_score||0)<60;
+    return insuranceExpired||lowScore;
+  }).length;
+  const _suppApproved=_suppAll.filter(s=>s.standing==='Approved').length;
+
   document.getElementById('dash-kpi-row').innerHTML=`
     <div class="kpi-card" style="--kpi-color:var(--accent)" onclick="navigateTo('observations')" title="Go to Job Observations">
       <div class="kpi-label">Observations</div>
@@ -6596,6 +6801,26 @@ function renderDashboard(){
         <span class="kpib kpib-orange">Open: ${_seOpen}</span>
         <span class="kpib ${_seComplaints>0?'kpib-red':'kpib-gray'}">Complaints: ${_seComplaints}</span>
         <span class="kpib kpib-green">Closed: ${_seClosed}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_wellDays>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('wellness')" title="Go to Wellness & Absenteeism">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div>
+      <div class="kpi-label">Wellness</div>
+      <div class="kpi-value">${_wellDays}</div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">days lost</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-orange">${_wellCount} absences</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_suppWarn>0?'var(--red)':'var(--green)'}" onclick="navigateTo('suppliers')" title="Go to Supplier Scorecard">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#b45309,#fbbf24)"></div>
+      <div class="kpi-label">Suppliers</div>
+      <div class="kpi-value">${_suppAll.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">Approved: ${_suppApproved}</span>
+        <span class="kpib ${_suppWarn>0?'kpib-red':'kpib-gray'}">Warnings: ${_suppWarn}</span>
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
@@ -7762,6 +7987,398 @@ document.getElementById('se-search').addEventListener('input',()=>renderStakehol
 document.getElementById('se-filter-cat').addEventListener('change',()=>renderStakeholder(1));
 document.getElementById('se-filter-type').addEventListener('change',()=>renderStakeholder(1));
 document.getElementById('se-filter-status').addEventListener('change',()=>renderStakeholder(1));
+
+// ============================================================
+// LEGAL COMPLIANCE ALERT BADGE
+// ============================================================
+function checkLegalAlerts(){
+  const items=getData()?.legalItems||[];
+  const now=Date.now();
+  const due=items.filter(i=>{
+    const d=new Date(i.dueDate||i.lastComplied||'').getTime();
+    return d-now<=30*86400000&&d>=now&&i.status!=='COMPLIANT'&&i.status!=='Compliant';
+  });
+  const badge=document.getElementById('legal-badge');
+  if(badge){badge.style.display=due.length>0?'inline-block':'none';badge.textContent=due.length;}
+}
+
+// ============================================================
+// ENERGY SUB-TAB (inside GHG page)
+// ============================================================
+let ghgActiveTab='emissions';
+function switchGhgTab(tab){
+  ghgActiveTab=tab;
+  document.getElementById('ghg-panel-emissions').style.display=tab==='emissions'?'block':'none';
+  document.getElementById('ghg-panel-energy').style.display=tab==='energy'?'block':'none';
+  document.getElementById('ghg-tab-emissions').className=tab==='emissions'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';
+  document.getElementById('ghg-tab-energy').className=tab==='energy'?'btn btn-primary btn-sm':'btn btn-ghost btn-sm';
+  document.getElementById('ghg-add-btn').style.display=tab==='emissions'?'':'none';
+  document.getElementById('ghg-export-btn').onclick=tab==='emissions'?()=>exportCSV('ghg'):()=>exportCSV('energy');
+  if(tab==='energy'){document.getElementById('ghg-add-btn').style.display='none';renderEnergy(1);}
+  else renderGhg(1);
+  // Swap the add button label/action
+  const addBtn=document.getElementById('ghg-add-btn');
+  addBtn.style.display='inline-flex';
+  if(tab==='energy'){addBtn.textContent='+ Log Energy';addBtn.onclick=()=>{document.getElementById('ene-f-edit-id').value='';openModal('energy-modal');};}
+  else{addBtn.textContent='+ Log Emission';addBtn.onclick=()=>{document.getElementById('ghg-f-edit-id').value='';document.getElementById('ghg-f-tco2e').value='';openModal('ghg-modal');};}
+}
+let enePage=1;
+function saveEnergy(){
+  if(!rateCheck('save-energy',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.energyLog=d.energyLog||[];
+  const editId=document.getElementById('ene-f-edit-id').value;
+  if(!validateRequired([{id:'ene-f-date',label:'Date'},{id:'ene-f-qty',label:'Quantity'}]))return;
+  const type=document.getElementById('ene-f-type').value;
+  const qty=parseFloat(document.getElementById('ene-f-qty').value)||0;
+  const unit=document.getElementById('ene-f-unit').value;
+  // Auto tCO2e using GHG_FACTORS
+  const factor=GHG_FACTORS[type]||0;
+  const tCO2e=factor>0?parseFloat(((qty*factor)/1000).toFixed(3)):0;
+  const rec={
+    id:editId||genId('ENE',d.energyLog),
+    date:document.getElementById('ene-f-date').value,
+    type,quantity:qty,unit,
+    cost_zar:parseFloat(document.getElementById('ene-f-cost').value)||0,
+    supplier:document.getElementById('ene-f-supplier').value||'',
+    meter_reading:document.getElementById('ene-f-meter').value||'',
+    notes:document.getElementById('ene-f-notes').value||'',
+    tCO2e
+  };
+  if(editId){const idx=d.energyLog.findIndex(x=>x.id===editId);if(idx>=0)d.energyLog[idx]=rec;}
+  else d.energyLog.push(rec);
+  // Auto-sync electricity entries into GHG as Scope 2
+  if(type==='Electricity'&&tCO2e>0){
+    d.ghgEntries=d.ghgEntries||[];
+    const ghgRef='GHG-ENE-'+rec.id;
+    const existing=d.ghgEntries.findIndex(x=>x._energyRef===rec.id);
+    const ghgRec={id:existing>=0?d.ghgEntries[existing].id:ghgRef,date:rec.date,scope:'Scope 2',source:'Electricity',quantity:qty,unit,tCO2e,notes:'Auto from Energy: '+rec.notes,_energyRef:rec.id};
+    if(existing>=0)d.ghgEntries[existing]=ghgRec;
+    else d.ghgEntries.push(ghgRec);
+  }
+  secLog('DATA_WRITE',{module:'energyLog',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('energy-modal');renderEnergy(1);
+}
+function deleteEnergy(id){
+  if(!requireRole('delete','Delete Energy Entry'))return;
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete energy entry '+id+'?\nThis cannot be undone.'))return;
+  d.energyLog=(d.energyLog||[]).filter(x=>x.id!==id);
+  // Remove linked GHG entry if any
+  d.ghgEntries=(d.ghgEntries||[]).filter(x=>x._energyRef!==id);
+  saveData(d);renderEnergy(enePage);
+}
+function editEnergy(id){
+  const d=getData()||getDefaultData();const r=(d.energyLog||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('ene-f-edit-id').value=id;
+  document.getElementById('ene-f-date').value=r.date||'';
+  document.getElementById('ene-f-type').value=r.type||'Electricity';
+  document.getElementById('ene-f-qty').value=r.quantity||0;
+  document.getElementById('ene-f-unit').value=r.unit||'kWh';
+  document.getElementById('ene-f-cost').value=r.cost_zar||0;
+  document.getElementById('ene-f-supplier').value=r.supplier||'';
+  document.getElementById('ene-f-meter').value=r.meter_reading||'';
+  document.getElementById('ene-f-notes').value=r.notes||'';
+  openModal('energy-modal');
+}
+const ENE_TYPE_COLOR={Electricity:'kpib-yellow',Diesel:'kpib-red',Petrol:'kpib-orange','Natural Gas':'kpib-blue',LPG:'kpib-teal',Solar:'kpib-green'};
+function renderEnergy(page=1){
+  enePage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('ene-search').value||'').toLowerCase();
+  const fType=document.getElementById('ene-filter-type').value;
+  let items=(d.energyLog||[]).filter(r=>{
+    const ms=!search||[r.id,r.type,r.supplier,r.meter_reading,r.notes].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fType||r.type===fType);
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('ene-tbody').innerHTML=rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)||'—'}</td>
+      <td><span class="kpib ${ENE_TYPE_COLOR[r.type]||'kpib-gray'}">${r.type}</span></td>
+      <td>${r.quantity.toLocaleString()}</td>
+      <td>${r.unit}</td>
+      <td>${r.cost_zar?'MZN '+r.cost_zar.toLocaleString():'—'}</td>
+      <td>${r.supplier||'—'}</td>
+      <td>${r.meter_reading||'—'}</td>
+      <td>${r.tCO2e||'—'}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editEnergy('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteEnergy('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('ene-pagination',total,page,renderEnergy);
+}
+document.getElementById('ene-search').addEventListener('input',()=>renderEnergy(1));
+document.getElementById('ene-filter-type').addEventListener('change',()=>renderEnergy(1));
+
+// ============================================================
+// WELLNESS & ABSENTEEISM
+// ============================================================
+let welPage=1;
+function saveWellness(){
+  if(!rateCheck('save-wellness',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.wellness=d.wellness||[];
+  const editId=document.getElementById('wel-f-edit-id').value;
+  if(!validateRequired([{id:'wel-f-name',label:'Employee Name'},{id:'wel-f-date',label:'Date'}]))return;
+  const rec={
+    id:editId||genId('WEL',d.wellness),
+    date:document.getElementById('wel-f-date').value,
+    employee_name:document.getElementById('wel-f-name').value||'',
+    employee_id:document.getElementById('wel-f-empid').value||'',
+    reason:document.getElementById('wel-f-reason').value,
+    days_lost:parseFloat(document.getElementById('wel-f-days').value)||0,
+    return_date:document.getElementById('wel-f-return').value||'',
+    notes:document.getElementById('wel-f-notes').value||''
+  };
+  if(editId){const idx=d.wellness.findIndex(x=>x.id===editId);if(idx>=0)d.wellness[idx]=rec;}
+  else d.wellness.push(rec);
+  secLog('DATA_WRITE',{module:'wellness',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('wellness-modal');renderWellness(1);
+}
+function deleteWellness(id){
+  if(!requireRole('delete','Delete Wellness Entry'))return;
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete wellness entry '+id+'?\nThis cannot be undone.'))return;
+  d.wellness=(d.wellness||[]).filter(x=>x.id!==id);
+  saveData(d);renderWellness(welPage);
+}
+function editWellness(id){
+  const d=getData()||getDefaultData();const r=(d.wellness||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('wel-f-edit-id').value=id;
+  document.getElementById('wel-f-date').value=r.date||'';
+  document.getElementById('wel-f-name').value=r.employee_name||'';
+  document.getElementById('wel-f-empid').value=r.employee_id||'';
+  document.getElementById('wel-f-reason').value=r.reason||'Sick';
+  document.getElementById('wel-f-days').value=r.days_lost||0;
+  document.getElementById('wel-f-return').value=r.return_date||'';
+  document.getElementById('wel-f-notes').value=r.notes||'';
+  openModal('wellness-modal');
+}
+const WEL_REASON_COLOR={Sick:'kpib-orange',Injury:'kpib-red',Personal:'kpib-blue',Family:'kpib-teal',Other:'kpib-gray'};
+function renderWellness(page=1){
+  welPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('wel-search').value||'').toLowerCase();
+  const fReason=document.getElementById('wel-filter-reason').value;
+  const now=new Date();
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1).toISOString().substring(0,10);
+  const items=(d.wellness||[]).filter(r=>{
+    const ms=!search||[r.id,r.employee_name,r.employee_id,r.notes].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fReason||r.reason===fReason);
+  });
+  const daysThisMonth=(d.wellness||[]).filter(r=>r.date>=monthStart).reduce((s,r)=>s+(r.days_lost||0),0);
+  const workingDaysThisMonth=22;
+  const totalStaff=(d.workforceMetrics||[]).sort((a,b)=>b.period.localeCompare(a.period))[0]?.totalEmployees||100;
+  const absRate=Math.round((daysThisMonth/(totalStaff*workingDaysThisMonth))*100*10)/10;
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('wel-tbody').innerHTML=`
+    <tr style="background:var(--card2);font-size:12px"><td colspan="9" style="padding:8px 12px">
+      📊 <strong>This month:</strong> ${daysThisMonth} days lost &nbsp;|&nbsp; Absenteeism rate: <strong>${absRate}%</strong> (${daysThisMonth} / ${totalStaff} staff × ${workingDaysThisMonth} working days)
+    </td></tr>`+
+  rows.map(r=>`
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)||'—'}</td>
+      <td>${maskPII?r.employee_name.replace(/(?<=.{2}).(?=.*\s)/g,'*'):r.employee_name}</td>
+      <td>${r.employee_id||'—'}</td>
+      <td><span class="kpib ${WEL_REASON_COLOR[r.reason]||'kpib-gray'}">${r.reason}</span></td>
+      <td><strong>${r.days_lost}</strong></td>
+      <td>${fmtDate(r.return_date)||'—'}</td>
+      <td>${truncate(r.notes,45)||'—'}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editWellness('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteWellness('${r.id}')">Del</button>
+      </td>
+    </tr>`).join('');
+  renderPagination('wel-pagination',total,page,renderWellness);
+}
+document.getElementById('wel-search').addEventListener('input',()=>renderWellness(1));
+document.getElementById('wel-filter-reason').addEventListener('change',()=>renderWellness(1));
+
+// ============================================================
+// SUPPLIER SAFETY SCORECARD
+// ============================================================
+let supPage=1;
+function getSupplierWarning(s){
+  const insuranceExpired=s.insurance_expiry&&new Date(s.insurance_expiry)<new Date();
+  const lowScore=(s.safety_score||0)<60;
+  if(insuranceExpired&&lowScore)return'Insurance Expired + Low Score';
+  if(insuranceExpired)return'Insurance Expired';
+  if(lowScore)return'Low Safety Score';
+  return null;
+}
+function saveSupplier(){
+  if(!rateCheck('save-supplier',100))return;
+  let d=getData();if(!d)d=getDefaultData();d.suppliers=d.suppliers||[];
+  const editId=document.getElementById('sup-f-edit-id').value;
+  if(!validateRequired([{id:'sup-f-name',label:'Supplier Name'}]))return;
+  const rec={
+    id:editId||genId('SUP',d.suppliers),
+    supplier_name:document.getElementById('sup-f-name').value||'',
+    service_type:document.getElementById('sup-f-service').value||'',
+    contact_name:document.getElementById('sup-f-contact').value||'',
+    contact_email:document.getElementById('sup-f-email').value||'',
+    last_audit_date:document.getElementById('sup-f-audit').value||'',
+    safety_score:parseInt(document.getElementById('sup-f-score').value)||0,
+    insurance_expiry:document.getElementById('sup-f-insurance').value||'',
+    standing:document.getElementById('sup-f-standing').value,
+    notes:document.getElementById('sup-f-notes').value||''
+  };
+  if(editId){const idx=d.suppliers.findIndex(x=>x.id===editId);if(idx>=0)d.suppliers[idx]=rec;}
+  else d.suppliers.push(rec);
+  secLog('DATA_WRITE',{module:'suppliers',id:rec.id,classification:'Internal'});
+  saveData(d);closeModal('supplier-modal');renderSuppliers(1);
+}
+function deleteSupplier(id){
+  if(!requireRole('delete','Delete Supplier'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.suppliers||[]).find(x=>x.id===id);
+  if(!confirm('Delete supplier '+id+(r?' — '+r.supplier_name:'')+'\nThis cannot be undone.'))return;
+  d.suppliers=(d.suppliers||[]).filter(x=>x.id!==id);
+  saveData(d);renderSuppliers(supPage);
+}
+function editSupplier(id){
+  const d=getData()||getDefaultData();const r=(d.suppliers||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('sup-f-edit-id').value=id;
+  document.getElementById('sup-f-name').value=r.supplier_name||'';
+  document.getElementById('sup-f-service').value=r.service_type||'';
+  document.getElementById('sup-f-contact').value=r.contact_name||'';
+  document.getElementById('sup-f-email').value=r.contact_email||'';
+  document.getElementById('sup-f-audit').value=r.last_audit_date||'';
+  document.getElementById('sup-f-score').value=r.safety_score||0;
+  document.getElementById('sup-f-insurance').value=r.insurance_expiry||'';
+  document.getElementById('sup-f-standing').value=r.standing||'Approved';
+  document.getElementById('sup-f-notes').value=r.notes||'';
+  openModal('supplier-modal');
+}
+const SUP_STANDING_COLOR={Approved:'kpib-green',Conditional:'kpib-yellow',Suspended:'kpib-red'};
+function renderSuppliers(page=1){
+  supPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('sup-search').value||'').toLowerCase();
+  const fStanding=document.getElementById('sup-filter-standing').value;
+  let items=(d.suppliers||[]).filter(r=>{
+    const ms=!search||[r.id,r.supplier_name,r.service_type,r.contact_name].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fStanding||r.standing===fStanding);
+  });
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('sup-tbody').innerHTML=rows.map(r=>{
+    const warn=getSupplierWarning(r);
+    const scoreColor=r.safety_score>=80?'kpib-green':r.safety_score>=60?'kpib-yellow':'kpib-red';
+    return`<tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${r.supplier_name}</td>
+      <td>${r.service_type||'—'}</td>
+      <td>${r.contact_name||'—'}</td>
+      <td>${fmtDate(r.last_audit_date)||'—'}</td>
+      <td><span class="kpib ${scoreColor}">${r.safety_score}/100</span></td>
+      <td>${fmtDate(r.insurance_expiry)||'—'}</td>
+      <td><span class="kpib ${SUP_STANDING_COLOR[r.standing]||'kpib-gray'}">${r.standing}</span></td>
+      <td>${warn?`<span class="kpib kpib-red" style="font-size:10px">⚠️ ${warn}</span>`:'<span class="kpib kpib-green">✓ OK</span>'}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editSupplier('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteSupplier('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('');
+  renderPagination('sup-pagination',total,page,renderSuppliers);
+}
+document.getElementById('sup-search').addEventListener('input',()=>renderSuppliers(1));
+document.getElementById('sup-filter-standing').addEventListener('change',()=>renderSuppliers(1));
+
+// ============================================================
+// ANNUAL ESG REPORT
+// ============================================================
+function renderEsgAnnualReport(){
+  const d=getData()||getDefaultData();
+  const year=new Date().getFullYear();
+  const yrStart=year+'-01-01';
+  const inYear=date=>date&&date>=yrStart;
+  const ghg=(d.ghgEntries||[]).filter(r=>inYear(r.date));
+  const s1=ghg.filter(r=>r.scope==='Scope 1').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const s2=ghg.filter(r=>r.scope==='Scope 2').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const s3=ghg.filter(r=>r.scope==='Scope 3').reduce((s,r)=>s+(r.tCO2e||0),0);
+  const water=(d.waterReg||[]).filter(r=>inYear(r.date)).reduce((s,r)=>s+(r.volume_kl||0),0);
+  const waste=(d.wasteLog||[]).filter(r=>inYear(r.date));
+  const wasteTotal=waste.reduce((s,r)=>s+(r.quantity||0),0);
+  const wasteLandfill=waste.filter(r=>r.disposalMethod==='Landfill').reduce((s,r)=>s+(r.quantity||0),0);
+  const wasteDivPct=wasteTotal>0?Math.round((wasteTotal-wasteLandfill)/wasteTotal*100):0;
+  const incs=(d.incidents||[]).filter(r=>inYear(r.date));
+  const ltiCount=incs.filter(r=>(r.type||'').toLowerCase().includes('lti')||(r.desc||'').toLowerCase().includes('lost time')).length;
+  const nmCount=(d.nearMisses||[]).filter(r=>inYear(r.date)).length;
+  const training=(d.trainingReg||[]).map(r=>({...r,_st:getTrainingStatus(r.expiry_date)}));
+  const trPct=training.length>0?Math.round(training.filter(r=>r._st==='Valid').length/training.length*100):0;
+  const capas=(d.capas||[]).filter(r=>inYear(r.created));
+  const capaClosePct=capas.length>0?Math.round(capas.filter(r=>r.status==='Closed').length/capas.length*100):0;
+  const legal=(d.legalItems||[]);
+  const legalPct=legal.length>0?Math.round(legal.filter(r=>r.status==='COMPLIANT'||r.status==='Compliant').length/legal.length*100):0;
+  const dei=(d.deiMetrics||[]);
+  const femalePct=dei.length>0?Math.round(dei.filter(r=>r.gender==='Female').length/dei.length*100):0;
+  const wfLatest=(d.workforceMetrics||[]).sort((a,b)=>b.period.localeCompare(a.period))[0];
+  const supWarnings=(d.suppliers||[]).filter(s=>getSupplierWarning(s)).length;
+  const daysLost=(d.wellness||[]).filter(r=>inYear(r.date)).reduce((s,r)=>s+(r.days_lost||0),0);
+  // Render into esg-board-content as a full-page printable report
+  document.getElementById('esg-board-content').innerHTML=`
+    <div style="font-family:serif;max-width:900px;margin:0 auto;padding:var(--sp-3)" id="esg-annual-report">
+      <div style="border-bottom:3px solid #16a34a;padding-bottom:var(--sp-2);margin-bottom:var(--sp-3)">
+        <div style="font-size:22px;font-weight:800;color:var(--fg)">Annual ESG Report — ${year}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">GRCentral · SHEQ-AI Platform · Prepared ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3)">
+        <div style="padding:var(--sp-2);background:rgba(74,222,128,.1);border-radius:8px;border-left:4px solid #16a34a">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#15803d;margin-bottom:6px">🌿 Environmental</div>
+          <div style="font-size:13px">GHG Scope 1: <strong>${s1.toFixed(2)} tCO₂e</strong></div>
+          <div style="font-size:13px">GHG Scope 2: <strong>${s2.toFixed(2)} tCO₂e</strong></div>
+          <div style="font-size:13px">GHG Scope 3: <strong>${s3.toFixed(2)} tCO₂e</strong></div>
+          <div style="font-size:13px">Water: <strong>${water.toFixed(1)} kL</strong></div>
+          <div style="font-size:13px">Waste Diversion: <strong>${wasteDivPct}%</strong></div>
+        </div>
+        <div style="padding:var(--sp-2);background:rgba(96,165,250,.1);border-radius:8px;border-left:4px solid #2563eb">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:6px">🤝 Social</div>
+          <div style="font-size:13px">Total Employees: <strong>${wfLatest?.totalEmployees||'—'}</strong></div>
+          <div style="font-size:13px">Female Representation: <strong>${femalePct}%</strong></div>
+          <div style="font-size:13px">Lost Time Injuries: <strong>${ltiCount}</strong></div>
+          <div style="font-size:13px">Near Misses: <strong>${nmCount}</strong></div>
+          <div style="font-size:13px">Training Compliance: <strong>${trPct}%</strong></div>
+          <div style="font-size:13px">Days Lost (Absenteeism): <strong>${daysLost}</strong></div>
+        </div>
+        <div style="padding:var(--sp-2);background:rgba(167,139,250,.1);border-radius:8px;border-left:4px solid #7c3aed">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#6d28d9;margin-bottom:6px">🏛️ Governance</div>
+          <div style="font-size:13px">Legal Compliance: <strong>${legalPct}%</strong></div>
+          <div style="font-size:13px">CAPA Closure Rate: <strong>${capaClosePct}%</strong></div>
+          <div style="font-size:13px">Supplier Warnings: <strong>${supWarnings}</strong></div>
+          <div style="font-size:13px">Internal Audits: <strong>${(d.audits||[]).filter(r=>inYear(r.date)).length}</strong></div>
+          <div style="font-size:13px">ESG Risks Tracked: <strong>${(d.risks||[]).filter(r=>r.esgCategory&&r.esgCategory!=='None').length}</strong></div>
+        </div>
+      </div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:var(--sp-1);border-bottom:1px solid var(--border);padding-bottom:4px">GRI Content Index — ${year}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:var(--card2)"><th style="padding:6px 8px;text-align:left;border:1px solid var(--border)">GRI Standard</th><th style="padding:6px 8px;text-align:left;border:1px solid var(--border)">Disclosure</th><th style="padding:6px 8px;text-align:left;border:1px solid var(--border)">Status</th><th style="padding:6px 8px;text-align:left;border:1px solid var(--border)">Data / Reference</th></tr></thead>
+        <tbody>
+          ${[
+            ['GRI 302','Energy consumption','Partial',`Energy log: ${(d.energyLog||[]).filter(r=>inYear(r.date)).length} entries`],
+            ['GRI 303','Water withdrawal','Reported',`${water.toFixed(1)} kL total · ${(d.waterReg||[]).filter(r=>inYear(r.date)).length} readings`],
+            ['GRI 305','GHG Emissions','Reported',`S1: ${s1.toFixed(2)} · S2: ${s2.toFixed(2)} · S3: ${s3.toFixed(2)} tCO₂e`],
+            ['GRI 306','Waste','Reported',`${wasteTotal.toFixed(0)} kg total · ${wasteDivPct}% diverted from landfill`],
+            ['GRI 307','Environmental compliance','Partial',`Legal register: ${legal.length} items · ${legalPct}% compliant`],
+            ['GRI 308','Supplier env. assessment','Partial',`${(d.suppliers||[]).length} suppliers scored`],
+            ['GRI 401','Employment','Partial',`${wfLatest?.totalEmployees||'—'} employees · ${wfLatest?.newHires||0} new hires`],
+            ['GRI 403','OHS','Reported',`${ltiCount} LTIs · ${nmCount} near misses · Incidents module active`],
+            ['GRI 404','Training & Education','Reported',`${training.length} records · ${trPct}% valid`],
+            ['GRI 405','Diversity & Equal Opportunity','Reported',`${femalePct}% female · ${dei.length} DEI records`],
+            ['GRI 413','Local communities','Partial',`${(d.stakeholders||[]).filter(r=>inYear(r.date)).length} engagements logged`],
+            ['GRI 414','Supplier social assessment','Partial',`${(d.suppliers||[]).length} suppliers · ${supWarnings} with warnings`],
+          ].map(([std,disc,status,data])=>`
+            <tr>
+              <td style="padding:5px 8px;border:1px solid var(--border)">${std}</td>
+              <td style="padding:5px 8px;border:1px solid var(--border)">${disc}</td>
+              <td style="padding:5px 8px;border:1px solid var(--border)"><span style="color:${status==='Reported'?'#15803d':status==='Partial'?'#d97706':'#dc2626'};font-weight:600">${status}</span></td>
+              <td style="padding:5px 8px;border:1px solid var(--border);color:var(--muted)">${data}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:var(--sp-3);font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:var(--sp-1)">
+        GRCentral · SHEQ-AI ESG Management Platform · Annual Report ${year} · Generated ${new Date().toLocaleString()} · Confidential — Not for External Distribution
+      </div>
+    </div>`;
+}
 
 // ============================================================
 // GHG EMISSIONS TRACKER
@@ -10570,7 +11187,7 @@ function importJSON(){
         const missing=REQUIRED_KEYS.filter(k=>!(k in data));
         if(missing.length&&!data.initialized){throw new Error('Not a valid ESG Management Systems - SHEQ backup file.');}
         // API-13: per-module schema validation
-        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics'];
+        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics','wellness','suppliers','energyLog'];
         for(const k of ALL_ARRAY_KEYS){
           if(!(k in data)) continue;
           const check=_validateImportModule(k,data[k]);
@@ -10735,6 +11352,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     autoMarkOverdue(d);
     migrateMissingCapas(d);
     setTimeout(checkTrainingBadge, 200);
+    setTimeout(checkLegalAlerts, 200);
     const k=sessionStorage.getItem('sheqai_apikey');
     if(k)document.getElementById('api-key-input').value=k;
     updateSyncStatus();
