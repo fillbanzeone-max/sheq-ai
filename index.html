@@ -736,16 +736,18 @@
 
     .chart-wrap {
       position: relative;
-      padding-top: var(--sp-1);
+      width: 100%;
+      height: 280px;
     }
 
     .chart-wrap canvas {
-      max-height: 320px;
+      width: 100% !important;
+      height: 100% !important;
     }
 
     /* Trend chart gets more vertical room because it's 2fr wide */
-    .charts-row > .card:first-child .chart-wrap canvas {
-      max-height: 420px;
+    .charts-row > .card:first-child .chart-wrap {
+      height: 360px;
     }
 
     /* ============================================================
