@@ -330,6 +330,29 @@
       overflow: hidden;
       opacity: 1;
       transition: opacity 0.2s;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-section-label:hover { opacity: .85; }
+    .pillar-chevron {
+      font-style: normal;
+      font-size: 9px;
+      opacity: .6;
+      transition: transform .2s;
+      margin-right: 2px;
+      flex-shrink: 0;
+    }
+    .nav-section-label.pillar-collapsed .pillar-chevron {
+      transform: rotate(-90deg);
+    }
+    .nav-item {
+      transition: opacity .15s;
+    }
+    .nav-item.pillar-hidden {
+      display: none !important;
     }
 
     #sidebar.collapsed .nav-section-label {
@@ -2629,34 +2652,34 @@
   <ul class="nav-list">
     <li class="nav-item"><div class="nav-link active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></div></li>
 
-    <li class="nav-section-label" style="color:rgba(239,68,68,.75)">🔴 Safety</li>
+    <li class="nav-section-label" data-pillar="safety" style="color:rgba(239,68,68,.75)">🔴 Safety<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="observations"><span class="nav-icon">👁️</span><span class="nav-label">Job Observations</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="nearmiss"><span class="nav-icon">⚠️</span><span class="nav-label">Near Miss</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="incidents"><span class="nav-icon">🚨</span><span class="nav-label">Incidents</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="permits"><span class="nav-icon">📋</span><span class="nav-label">Permit to Work</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="emergency"><span class="nav-icon">🚑</span><span class="nav-label">Emergency Contacts</span></div></li>
 
-    <li class="nav-section-label" style="color:rgba(34,197,94,.75)">🩺 Health</li>
+    <li class="nav-section-label" data-pillar="health" style="color:rgba(34,197,94,.75)">🩺 Health<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="toolbox"><span class="nav-icon">🗣️</span><span class="nav-label">Toolbox Talks</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="inductions"><span class="nav-icon">🪪</span><span class="nav-label">Inductions</span></div></li>
 
-    <li class="nav-section-label" style="color:rgba(74,222,128,.65)">🌿 Environmental</li>
+    <li class="nav-section-label" data-pillar="environmental" style="color:rgba(74,222,128,.65)">🌿 Environmental<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" style="opacity:.45;cursor:default" title="Coming soon"><span class="nav-icon">🌍</span><span class="nav-label">ESG Reporting <span style="font-size:9px;opacity:.7">Soon</span></span></div></li>
 
-    <li class="nav-section-label" style="color:rgba(251,191,36,.75)">⭐ Quality</li>
+    <li class="nav-section-label" data-pillar="quality" style="color:rgba(251,191,36,.75)">⭐ Quality<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="audits"><span class="nav-icon">📝</span><span class="nav-label">Audits &amp; Inspections</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
 
-    <li class="nav-section-label" style="color:rgba(96,165,250,.75)">🤝 Social</li>
+    <li class="nav-section-label" data-pillar="social" style="color:rgba(96,165,250,.75)">🤝 Social<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" style="opacity:.45;cursor:default" title="Coming soon"><span class="nav-icon">👥</span><span class="nav-label">Workforce &amp; Community <span style="font-size:9px;opacity:.7">Soon</span></span></div></li>
 
-    <li class="nav-section-label" style="color:rgba(167,139,250,.75)">🏛️ Governance</li>
+    <li class="nav-section-label" data-pillar="governance" style="color:rgba(167,139,250,.75)">🏛️ Governance<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">🎯</span><span class="nav-label">Risk Register</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div></li>
 
-    <li class="nav-section-label">📁 Reports</li>
+    <li class="nav-section-label" data-pillar="reports">📁 Reports<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📄</span><span class="nav-label">Monthly Report</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">SHEQ Calendar</span></div></li>
   </ul>
@@ -5585,6 +5608,7 @@ function navigateTo(page){
   const _depth=_depthMap[page]||3;
   _dots.forEach((d,i)=>{d.classList.toggle('active',i<_depth);});
   currentPage=page;
+  if(typeof _openPillarForPage==='function') _openPillarForPage(page);
   if(page==='dashboard')renderDashboard();
   else if(page==='observations')renderObservations();
   else if(page==='nearmiss')renderNearMiss();
@@ -5601,8 +5625,64 @@ function navigateTo(page){
   else if(page==='assets')renderAssets();
   else if(page==='audits')renderAudits();
 }
-document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>navigateTo(l.dataset.page)));
+document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>{ if(l.closest('.nav-link')?.style.cursor==='default') return; navigateTo(l.dataset.page); }));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
+
+// ── Pillar accordion ──────────────────────────────────────────
+(function initPillarToggles(){
+  const PKEY = 'sheqai_pillar_collapsed';
+  let state = {};
+  try { state = JSON.parse(localStorage.getItem(PKEY)||'{}'); } catch(e){}
+
+  function getSiblingItems(labelEl){
+    const items = [];
+    let el = labelEl.nextElementSibling;
+    while(el && !el.classList.contains('nav-section-label')){
+      items.push(el); el = el.nextElementSibling;
+    }
+    return items;
+  }
+
+  function applyState(labelEl, collapsed){
+    const items = getSiblingItems(labelEl);
+    items.forEach(item => item.classList.toggle('pillar-hidden', collapsed));
+    labelEl.classList.toggle('pillar-collapsed', collapsed);
+  }
+
+  document.querySelectorAll('.nav-section-label[data-pillar]').forEach(label => {
+    const pillar = label.dataset.pillar;
+    // Restore saved state
+    if(state[pillar]) applyState(label, true);
+
+    label.addEventListener('click', () => {
+      const nowCollapsed = !label.classList.contains('pillar-collapsed');
+      applyState(label, nowCollapsed);
+      state[pillar] = nowCollapsed;
+      localStorage.setItem(PKEY, JSON.stringify(state));
+    });
+  });
+
+  // Expose for navigateTo to auto-open the right pillar
+  window._openPillarForPage = function(page){
+    const link = document.querySelector(`.nav-link[data-page="${page}"]`);
+    if(!link) return;
+    const item = link.closest('.nav-item');
+    if(!item) return;
+    let el = item.previousElementSibling;
+    while(el){
+      if(el.classList.contains('nav-section-label') && el.dataset.pillar){
+        if(el.classList.contains('pillar-collapsed')){
+          applyState(el, false);
+          const pillar = el.dataset.pillar;
+          state[pillar] = false;
+          localStorage.setItem(PKEY, JSON.stringify(state));
+        }
+        break;
+      }
+      el = el.previousElementSibling;
+    }
+  };
+})();
 document.getElementById('settings-btn').addEventListener('click',()=>{
   const k=sessionStorage.getItem('sheqai_apikey');
   if(k)document.getElementById('api-key-input').value=k;
