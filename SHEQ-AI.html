@@ -2628,21 +2628,37 @@
   </div>
   <ul class="nav-list">
     <li class="nav-item"><div class="nav-link active" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></div></li>
+
+    <li class="nav-section-label" style="color:rgba(239,68,68,.75)">🔴 Safety</li>
     <li class="nav-item"><div class="nav-link" data-page="observations"><span class="nav-icon">👁️</span><span class="nav-label">Job Observations</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="nearmiss"><span class="nav-icon">⚠️</span><span class="nav-label">Near Miss</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="incidents"><span class="nav-icon">🚨</span><span class="nav-label">Incidents</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="permits"><span class="nav-icon">📋</span><span class="nav-label">Permit to Work</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">🎯</span><span class="nav-label">Risk Register</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">SHEQ Calendar</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📄</span><span class="nav-label">Monthly Report</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="emergency"><span class="nav-icon">🚑</span><span class="nav-label">Emergency Contacts</span></div></li>
+
+    <li class="nav-section-label" style="color:rgba(34,197,94,.75)">🩺 Health</li>
     <li class="nav-item"><div class="nav-link" data-page="toolbox"><span class="nav-icon">🗣️</span><span class="nav-label">Toolbox Talks</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="inductions"><span class="nav-icon">🪪</span><span class="nav-label">Inductions</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="emergency"><span class="nav-icon">🚑</span><span class="nav-label">Emergency Contacts</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
-    <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
+
+    <li class="nav-section-label" style="color:rgba(74,222,128,.65)">🌿 Environmental</li>
+    <li class="nav-item"><div class="nav-link" style="opacity:.45;cursor:default" title="Coming soon"><span class="nav-icon">🌍</span><span class="nav-label">ESG Reporting <span style="font-size:9px;opacity:.7">Soon</span></span></div></li>
+
+    <li class="nav-section-label" style="color:rgba(251,191,36,.75)">⭐ Quality</li>
+    <li class="nav-item"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="audits"><span class="nav-icon">📝</span><span class="nav-label">Audits &amp; Inspections</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
+
+    <li class="nav-section-label" style="color:rgba(96,165,250,.75)">🤝 Social</li>
+    <li class="nav-item"><div class="nav-link" style="opacity:.45;cursor:default" title="Coming soon"><span class="nav-icon">👥</span><span class="nav-label">Workforce &amp; Community <span style="font-size:9px;opacity:.7">Soon</span></span></div></li>
+
+    <li class="nav-section-label" style="color:rgba(167,139,250,.75)">🏛️ Governance</li>
+    <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">🎯</span><span class="nav-label">Risk Register</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div></li>
+
+    <li class="nav-section-label">📁 Reports</li>
+    <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📄</span><span class="nav-label">Monthly Report</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">SHEQ Calendar</span></div></li>
   </ul>
   <div class="sidebar-footer">
     <div class="nav-link" id="settings-btn"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
@@ -2652,17 +2668,26 @@
 <!-- ===== MOBILE BOTTOM NAV ===== -->
 <div id="mobile-nav">
   <div class="mobile-nav-item active" data-page="dashboard"><span class="nav-icon">📊</span>Dash</div>
+  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
   <div class="mobile-nav-item" data-page="observations"><span class="nav-icon">👁️</span>Obs</div>
   <div class="mobile-nav-item" data-page="nearmiss"><span class="nav-icon">⚠️</span>NM</div>
   <div class="mobile-nav-item" data-page="incidents"><span class="nav-icon">🚨</span>Inc</div>
   <div class="mobile-nav-item" data-page="permits"><span class="nav-icon">📋</span>PTW</div>
-  <div class="mobile-nav-item" data-page="risks"><span class="nav-icon">🎯</span>Risk</div>
-  <div class="mobile-nav-item" data-page="legal"><span class="nav-icon">⚖️</span>Legal</div>
-  <div class="mobile-nav-item" data-page="capa"><span class="nav-icon">✅</span>CAPA</div>
+  <div class="mobile-nav-item" data-page="emergency"><span class="nav-icon">🚑</span>SOS</div>
+  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
   <div class="mobile-nav-item" data-page="toolbox"><span class="nav-icon">🗣️</span>TBT</div>
   <div class="mobile-nav-item" data-page="inductions"><span class="nav-icon">🪪</span>Ind</div>
-  <div class="mobile-nav-item" data-page="assets"><span class="nav-icon">🔧</span>Assets</div>
+  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
+  <div class="mobile-nav-item" data-page="capa"><span class="nav-icon">✅</span>CAPA</div>
   <div class="mobile-nav-item" data-page="audits"><span class="nav-icon">📝</span>Audits</div>
+  <div class="mobile-nav-item" data-page="assets"><span class="nav-icon">🔧</span>Assets</div>
+  <div class="mobile-nav-item" data-page="moc"><span class="nav-icon">🔄</span>MoC</div>
+  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
+  <div class="mobile-nav-item" data-page="risks"><span class="nav-icon">🎯</span>Risk</div>
+  <div class="mobile-nav-item" data-page="legal"><span class="nav-icon">⚖️</span>Legal</div>
+  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
+  <div class="mobile-nav-item" data-page="report"><span class="nav-icon">📄</span>Report</div>
+  <div class="mobile-nav-item" data-page="calendar"><span class="nav-icon">📅</span>Cal</div>
 </div>
 
 <!-- ===== MAIN ===== -->
