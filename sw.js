@@ -1,28 +1,49 @@
-// ESG Management Systems - SHEQ Service Worker — v1.3
-// Cache-first strategy for the app shell; passes through CDN/Firebase requests.
+// ESG Management Systems — SHEQ Service Worker v2.0
+// Strategy: cache-first for app shell; stale-while-revalidate for CDN assets.
+// Offline banner and Firebase write-queue handled in the app layer.
 
-const CACHE_NAME = 'esg-sheq-v1';
-const SHELL_FILES = [
+const CACHE_NAME = 'esg-sheq-v2';
+
+// App shell (same-origin)
+const SHELL = [
   './index.html',
-  './SHEQ-AI.html',
   './manifest.json',
-  './logo.png'
+  './logo.png',
 ];
 
-// ── Install: pre-cache the app shell ─────────────────────────
+// CDN scripts — cached on first fetch, served from cache when offline
+const CDN_URLS = [
+  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+  'https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js',
+  'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/9.22.2/firebase-functions-compat.js',
+  'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js',
+];
+
+// ── Install: pre-cache app shell + CDN scripts ────────────────
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      // addAll will fail silently for files that 404 — wrap individually
-      return Promise.allSettled(
-        SHELL_FILES.map(f => cache.add(f).catch(() => {}))
-      );
+      // Shell: must succeed
+      return cache.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))
+        .catch(() => {})
+        .then(() =>
+          // CDN: best-effort (no-cors so we get opaque responses)
+          Promise.allSettled(
+            CDN_URLS.map(url =>
+              fetch(new Request(url, { mode: 'no-cors' }))
+                .then(resp => resp.ok || resp.type === 'opaque' ? cache.put(url, resp) : null)
+                .catch(() => {})
+            )
+          )
+        );
     })
   );
   self.skipWaiting();
 });
 
-// ── Activate: delete old caches ──────────────────────────────
+// ── Activate: remove old caches ───────────────────────────────
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -32,27 +53,43 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// ── Fetch: cache-first for same-origin, pass-through for external ─
+// ── Fetch ─────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
+  const req = event.request;
+  if (req.method !== 'GET') return;                     // POST/PUT pass through
+  if (req.url.includes('firebaseio.com')) return;       // Firebase RT DB — always live
+  if (req.url.includes('googleapis.com')) return;       // Firebase Auth — always live
+  if (req.url.includes('identitytoolkit')) return;
+  if (req.url.includes('emailjs.com/api')) return;      // EmailJS API — always live
 
-  // Only handle GET requests
-  if (event.request.method !== 'GET') return;
+  const isCdn = CDN_URLS.some(u => req.url.startsWith(u));
 
-  // Pass through cross-origin requests (Firebase, CDN, EmailJS, etc.)
-  if (url.origin !== location.origin) return;
+  if (isCdn) {
+    // CDN: cache-first, update in background
+    event.respondWith(
+      caches.match(req).then(cached => {
+        const networkFetch = fetch(req).then(resp => {
+          if (resp.ok || resp.type === 'opaque') {
+            caches.open(CACHE_NAME).then(c => c.put(req, resp.clone()));
+          }
+          return resp;
+        }).catch(() => cached);
+        return cached || networkFetch;
+      })
+    );
+    return;
+  }
 
+  // Same-origin: stale-while-revalidate
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      // Return cached copy immediately, refresh cache in background (stale-while-revalidate)
-      const fetchPromise = fetch(event.request).then(response => {
-        if (response.ok) {
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
-        }
-        return response;
-      }).catch(() => null);
-
-      return cached || fetchPromise || caches.match('./index.html');
-    })
+    caches.open(CACHE_NAME).then(cache =>
+      cache.match(req).then(cached => {
+        const networkFetch = fetch(req).then(resp => {
+          if (resp.ok) cache.put(req, resp.clone());
+          return resp;
+        }).catch(() => null);
+        return cached || networkFetch || cache.match('./index.html');
+      })
+    )
   );
 });

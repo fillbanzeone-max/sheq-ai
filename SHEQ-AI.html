@@ -2757,6 +2757,12 @@
 </nav>
 
 <!-- ===== MOBILE BOTTOM NAV ===== -->
+<!-- Offline banner -->
+<div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#b45309;color:#fff;text-align:center;padding:7px 14px;font-size:13px;font-weight:600;letter-spacing:.02em;box-shadow:0 2px 8px rgba(0,0,0,.25)">
+  📶 You are offline — data is saved locally and will sync when reconnected
+  <span id="offline-queue-count" style="display:none;margin-left:8px;background:rgba(255,255,255,.25);padding:1px 7px;border-radius:10px;font-size:11px"></span>
+</div>
+
 <!-- Mobile overlay + drawer -->
 <div id="mob-drawer-overlay" onclick="closeMobileDrawer()"></div>
 <div id="mobile-drawer">
@@ -7234,6 +7240,14 @@ const RS=[[1,3,6,10,15],[2,5,9,14,19],[4,8,13,18,22],[7,12,17,21,24],[11,16,20,2
 function getRiskScore(p,i){return RS[(p||1)-1][(i||1)-1]||1;}
 function riskRating(s){return s<=4?'LOW':s<=9?'MEDIUM':s<=16?'HIGH':'CRITICAL';}
 function riskCellClass(s){return s<=4?'cell-green':s<=9?'cell-yellow':s<=16?'cell-orange':'cell-red';}
+function trendArrow(curr,prev,lowerIsBetter=true){
+  if(prev==null||prev===0){return curr>0?'<span style="color:var(--muted);font-size:10px"> new</span>':'';}
+  const pct=Math.round((curr-prev)/prev*100);
+  if(Math.abs(pct)<2)return'<span style="color:var(--muted);font-size:10px"> →0%</span>';
+  const up=pct>0;const good=lowerIsBetter?!up:up;
+  const col=good?'#16a34a':'#dc2626';
+  return`<span style="color:${col};font-size:10px;font-weight:700;margin-left:4px">${up?'↑':'↓'}${Math.abs(pct)}%</span>`;
+}
 function controlsBadge(r){
   const has=(r.controls||'').trim().length>0;
   const highRes=r.rRating==='HIGH'||r.rRating==='CRITICAL';
@@ -7875,18 +7889,37 @@ function renderDashboard(){
   const sheqColor=sheqScore>=80?'var(--green)':sheqScore>=60?'var(--yellow)':'var(--red)';
   const sheqLabel=sheqScore>=80?'Established':sheqScore>=60?'Developing':'At Risk';
 
+  // ── 30-day trend vs prior 30-day window ──────────────────────────────────
+  const _now=new Date();
+  const _c30=new Date(_now-30*86400000).toISOString().substring(0,10);
+  const _c60=new Date(_now-60*86400000).toISOString().substring(0,10);
+  const _in30=dt=>dt&&dt>=_c30;
+  const _inP30=dt=>dt&&dt>=_c60&&dt<_c30;
+  // GHG 30d trend
+  const _ghg30=((d.ghgEntries||[]).filter(r=>_in30(r.date)).reduce((s,r)=>s+(r.tCO2e||0),0));
+  const _ghgP30=((d.ghgEntries||[]).filter(r=>_inP30(r.date)).reduce((s,r)=>s+(r.tCO2e||0),0));
+  // Incidents 30d trend (count)
+  const _inc30=(d.incidents||[]).filter(r=>_in30(r.date)).length;
+  const _incP30=(d.incidents||[]).filter(r=>_inP30(r.date)).length;
+  // Near misses 30d trend
+  const _nm30=(d.nearMisses||[]).filter(r=>_in30(r.date)).length;
+  const _nmP30=(d.nearMisses||[]).filter(r=>_inP30(r.date)).length;
+  // CAPAs opened 30d trend
+  const _cap30=(d.capas||[]).filter(r=>_in30(r.created)).length;
+  const _capP30=(d.capas||[]).filter(r=>_inP30(r.created)).length;
+
   // ── Hero row (always visible) ─────────────────────────────────────────────
   document.getElementById('dash-hero-row').innerHTML=`
     <div class="kpi-card" style="--kpi-color:${parseFloat(_ltifr)>0?'var(--red)':'var(--green)'}">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#dc2626,#f87171)"></div>
       <div class="kpi-label">LTIFR</div>
-      <div class="kpi-value">${_ltifr}</div>
-      <div class="kpi-breakdown"><span class="kpib ${_ltiCount>0?'kpib-red':'kpib-green'}">LTIs: ${_ltiCount}</span><span class="kpib kpib-gray">per 1M hrs</span></div>
+      <div class="kpi-value">${_ltifr}${trendArrow(_inc30,_incP30,true)}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_ltiCount>0?'kpib-red':'kpib-green'}">LTIs: ${_ltiCount}</span><span class="kpib kpib-gray">per 1M hrs</span><span class="kpib kpib-gray">30d: ${_inc30} inc</span></div>
     </div>
     <div class="kpi-card" style="--kpi-color:${capaOverdue>0?'var(--red)':capaOpen>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('capa')">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#d97706,#fde68a)"></div>
       <div class="kpi-label">Open CAPAs</div>
-      <div class="kpi-value">${capaOpen+capaOverdue}</div>
+      <div class="kpi-value">${capaOpen+capaOverdue}${trendArrow(_cap30,_capP30,true)}</div>
       <div class="kpi-breakdown"><span class="kpib ${capaOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${capaOverdue}</span><span class="kpib kpib-green">Closed: ${capaClosed}</span></div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
@@ -7907,7 +7940,7 @@ function renderDashboard(){
     <div class="kpi-card" style="--kpi-color:rgba(74,222,128,.9)" onclick="navigateTo('ghg')">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
       <div class="kpi-label">GHG ${periodLabel}</div>
-      <div class="kpi-value">${_ghgCO2.toFixed(1)}<span style="font-size:.75rem;margin-left:3px">tCO₂e</span></div>
+      <div class="kpi-value">${_ghgCO2.toFixed(1)}<span style="font-size:.75rem;margin-left:3px">tCO₂e</span>${trendArrow(_ghg30,_ghgP30,true)}</div>
       <div class="kpi-breakdown"><span class="kpib kpib-gray">S1:${_ghgS1.toFixed(1)}</span><span class="kpib kpib-gray">S2:${_ghgS2.toFixed(1)}</span><span class="kpib kpib-gray">S3:${_ghgS3.toFixed(1)}</span></div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
@@ -7915,7 +7948,7 @@ function renderDashboard(){
       <div class="kpi-accent-bar" style="background:${sheqColor}"></div>
       <div class="kpi-label">SHEQ Health Score</div>
       <div class="kpi-value" style="color:${sheqColor}">${sheqScore}</div>
-      <div class="kpi-breakdown"><span class="kpib" style="background:${sheqScore>=80?'#dcfce7':sheqScore>=60?'#fef9c3':'#fee2e2'};color:${sheqScore>=80?'#166534':sheqScore>=60?'#854d0e':'#991b1b'}">${sheqLabel}</span></div>
+      <div class="kpi-breakdown"><span class="kpib" style="background:${sheqScore>=80?'#dcfce7':sheqScore>=60?'#fef9c3':'#fee2e2'};color:${sheqScore>=80?'#166534':sheqScore>=60?'#854d0e':'#991b1b'}">${sheqLabel}</span><span class="kpib kpib-gray" title="CAPA 25% · Training 20% · Legal 20% · Audit 20% · Incidents 15%">ⓘ formula</span></div>
     </div>`;
 
   // ── Pillar tab HTML ──────────────────────────────────────────────────────
@@ -14142,6 +14175,50 @@ if('serviceWorker' in navigator){
     }).catch(()=>{}); // Silently fail if sw.js not present
   });
 }
+
+// ── Offline / Online connectivity banner ─────────────────────
+let _offlineQueue = [];
+function _setOfflineBanner(isOffline){
+  const banner = document.getElementById('offline-banner');
+  if(!banner) return;
+  banner.style.display = isOffline ? 'block' : 'none';
+  // Push topbar down so banner doesn't overlap
+  const topbar = document.getElementById('topbar');
+  if(topbar) topbar.style.marginTop = isOffline ? '38px' : '';
+}
+function _updateOfflineQueueBadge(){
+  const el = document.getElementById('offline-queue-count');
+  if(!el) return;
+  if(_offlineQueue.length > 0){
+    el.style.display = 'inline';
+    el.textContent = _offlineQueue.length + ' pending write' + (_offlineQueue.length!==1?'s':'');
+  } else {
+    el.style.display = 'none';
+  }
+}
+// Firebase saveData wrapper: queue writes when offline, flush on reconnect
+const _origSaveData = typeof saveData !== 'undefined' ? saveData : null;
+function _flushOfflineQueue(){
+  if(!_offlineQueue.length) return;
+  const q = _offlineQueue.splice(0);
+  q.forEach(payload => {
+    try{ if(typeof saveData === 'function') saveData(payload, true); }catch(e){}
+  });
+  _updateOfflineQueueBadge();
+  if(q.length) showToast('✅ ' + q.length + ' offline write' + (q.length!==1?'s':'') + ' synced to Firebase.', 'success', 4000);
+}
+window.addEventListener('offline', () => {
+  _setOfflineBanner(true);
+});
+window.addEventListener('online', () => {
+  _setOfflineBanner(false);
+  _flushOfflineQueue();
+  showToast('📶 Back online — syncing data…', 'info', 3000);
+});
+// Set initial state on load
+window.addEventListener('load', () => {
+  if(!navigator.onLine) _setOfflineBanner(true);
+});
 
 // PWA install prompt handling
 let _pwaInstallPrompt = null;
