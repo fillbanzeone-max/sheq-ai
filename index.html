@@ -2677,6 +2677,7 @@
     <li class="nav-item" style="position:relative"><div class="nav-link" data-page="capa"><span class="nav-icon">✅</span><span class="nav-label">CAPA Tracker</span></div><span id="capa-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
     <li class="nav-item"><div class="nav-link" data-page="audits"><span class="nav-icon">📝</span><span class="nav-label">Audits &amp; Inspections</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
+    <li class="nav-item" style="position:relative"><div class="nav-link" data-page="calibration"><span class="nav-icon">🔬</span><span class="nav-label">Calibration Register</span></div><span id="cal-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
 
     <li class="nav-section-label" data-pillar="social" style="color:rgba(96,165,250,.75)">🤝 Social<span class="pillar-chevron nav-label">▾</span></li>
@@ -2689,6 +2690,9 @@
     <li class="nav-section-label" data-pillar="governance" style="color:rgba(167,139,250,.75)">🏛️ Governance<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="risks"><span class="nav-icon">🎯</span><span class="nav-label">Risk Register</span></div></li>
     <li class="nav-item" style="position:relative"><div class="nav-link" data-page="legal"><span class="nav-icon">⚖️</span><span class="nav-label">Legal Register</span></div><span id="legal-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
+    <li class="nav-item"><div class="nav-link" data-page="documents"><span class="nav-icon">📂</span><span class="nav-label">Document Library</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="mgmt-review"><span class="nav-icon">🏛️</span><span class="nav-label">Management Review</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="objectives"><span class="nav-icon">🎯</span><span class="nav-label">Objectives &amp; Targets</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="suppliers"><span class="nav-icon">🏭</span><span class="nav-label">Supplier Scorecard</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="esg-board"><span class="nav-icon">📊</span><span class="nav-label">ESG Board Dashboard</span></div></li>
 
@@ -2738,6 +2742,10 @@
   <div class="mobile-nav-item" data-page="workforce"><span class="nav-icon">👥</span>WF</div>
   <div class="mobile-nav-item" data-page="stakeholder"><span class="nav-icon">🤝</span>Stk</div>
   <div class="mobile-nav-item" data-page="community"><span class="nav-icon">🏘️</span>Comm</div>
+  <div class="mobile-nav-item" data-page="calibration"><span class="nav-icon">🔬</span>Cal</div>
+  <div class="mobile-nav-item" data-page="documents"><span class="nav-icon">📂</span>Docs</div>
+  <div class="mobile-nav-item" data-page="mgmt-review"><span class="nav-icon">🏛️</span>MgmtRev</div>
+  <div class="mobile-nav-item" data-page="objectives"><span class="nav-icon">🎯</span>Obj</div>
   <div class="mobile-nav-item" data-page="suppliers"><span class="nav-icon">🏭</span>Sup</div>
   <div class="mobile-nav-item" data-page="esg-board"><span class="nav-icon">📊</span>ESG</div>
 </div>
@@ -3271,6 +3279,106 @@
       </table>
     </div>
     <div class="pagination" id="comm-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= CALIBRATION REGISTER ======= -->
+<div id="page-calibration" class="page">
+  <div class="section-header">
+    <span class="section-title">🔬 Calibration Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('calibration')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('cal-f-edit-id').value='';openModal('calibration-modal')">+ Add Equipment</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="cal-search" placeholder="Search calibration records…">
+    <select id="cal-filter-status"><option value="">All Statuses</option><option value="Current">Current</option><option value="Due Soon">Due Soon</option><option value="Overdue">Overdue</option></select>
+    <select id="cal-filter-type"><option value="">All Types</option><option value="Electrical">Electrical</option><option value="Pressure">Pressure</option><option value="Temperature">Temperature</option><option value="Gas Detection">Gas Detection</option><option value="Noise">Noise</option><option value="Air Sampling">Air Sampling</option><option value="Other">Other</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Equipment</th><th>Asset ID</th><th>Type</th><th>Manufacturer</th><th>Serial No.</th><th>Location</th><th>Last Cal.</th><th>Next Due</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="cal-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="cal-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= DOCUMENT LIBRARY ======= -->
+<div id="page-documents" class="page">
+  <div class="section-header">
+    <span class="section-title">📂 Document &amp; Policy Library</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('documents')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('doc-f-edit-id').value='';openModal('document-modal')">+ Add Document</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="doc-search" placeholder="Search documents…">
+    <select id="doc-filter-type"><option value="">All Types</option><option value="Policy">Policy</option><option value="Procedure">Procedure</option><option value="Instruction">Instruction</option><option value="Form">Form</option><option value="Plan">Plan</option><option value="Register">Register</option><option value="Report">Report</option><option value="Standard">Standard</option></select>
+    <select id="doc-filter-status"><option value="">All Statuses</option><option value="Current">Current</option><option value="Under Review">Under Review</option><option value="Obsolete">Obsolete</option><option value="Draft">Draft</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Title</th><th>Type</th><th>Doc No.</th><th>Rev.</th><th>Effective</th><th>Review Due</th><th>Owner</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="doc-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="doc-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= MANAGEMENT REVIEW LOG ======= -->
+<div id="page-mgmt-review" class="page">
+  <div class="section-header">
+    <span class="section-title">🏛️ Management Review Log</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('mgmtReviews')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('mr-f-edit-id').value='';openModal('mgmt-review-modal')">+ Log Review</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="mr-search" placeholder="Search management reviews…">
+    <select id="mr-filter-type"><option value="">All Types</option><option value="Annual">Annual</option><option value="Quarterly">Quarterly</option><option value="Monthly">Monthly</option><option value="Ad Hoc">Ad Hoc</option></select>
+    <select id="mr-filter-status"><option value="">All Statuses</option><option value="Planned">Planned</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Type</th><th>Chairperson</th><th>Attendees</th><th>Key Decisions</th><th>Action Items</th><th>Next Review</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="mr-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="mr-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= OBJECTIVES & TARGETS ======= -->
+<div id="page-objectives" class="page">
+  <div class="section-header">
+    <span class="section-title">🎯 Objectives &amp; Targets Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('objectives')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('obj-f-edit-id').value='';openModal('objective-modal')">+ Add Objective</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="obj-search" placeholder="Search objectives…">
+    <select id="obj-filter-pillar"><option value="">All Pillars</option><option value="Safety">Safety</option><option value="Health">Health</option><option value="Environmental">Environmental</option><option value="Quality">Quality</option><option value="Social">Social</option><option value="Governance">Governance</option></select>
+    <select id="obj-filter-status"><option value="">All Statuses</option><option value="On Track">On Track</option><option value="At Risk">At Risk</option><option value="Behind">Behind</option><option value="Achieved">Achieved</option><option value="Not Started">Not Started</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Pillar</th><th>Objective</th><th>KPI</th><th>Baseline</th><th>Target</th><th>Current</th><th>Progress</th><th>Due</th><th>Owner</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="obj-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="obj-pagination"></div>
   </div>
 </div>
 
@@ -4680,6 +4788,153 @@
   </div>
 </div>
 
+<!-- CALIBRATION MODAL -->
+<div class="modal-overlay" id="calibration-modal">
+  <div class="modal">
+    <div class="modal-title">Calibration Record <button class="modal-close" onclick="closeModal('calibration-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Equipment Name</label><input type="text" id="cal-f-name" placeholder="e.g. Noise Dosimeter"></div>
+      <div class="form-group"><label>Asset / Tag ID</label><input type="text" id="cal-f-asset-id" placeholder="e.g. NM-001"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Equipment Type</label>
+        <select id="cal-f-type"><option value="Electrical">Electrical</option><option value="Pressure">Pressure</option><option value="Temperature">Temperature</option><option value="Gas Detection">Gas Detection</option><option value="Noise">Noise</option><option value="Air Sampling">Air Sampling</option><option value="Other">Other</option></select>
+      </div>
+      <div class="form-group"><label>Location / Area</label><input type="text" id="cal-f-location" placeholder="e.g. Workshop A"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Manufacturer</label><input type="text" id="cal-f-manufacturer" placeholder="e.g. Brüel &amp; Kjær"></div>
+      <div class="form-group"><label>Model</label><input type="text" id="cal-f-model" placeholder="e.g. 2250"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Serial Number</label><input type="text" id="cal-f-serial" placeholder="e.g. SN-2024-009"></div>
+      <div class="form-group"><label>Calibration Interval</label>
+        <select id="cal-f-interval"><option value="3">3 months</option><option value="6">6 months</option><option value="12" selected>12 months</option><option value="24">24 months</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Last Calibrated</label><input type="date" id="cal-f-last-cal" oninput="calAutoNextDue()"></div>
+      <div class="form-group"><label>Next Due</label><input type="date" id="cal-f-next-due"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Calibrated By</label><input type="text" id="cal-f-cal-by" placeholder="e.g. Fluke Calibration Lab"></div>
+      <div class="form-group"><label>Certificate No.</label><input type="text" id="cal-f-cert-no" placeholder="e.g. CAL-2025-001"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="cal-f-notes" placeholder="Any calibration notes or findings…"></textarea></div>
+    <input type="hidden" id="cal-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('calibration-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCalibration()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOCUMENT MODAL -->
+<div class="modal-overlay" id="document-modal">
+  <div class="modal">
+    <div class="modal-title">Document Record <button class="modal-close" onclick="closeModal('document-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Document Title</label><input type="text" id="doc-f-title" placeholder="e.g. PTW Procedure"></div>
+      <div class="form-group"><label>Document Type</label>
+        <select id="doc-f-type"><option value="Policy">Policy</option><option value="Procedure">Procedure</option><option value="Instruction">Instruction</option><option value="Form">Form</option><option value="Plan">Plan</option><option value="Register">Register</option><option value="Report">Report</option><option value="Standard">Standard</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Document Number</label><input type="text" id="doc-f-doc-no" placeholder="e.g. SHE-PRO-001"></div>
+      <div class="form-group"><label>Revision</label><input type="text" id="doc-f-revision" placeholder="e.g. Rev 3"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Effective Date</label><input type="date" id="doc-f-effective"></div>
+      <div class="form-group"><label>Review Due Date</label><input type="date" id="doc-f-review-due"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Document Owner</label><input type="text" id="doc-f-owner" placeholder="e.g. SHEQ Manager"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="doc-f-status"><option value="Current">Current</option><option value="Draft">Draft</option><option value="Under Review">Under Review</option><option value="Obsolete">Obsolete</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description / Scope</label><textarea id="doc-f-description" placeholder="Brief description of document purpose and scope…"></textarea></div>
+    <div class="form-group"><label>Document URL / Location</label><input type="text" id="doc-f-url" placeholder="e.g. SharePoint link or file path"></div>
+    <input type="hidden" id="doc-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('document-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDocument()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGEMENT REVIEW MODAL -->
+<div class="modal-overlay" id="mgmt-review-modal">
+  <div class="modal">
+    <div class="modal-title">Management Review Record <button class="modal-close" onclick="closeModal('mgmt-review-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Review Date</label><input type="date" id="mr-f-date"></div>
+      <div class="form-group"><label>Review Type</label>
+        <select id="mr-f-type"><option value="Annual">Annual</option><option value="Quarterly">Quarterly</option><option value="Monthly">Monthly</option><option value="Ad Hoc">Ad Hoc</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Chairperson</label><input type="text" id="mr-f-chair" placeholder="e.g. CEO / Site Manager"></div>
+      <div class="form-group"><label>Attendees</label><input type="text" id="mr-f-attendees" placeholder="e.g. SHEQ Manager, HR, Operations"></div>
+    </div>
+    <div class="form-group"><label>Agenda / Topics Covered</label><textarea id="mr-f-agenda" placeholder="List agenda items discussed…"></textarea></div>
+    <div class="form-group"><label>Key Decisions &amp; Outcomes</label><textarea id="mr-f-decisions" placeholder="Summarise key decisions, approvals, and management commitments…"></textarea></div>
+    <div class="form-group"><label>Action Items</label><textarea id="mr-f-actions" placeholder="List action items, owners, and due dates…"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Next Review Date</label><input type="date" id="mr-f-next-review"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="mr-f-status"><option value="Planned">Planned</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select>
+      </div>
+    </div>
+    <input type="hidden" id="mr-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('mgmt-review-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMgmtReview()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- OBJECTIVE MODAL -->
+<div class="modal-overlay" id="objective-modal">
+  <div class="modal">
+    <div class="modal-title">Objective &amp; Target <button class="modal-close" onclick="closeModal('objective-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Pillar</label>
+        <select id="obj-f-pillar"><option value="Safety">Safety</option><option value="Health">Health</option><option value="Environmental">Environmental</option><option value="Quality">Quality</option><option value="Social">Social</option><option value="Governance">Governance</option></select>
+      </div>
+      <div class="form-group"><label>ISO Standard Reference</label><input type="text" id="obj-f-standard" placeholder="e.g. ISO 45001 cl.6.2"></div>
+    </div>
+    <div class="form-group"><label>Objective Statement</label><textarea id="obj-f-objective" placeholder="e.g. Reduce Lost Time Injury Frequency Rate to zero by Dec 2026"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>KPI / Measure</label><input type="text" id="obj-f-kpi" placeholder="e.g. LTIFR"></div>
+      <div class="form-group"><label>Unit</label><input type="text" id="obj-f-unit" placeholder="e.g. per million hrs"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Baseline Value</label><input type="number" id="obj-f-baseline" step="0.01" placeholder="0"></div>
+      <div class="form-group"><label>Target Value</label><input type="number" id="obj-f-target" step="0.01" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Current Value</label><input type="number" id="obj-f-current" step="0.01" placeholder="0" oninput="objCalcProgress()"></div>
+      <div class="form-group"><label>Progress % <span style="font-size:10px;color:var(--muted)">(auto)</span></label><input type="number" id="obj-f-progress" placeholder="0" style="background:var(--card2)"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Due Date</label><input type="date" id="obj-f-due"></div>
+      <div class="form-group"><label>Owner</label><input type="text" id="obj-f-owner" placeholder="e.g. SHEQ Manager"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Status</label>
+        <select id="obj-f-status"><option value="Not Started">Not Started</option><option value="On Track">On Track</option><option value="At Risk">At Risk</option><option value="Behind">Behind</option><option value="Achieved">Achieved</option></select>
+      </div>
+      <div class="form-group"><label>Notes</label><input type="text" id="obj-f-notes" placeholder="Optional comments"></div>
+    </div>
+    <input type="hidden" id="obj-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('objective-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveObjective()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- GHG MODAL -->
 <div class="modal-overlay" id="ghg-modal">
   <div class="modal">
@@ -6078,6 +6333,39 @@ function getDefaultData() {
       {id:'FA-004',date:'2026-02-22',time:'08:30',employee_name:'Graça Mondlane',employee_id:'EMP-052',description:'Twisted ankle stepping off platform.',body_part:'Ankle / Foot',treatment:'RICE protocol applied; crepe bandage; advised to elevate.',first_aider:'Carlos Nhantumbo',referred:'Yes — Clinic',referral_destination:'Clínica Maputo Saúde',follow_up_date:'2026-02-25',status:'Follow-up Required'},
       {id:'FA-005',date:'2026-03-18',time:'15:20',employee_name:'David Cumbe',employee_id:'EMP-028',description:'Minor burn to forearm from hot pipe surface contact.',body_part:'Forearm',treatment:'Cool running water applied for 20 minutes; non-adhesive dressing applied.',first_aider:'Ana Muchanga',referred:'No',referral_destination:'',follow_up_date:'2026-03-21',status:'Treated'}
     ],
+    calibrationReg: [
+      {id:'CAL-001',equipment_name:'Noise Level Meter',equipment_id:'NLM-001',location:'Turbine Hall',measurement_type:'Noise',manufacturer:'Brüel & Kjær',model:'2250-L',serial_no:'BK2250-0341',last_calibrated:'2025-10-15',calibrated_by:'EnviroLab Mozambique',certificate_no:'CAL-2025-NLM-001',next_due:'2026-10-15',notes:'SANAS-accredited calibration certificate on file'},
+      {id:'CAL-002',equipment_name:'Gas Detector (4-gas)',equipment_id:'GD-003',location:'Confined Space Entry Kit',measurement_type:'Gas Detection',manufacturer:'MSA Safety',model:'Altair 4XR',serial_no:'MSA-4XR-0882',last_calibrated:'2026-01-20',calibrated_by:'MSA Distributor — Maputo',certificate_no:'CAL-2026-GD-003',next_due:'2026-07-20',notes:'Bump test daily; full calibration 6-monthly'},
+      {id:'CAL-003',equipment_name:'Pressure Gauge — Hydraulic Press',equipment_id:'PG-007',location:'Workshop',measurement_type:'Pressure',manufacturer:'Wika',model:'232.50',serial_no:'WK232-1145',last_calibrated:'2025-09-01',calibrated_by:'SHEQ Officer (in-house)',certificate_no:'CAL-2025-PG-007',next_due:'2026-09-01',notes:'Annual in-house calibration against reference gauge'},
+      {id:'CAL-004',equipment_name:'Thermometer — Process',equipment_id:'TH-011',location:'Water Treatment Plant',measurement_type:'Temperature',manufacturer:'Fluke',model:'52 II',serial_no:'FL52-3309',last_calibrated:'2026-02-10',calibrated_by:'SHEQ Officer (in-house)',certificate_no:'CAL-2026-TH-011',next_due:'2027-02-10',notes:'Annual calibration — ice bath and boiling water reference'},
+      {id:'CAL-005',equipment_name:'Personal Air Sampling Pump',equipment_id:'AS-002',location:'SHEQ Store',measurement_type:'Flow',manufacturer:'SKC',model:'Universal PCXR8',serial_no:'SKC-PCX-0567',last_calibrated:'2025-08-15',calibrated_by:'EnviroLab Mozambique',certificate_no:'CAL-2025-AS-002',next_due:'2026-08-15',notes:'Used for dust and chemical vapour sampling'},
+      {id:'CAL-006',equipment_name:'Electrical Insulation Tester',equipment_id:'ET-004',location:'Electrical Workshop',measurement_type:'Electrical',manufacturer:'Megger',model:'MIT410',serial_no:'MG410-2291',last_calibrated:'2025-12-01',calibrated_by:'Certified Electrician',certificate_no:'CAL-2025-ET-004',next_due:'2026-06-01',notes:'6-monthly calibration per electrical safety SOP'}
+    ],
+    documentLib: [
+      {id:'DOC-001',title:'SHEQ Policy Statement',type:'Policy',reference_no:'POL-SHEQ-001',version:'v3.1',effective_date:'2026-01-01',review_date:'2027-01-01',owner:'SHEQ Manager',status:'Active',file_url:'',notes:'Signed by CEO. Covers Safety, Health, Environment, Quality commitments.'},
+      {id:'DOC-002',title:'Environmental Policy',type:'Policy',reference_no:'POL-ENV-001',version:'v2.0',effective_date:'2026-01-01',review_date:'2027-01-01',owner:'SHEQ Manager',status:'Active',file_url:'',notes:'ISO 14001 cl.5.2 requirement. Covers GHG, water, waste, biodiversity commitments.'},
+      {id:'DOC-003',title:'Permit to Work Procedure',type:'Procedure',reference_no:'SOP-PTW-001',version:'v4.2',effective_date:'2025-07-01',review_date:'2026-07-01',owner:'Operations Manager',status:'Active',file_url:'',notes:'Covers Hot Work, Electrical, Confined Space, Working at Height, Line Breaking.'},
+      {id:'DOC-004',title:'Incident Investigation Procedure',type:'Procedure',reference_no:'SOP-INC-002',version:'v2.1',effective_date:'2025-03-01',review_date:'2026-03-01',owner:'SHEQ Manager',status:'Under Review',file_url:'',notes:'Due for revision to include RCA methodology update.'},
+      {id:'DOC-005',title:'Emergency Response Plan',type:'Procedure',reference_no:'SOP-ERP-001',version:'v5.0',effective_date:'2025-10-01',review_date:'2026-10-01',owner:'SHEQ Manager',status:'Active',file_url:'',notes:'Covers fire, spill, medical emergency, explosion, community notification.'},
+      {id:'DOC-006',title:'Risk Assessment Form',type:'Form',reference_no:'FRM-RISK-001',version:'v2.0',effective_date:'2025-01-01',review_date:'2027-01-01',owner:'SHEQ Officer',status:'Active',file_url:'',notes:'5x5 risk matrix. Used for all task-based risk assessments.'},
+      {id:'DOC-007',title:'Chemical / SDS Register',type:'Record',reference_no:'REG-CHEM-001',version:'v1.3',effective_date:'2025-06-01',review_date:'2026-06-01',owner:'Environmental Officer',status:'Active',file_url:'',notes:'GHS-aligned. 23 substances listed. Annual review required.'},
+      {id:'DOC-008',title:'Management of Change Procedure',type:'Procedure',reference_no:'SOP-MOC-001',version:'v1.5',effective_date:'2025-09-01',review_date:'2026-09-01',owner:'Operations Manager',status:'Active',file_url:''}
+    ],
+    mgmtReviews: [
+      {id:'MR-001',date:'2026-01-15',meeting_type:'Quarterly',chairperson:'CEO',attendees:'CEO, Operations Manager, SHEQ Manager, HR Manager, Environmental Officer',agenda:'Q4 2025 SHEQ performance; incident trend review; CAPA closure status; legal compliance update; resource requirements.',key_decisions:'Increase SHEQ training budget by 15% for 2026. Appoint additional SHEQ Officer. Prioritise PTW system upgrade.',action_items:'SHEQ Manager to present training plan by 2026-02-15. HR to initiate recruitment. Ops to review PTW procedure.',next_review_date:'2026-04-15',status:'Completed'},
+      {id:'MR-002',date:'2026-04-10',meeting_type:'Quarterly',chairperson:'CEO',attendees:'CEO, Operations Manager, SHEQ Manager, HR Manager, Environmental Officer, Quality Manager',agenda:'Q1 2026 SHEQ performance; new module launches (Wellness, Suppliers, Energy); ESG score review; audit findings.',key_decisions:'ESG score at 78% — target 85% by Q4 2026. Community register to be activated. Environmental data entry campaign to begin.',action_items:'SHEQ to complete data entry for GHG/Water/Waste by 2026-05-31. Community register go-live by 2026-04-30.',next_review_date:'2026-07-15',status:'Completed'},
+      {id:'MR-003',date:'2026-07-15',meeting_type:'Quarterly',chairperson:'CEO',attendees:'',agenda:'Q2 2026 SHEQ performance; mid-year targets review; ISO surveillance audit preparation.',key_decisions:'',action_items:'',next_review_date:'2026-10-15',status:'Planned'}
+    ],
+    objectives: [
+      {id:'OBJ-001',pillar:'Safety',objective:'Achieve zero Lost Time Injuries',kpi:'LTIFR',baseline:'2.1',target_value:'0',unit:'per million hours',current_value:'0.8',due_date:'2026-12-31',owner:'SHEQ Manager',status:'On Track',notes:'LTIFR trending down from baseline of 2.1 in 2024'},
+      {id:'OBJ-002',pillar:'Safety',objective:'100% CAPA closure within target date',kpi:'CAPA on-time closure rate',baseline:'62%',target_value:'90',unit:'%',current_value:'75',due_date:'2026-12-31',owner:'SHEQ Manager',status:'At Risk',notes:'Currently 7 overdue CAPAs — focused action plan required'},
+      {id:'OBJ-003',pillar:'Environmental',objective:'Reduce GHG Scope 1+2 emissions by 10%',kpi:'tCO2e (Scope 1+2)',baseline:'142',target_value:'128',unit:'tCO2e/yr',current_value:'0',due_date:'2026-12-31',owner:'Environmental Officer',status:'At Risk',notes:'No emissions data yet recorded — data entry campaign required'},
+      {id:'OBJ-004',pillar:'Environmental',objective:'Achieve 70% waste diversion from landfill',kpi:'Waste diversion %',baseline:'45%',target_value:'70',unit:'%',current_value:'0',due_date:'2026-12-31',owner:'Environmental Officer',status:'At Risk',notes:'Waste module live but no records entered yet'},
+      {id:'OBJ-005',pillar:'Health',objective:'100% of workers with valid medical surveillance',kpi:'Medical surveillance current %',baseline:'60%',target_value:'100',unit:'%',current_value:'67',due_date:'2026-12-31',owner:'Occupational Health Nurse',status:'On Track',notes:'1 overdue, 1 due soon — 4 of 6 currently valid'},
+      {id:'OBJ-006',pillar:'Quality',objective:'Achieve ISO 9001 surveillance audit with zero major NCRs',kpi:'Major NCR count',baseline:'2',target_value:'0',unit:'NCRs',current_value:'0',due_date:'2026-11-30',owner:'Quality Manager',status:'On Track',notes:'Previous audit had 2 minor NCRs. All closed.'},
+      {id:'OBJ-007',pillar:'Governance',objective:'Reach ESG maturity score of 85% (Established)',kpi:'ESG score %',baseline:'58%',target_value:'85',unit:'%',current_value:'80',due_date:'2026-12-31',owner:'SHEQ Manager',status:'On Track',notes:'Score at 80% following Phase 1 & 2 module builds'},
+      {id:'OBJ-008',pillar:'Social',objective:'Achieve 95% training compliance (valid records)',kpi:'Training valid %',baseline:'0%',target_value:'95',unit:'%',current_value:'0',due_date:'2026-12-31',owner:'HR Manager',status:'Behind',notes:'Training register live — data entry required to populate'}
+    ],
     ghgEntries: [
       {id:'GHG-001',date:'2026-01-15',scope:'Scope 1',source:'Diesel',quantity:850,unit:'litres',tCO2e:2.278,notes:'Generator fuel — January'},
       {id:'GHG-002',date:'2026-01-31',scope:'Scope 2',source:'Electricity',quantity:12400,unit:'kWh',tCO2e:11.16,notes:'Grid electricity — January'},
@@ -6682,7 +6970,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register','med-surveillance':'Medical Surveillance Register',exposure:'Exposure Monitoring Register','first-aid':'First Aid Treatment Log'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register','med-surveillance':'Medical Surveillance Register',exposure:'Exposure Monitoring Register','first-aid':'First Aid Treatment Log',calibration:'Calibration Register',documents:'Document & Policy Library','mgmt-review':'Management Review Log',objectives:'Objectives & Targets Register'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -6730,6 +7018,10 @@ function navigateTo(page){
   else if(page==='med-surveillance'){renderMedSurveillance();checkMedBadge();}
   else if(page==='exposure')renderExposure();
   else if(page==='first-aid')renderFirstAid();
+  else if(page==='calibration'){renderCalibration();checkCalBadge();}
+  else if(page==='documents')renderDocuments();
+  else if(page==='mgmt-review')renderMgmtReview();
+  else if(page==='objectives')renderObjectives();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>{ if(l.closest('.nav-link')?.style.cursor==='default') return; navigateTo(l.dataset.page); }));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -6928,6 +7220,22 @@ function renderDashboard(){
   const _fa=(d.firstAidLog||[]).filter(r=>inPeriod(r.date));
   const _faFollowUp=_fa.filter(r=>r.status==='Follow-up Required').length;
   const _faReferred=_fa.filter(r=>r.referred&&r.referred!=='No').length;
+
+  // --- Phase 2 modules ---
+  const _calAll=(d.calibrationReg||[]).map(r=>({...r,_st:getCalStatus(r.next_due)}));
+  const _calOverdue=_calAll.filter(r=>r._st==='Overdue').length;
+  const _calDueSoon=_calAll.filter(r=>r._st==='Due Soon').length;
+  const _calCurrent=_calAll.filter(r=>r._st==='Current').length;
+  const _docAll=d.documentLib||[];
+  const _docUnderReview=_docAll.filter(r=>r.status==='Under Review').length;
+  const _docOverdue=_docAll.filter(r=>r.review_due&&r.review_due<today()&&r.status!=='Obsolete').length;
+  const _mrAll=d.mgmtReviews||[];
+  const _mrCompleted=_mrAll.filter(r=>r.status==='Completed').length;
+  const _mrPlanned=_mrAll.filter(r=>r.status==='Planned').length;
+  const _objAll=d.objectives||[];
+  const _objOnTrack=_objAll.filter(r=>r.status==='On Track'||r.status==='Achieved').length;
+  const _objAtRisk=_objAll.filter(r=>r.status==='At Risk').length;
+  const _objBehind=_objAll.filter(r=>r.status==='Behind').length;
 
   // --- Suppliers ---
   const _suppAll=d.suppliers||[];
@@ -7155,6 +7463,48 @@ function renderDashboard(){
       <div class="kpi-breakdown">
         <span class="kpib kpib-orange">Follow-up: ${_faFollowUp}</span>
         <span class="kpib kpib-yellow">Referred: ${_faReferred}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_calOverdue>0?'var(--red)':_calDueSoon>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('calibration')" title="Go to Calibration Register">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
+      <div class="kpi-label">Calibration</div>
+      <div class="kpi-value">${_calAll.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">Current: ${_calCurrent}</span>
+        <span class="kpib kpib-orange">Due Soon: ${_calDueSoon}</span>
+        <span class="kpib ${_calOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${_calOverdue}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_docOverdue>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('documents')" title="Go to Document Library">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1e40af,#60a5fa)"></div>
+      <div class="kpi-label">Documents</div>
+      <div class="kpi-value">${_docAll.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-blue">Under Review: ${_docUnderReview}</span>
+        <span class="kpib ${_docOverdue>0?'kpib-red':'kpib-gray'}">Review Overdue: ${_docOverdue}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:rgba(139,92,246,.9)" onclick="navigateTo('mgmt-review')" title="Go to Management Review">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#6d28d9,#a78bfa)"></div>
+      <div class="kpi-label">Mgmt Reviews</div>
+      <div class="kpi-value">${_mrAll.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">Completed: ${_mrCompleted}</span>
+        <span class="kpib kpib-blue">Planned: ${_mrPlanned}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_objBehind>0?'var(--red)':_objAtRisk>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('objectives')" title="Go to Objectives & Targets">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">Objectives</div>
+      <div class="kpi-value">${_objAll.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">On Track: ${_objOnTrack}</span>
+        <span class="kpib kpib-orange">At Risk: ${_objAtRisk}</span>
+        <span class="kpib ${_objBehind>0?'kpib-red':'kpib-gray'}">Behind: ${_objBehind}</span>
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
@@ -9033,6 +9383,394 @@ function renderCommunity(page=1){
 document.getElementById('comm-search').addEventListener('input',()=>renderCommunity(1));
 document.getElementById('comm-filter-type').addEventListener('change',()=>renderCommunity(1));
 document.getElementById('comm-filter-status').addEventListener('change',()=>renderCommunity(1));
+
+// ============================================================
+// CALIBRATION REGISTER
+// ============================================================
+let calPage=1;
+function genCalId(arr){const nums=(arr||[]).map(r=>parseInt((r.id||'').replace('CAL-',''))||0);return'CAL-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0');}
+function getCalStatus(next_due){
+  if(!next_due)return'Unknown';
+  const diff=new Date(next_due)-new Date();
+  if(diff<0)return'Overdue';
+  if(diff<30*86400000)return'Due Soon';
+  return'Current';
+}
+function calAutoNextDue(){
+  const last=document.getElementById('cal-f-last-cal').value;
+  const months=parseInt(document.getElementById('cal-f-interval').value)||12;
+  if(!last)return;
+  const d=new Date(last);d.setMonth(d.getMonth()+months);
+  document.getElementById('cal-f-next-due').value=d.toISOString().substring(0,10);
+}
+function checkCalBadge(){
+  const recs=getData()?.calibrationReg||[];
+  const alert=recs.filter(r=>{const s=getCalStatus(r.next_due);return s==='Overdue'||s==='Due Soon';}).length;
+  const badge=document.getElementById('cal-badge');
+  if(badge){badge.style.display=alert>0?'inline-block':'none';badge.textContent=alert;}
+}
+function saveCalibration(){
+  if(!rateCheck('save-calibration',100))return;
+  if(!validateRequired([['cal-f-name','Equipment Name'],['cal-f-asset-id','Asset ID']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.calibrationReg=d.calibrationReg||[];
+  const editId=document.getElementById('cal-f-edit-id').value;
+  const rec={
+    id:editId||genCalId(d.calibrationReg),
+    name:document.getElementById('cal-f-name').value||'',
+    asset_id:document.getElementById('cal-f-asset-id').value||'',
+    type:document.getElementById('cal-f-type').value,
+    location:document.getElementById('cal-f-location').value||'',
+    manufacturer:document.getElementById('cal-f-manufacturer').value||'',
+    model:document.getElementById('cal-f-model').value||'',
+    serial:document.getElementById('cal-f-serial').value||'',
+    interval_months:parseInt(document.getElementById('cal-f-interval').value)||12,
+    last_cal:document.getElementById('cal-f-last-cal').value||'',
+    next_due:document.getElementById('cal-f-next-due').value||'',
+    cal_by:document.getElementById('cal-f-cal-by').value||'',
+    cert_no:document.getElementById('cal-f-cert-no').value||'',
+    notes:document.getElementById('cal-f-notes').value||''
+  };
+  if(editId){const idx=d.calibrationReg.findIndex(x=>x.id===editId);if(idx>=0)d.calibrationReg[idx]=rec;else d.calibrationReg.push(rec);}
+  else d.calibrationReg.push(rec);
+  saveData(d);closeModal('calibration-modal');renderCalibration(1);checkCalBadge();
+}
+function deleteCalibration(id){
+  if(!requireRole('delete','Delete Calibration Record'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.calibrationReg||[]).find(x=>x.id===id);
+  if(!confirm('Delete calibration record '+id+(r?' — '+r.name:'')+'\nThis cannot be undone.'))return;
+  d.calibrationReg=(d.calibrationReg||[]).filter(x=>x.id!==id);
+  saveData(d);renderCalibration(calPage);checkCalBadge();
+}
+function editCalibration(id){
+  const d=getData()||getDefaultData();const r=(d.calibrationReg||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('cal-f-edit-id').value=id;
+  document.getElementById('cal-f-name').value=r.name||'';
+  document.getElementById('cal-f-asset-id').value=r.asset_id||'';
+  document.getElementById('cal-f-type').value=r.type||'Other';
+  document.getElementById('cal-f-location').value=r.location||'';
+  document.getElementById('cal-f-manufacturer').value=r.manufacturer||'';
+  document.getElementById('cal-f-model').value=r.model||'';
+  document.getElementById('cal-f-serial').value=r.serial||'';
+  document.getElementById('cal-f-interval').value=String(r.interval_months||12);
+  document.getElementById('cal-f-last-cal').value=r.last_cal||'';
+  document.getElementById('cal-f-next-due').value=r.next_due||'';
+  document.getElementById('cal-f-cal-by').value=r.cal_by||'';
+  document.getElementById('cal-f-cert-no').value=r.cert_no||'';
+  document.getElementById('cal-f-notes').value=r.notes||'';
+  openModal('calibration-modal');
+}
+function renderCalibration(page=1){
+  calPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('cal-search').value||'').toLowerCase();
+  const fStatus=document.getElementById('cal-filter-status').value;
+  const fType=document.getElementById('cal-filter-type').value;
+  let items=(d.calibrationReg||[]).filter(r=>{
+    const s=getCalStatus(r.next_due);
+    const ms=!search||[r.id,r.name,r.asset_id,r.location,r.manufacturer,r.serial].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fStatus||s===fStatus)&&(!fType||r.type===fType);
+  }).sort((a,b)=>(a.next_due||'').localeCompare(b.next_due||''));
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('cal-tbody').innerHTML=rows.length?rows.map(r=>{
+    const s=getCalStatus(r.next_due);
+    const pillColor=s==='Current'?'pill-green':s==='Due Soon'?'pill-orange':'pill-red';
+    return`<tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${escapeHtml(r.name)}</td>
+      <td>${escapeHtml(r.asset_id||'—')}</td>
+      <td>${escapeHtml(r.type||'—')}</td>
+      <td>${escapeHtml(r.manufacturer||'—')}</td>
+      <td>${escapeHtml(r.serial||'—')}</td>
+      <td>${escapeHtml(r.location||'—')}</td>
+      <td>${fmtDate(r.last_cal)}</td>
+      <td>${fmtDate(r.next_due)}</td>
+      <td><span class="pill ${pillColor}">${s}</span></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editCalibration('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCalibration('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:24px">No calibration records found</td></tr>`;
+  renderPagination('cal-pagination',total,page,renderCalibration);
+}
+document.getElementById('cal-search').addEventListener('input',()=>renderCalibration(1));
+document.getElementById('cal-filter-status').addEventListener('change',()=>renderCalibration(1));
+document.getElementById('cal-filter-type').addEventListener('change',()=>renderCalibration(1));
+
+// ============================================================
+// DOCUMENT LIBRARY
+// ============================================================
+let docPage=1;
+function genDocId(arr){const nums=(arr||[]).map(r=>parseInt((r.id||'').replace('DOC-',''))||0);return'DOC-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0');}
+function saveDocument(){
+  if(!rateCheck('save-document',100))return;
+  if(!validateRequired([['doc-f-title','Document Title'],['doc-f-doc-no','Document Number']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.documentLib=d.documentLib||[];
+  const editId=document.getElementById('doc-f-edit-id').value;
+  const rec={
+    id:editId||genDocId(d.documentLib),
+    title:document.getElementById('doc-f-title').value||'',
+    type:document.getElementById('doc-f-type').value,
+    doc_no:document.getElementById('doc-f-doc-no').value||'',
+    revision:document.getElementById('doc-f-revision').value||'',
+    effective:document.getElementById('doc-f-effective').value||'',
+    review_due:document.getElementById('doc-f-review-due').value||'',
+    owner:document.getElementById('doc-f-owner').value||'',
+    status:document.getElementById('doc-f-status').value,
+    description:document.getElementById('doc-f-description').value||'',
+    url:document.getElementById('doc-f-url').value||''
+  };
+  if(editId){const idx=d.documentLib.findIndex(x=>x.id===editId);if(idx>=0)d.documentLib[idx]=rec;else d.documentLib.push(rec);}
+  else d.documentLib.push(rec);
+  saveData(d);closeModal('document-modal');renderDocuments(1);
+}
+function deleteDocument(id){
+  if(!requireRole('delete','Delete Document Record'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.documentLib||[]).find(x=>x.id===id);
+  if(!confirm('Delete document '+id+(r?' — '+truncate(r.title,50):'')+'\nThis cannot be undone.'))return;
+  d.documentLib=(d.documentLib||[]).filter(x=>x.id!==id);
+  saveData(d);renderDocuments(docPage);
+}
+function editDocument(id){
+  const d=getData()||getDefaultData();const r=(d.documentLib||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('doc-f-edit-id').value=id;
+  document.getElementById('doc-f-title').value=r.title||'';
+  document.getElementById('doc-f-type').value=r.type||'Procedure';
+  document.getElementById('doc-f-doc-no').value=r.doc_no||'';
+  document.getElementById('doc-f-revision').value=r.revision||'';
+  document.getElementById('doc-f-effective').value=r.effective||'';
+  document.getElementById('doc-f-review-due').value=r.review_due||'';
+  document.getElementById('doc-f-owner').value=r.owner||'';
+  document.getElementById('doc-f-status').value=r.status||'Current';
+  document.getElementById('doc-f-description').value=r.description||'';
+  document.getElementById('doc-f-url').value=r.url||'';
+  openModal('document-modal');
+}
+function renderDocuments(page=1){
+  docPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('doc-search').value||'').toLowerCase();
+  const fType=document.getElementById('doc-filter-type').value;
+  const fStatus=document.getElementById('doc-filter-status').value;
+  let items=(d.documentLib||[]).filter(r=>{
+    const ms=!search||[r.id,r.title,r.doc_no,r.owner,r.type].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fType||r.type===fType)&&(!fStatus||r.status===fStatus);
+  }).sort((a,b)=>(a.doc_no||'').localeCompare(b.doc_no||''));
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('doc-tbody').innerHTML=rows.length?rows.map(r=>{
+    const reviewOverdue=r.review_due&&r.review_due<today()&&r.status!=='Obsolete';
+    const pillColor=r.status==='Current'?'pill-green':r.status==='Draft'?'pill-blue':r.status==='Under Review'?'pill-orange':'pill-red';
+    return`<tr style="${reviewOverdue?'background:#fff7ed':''}">
+      <td><strong>${r.id}</strong></td>
+      <td>${escapeHtml(r.title)}</td>
+      <td><span class="pill pill-blue" style="font-size:10px">${r.type}</span></td>
+      <td>${escapeHtml(r.doc_no||'—')}</td>
+      <td>${escapeHtml(r.revision||'—')}</td>
+      <td>${fmtDate(r.effective)}</td>
+      <td style="${reviewOverdue?'color:#ef4444;font-weight:700':''}">${fmtDate(r.review_due)}</td>
+      <td>${escapeHtml(r.owner||'—')}</td>
+      <td><span class="pill ${pillColor}">${r.status}</span></td>
+      <td>
+        ${r.url?`<a class="btn btn-sm btn-ghost" href="${escapeHtml(r.url)}" target="_blank" rel="noopener">View</a>`:''}
+        <button class="btn btn-sm btn-ghost" onclick="editDocument('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteDocument('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">No documents found</td></tr>`;
+  renderPagination('doc-pagination',total,page,renderDocuments);
+}
+document.getElementById('doc-search').addEventListener('input',()=>renderDocuments(1));
+document.getElementById('doc-filter-type').addEventListener('change',()=>renderDocuments(1));
+document.getElementById('doc-filter-status').addEventListener('change',()=>renderDocuments(1));
+
+// ============================================================
+// MANAGEMENT REVIEW LOG
+// ============================================================
+let mrPage=1;
+function genMrId(arr){const nums=(arr||[]).map(r=>parseInt((r.id||'').replace('MR-',''))||0);return'MR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0');}
+function saveMgmtReview(){
+  if(!rateCheck('save-mgmt-review',100))return;
+  if(!validateRequired([['mr-f-date','Review Date'],['mr-f-chair','Chairperson']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.mgmtReviews=d.mgmtReviews||[];
+  const editId=document.getElementById('mr-f-edit-id').value;
+  const rec={
+    id:editId||genMrId(d.mgmtReviews),
+    date:document.getElementById('mr-f-date').value||today(),
+    type:document.getElementById('mr-f-type').value,
+    chair:document.getElementById('mr-f-chair').value||'',
+    attendees:document.getElementById('mr-f-attendees').value||'',
+    agenda:document.getElementById('mr-f-agenda').value||'',
+    decisions:document.getElementById('mr-f-decisions').value||'',
+    actions:document.getElementById('mr-f-actions').value||'',
+    next_review:document.getElementById('mr-f-next-review').value||'',
+    status:document.getElementById('mr-f-status').value
+  };
+  if(editId){const idx=d.mgmtReviews.findIndex(x=>x.id===editId);if(idx>=0)d.mgmtReviews[idx]=rec;else d.mgmtReviews.push(rec);}
+  else d.mgmtReviews.push(rec);
+  saveData(d);closeModal('mgmt-review-modal');renderMgmtReview(1);
+}
+function deleteMgmtReview(id){
+  if(!requireRole('delete','Delete Management Review Record'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.mgmtReviews||[]).find(x=>x.id===id);
+  if(!confirm('Delete management review '+id+(r?' — '+fmtDate(r.date):'')+'\nThis cannot be undone.'))return;
+  d.mgmtReviews=(d.mgmtReviews||[]).filter(x=>x.id!==id);
+  saveData(d);renderMgmtReview(mrPage);
+}
+function editMgmtReview(id){
+  const d=getData()||getDefaultData();const r=(d.mgmtReviews||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('mr-f-edit-id').value=id;
+  document.getElementById('mr-f-date').value=r.date||'';
+  document.getElementById('mr-f-type').value=r.type||'Quarterly';
+  document.getElementById('mr-f-chair').value=r.chair||'';
+  document.getElementById('mr-f-attendees').value=r.attendees||'';
+  document.getElementById('mr-f-agenda').value=r.agenda||'';
+  document.getElementById('mr-f-decisions').value=r.decisions||'';
+  document.getElementById('mr-f-actions').value=r.actions||'';
+  document.getElementById('mr-f-next-review').value=r.next_review||'';
+  document.getElementById('mr-f-status').value=r.status||'Planned';
+  openModal('mgmt-review-modal');
+}
+function renderMgmtReview(page=1){
+  mrPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('mr-search').value||'').toLowerCase();
+  const fType=document.getElementById('mr-filter-type').value;
+  const fStatus=document.getElementById('mr-filter-status').value;
+  let items=(d.mgmtReviews||[]).filter(r=>{
+    const ms=!search||[r.id,r.chair,r.attendees,r.decisions].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fType||r.type===fType)&&(!fStatus||r.status===fStatus);
+  }).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('mr-tbody').innerHTML=rows.length?rows.map(r=>{
+    const pillColor=r.status==='Completed'?'pill-green':r.status==='Planned'?'pill-blue':'pill-red';
+    return`<tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)}</td>
+      <td><span class="pill pill-blue" style="font-size:10px">${r.type}</span></td>
+      <td>${escapeHtml(r.chair||'—')}</td>
+      <td style="max-width:140px">${truncate(r.attendees,60)}</td>
+      <td style="max-width:200px">${truncate(r.decisions,80)||'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="max-width:160px">${truncate(r.actions,60)||'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${fmtDate(r.next_review)}</td>
+      <td><span class="pill ${pillColor}">${r.status}</span></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editMgmtReview('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMgmtReview('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">No management reviews found</td></tr>`;
+  renderPagination('mr-pagination',total,page,renderMgmtReview);
+}
+document.getElementById('mr-search').addEventListener('input',()=>renderMgmtReview(1));
+document.getElementById('mr-filter-type').addEventListener('change',()=>renderMgmtReview(1));
+document.getElementById('mr-filter-status').addEventListener('change',()=>renderMgmtReview(1));
+
+// ============================================================
+// OBJECTIVES & TARGETS REGISTER
+// ============================================================
+let objPage=1;
+function genObjId(arr){const nums=(arr||[]).map(r=>parseInt((r.id||'').replace('OBJ-',''))||0);return'OBJ-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0');}
+function objCalcProgress(){
+  const baseline=parseFloat(document.getElementById('obj-f-baseline').value)||0;
+  const target=parseFloat(document.getElementById('obj-f-target').value)||0;
+  const current=parseFloat(document.getElementById('obj-f-current').value)||0;
+  let pct=0;
+  if(target!==baseline){pct=Math.round(Math.abs((current-baseline)/(target-baseline))*100);}
+  document.getElementById('obj-f-progress').value=Math.min(pct,100);
+}
+function saveObjective(){
+  if(!rateCheck('save-objective',100))return;
+  if(!validateRequired([['obj-f-objective','Objective Statement'],['obj-f-kpi','KPI']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.objectives=d.objectives||[];
+  const editId=document.getElementById('obj-f-edit-id').value;
+  const rec={
+    id:editId||genObjId(d.objectives),
+    pillar:document.getElementById('obj-f-pillar').value,
+    standard:document.getElementById('obj-f-standard').value||'',
+    objective:document.getElementById('obj-f-objective').value||'',
+    kpi:document.getElementById('obj-f-kpi').value||'',
+    unit:document.getElementById('obj-f-unit').value||'',
+    baseline:parseFloat(document.getElementById('obj-f-baseline').value)||0,
+    target:parseFloat(document.getElementById('obj-f-target').value)||0,
+    current:parseFloat(document.getElementById('obj-f-current').value)||0,
+    progress:parseInt(document.getElementById('obj-f-progress').value)||0,
+    due:document.getElementById('obj-f-due').value||'',
+    owner:document.getElementById('obj-f-owner').value||'',
+    status:document.getElementById('obj-f-status').value,
+    notes:document.getElementById('obj-f-notes').value||''
+  };
+  if(editId){const idx=d.objectives.findIndex(x=>x.id===editId);if(idx>=0)d.objectives[idx]=rec;else d.objectives.push(rec);}
+  else d.objectives.push(rec);
+  saveData(d);closeModal('objective-modal');renderObjectives(1);
+}
+function deleteObjective(id){
+  if(!requireRole('delete','Delete Objective'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.objectives||[]).find(x=>x.id===id);
+  if(!confirm('Delete objective '+id+(r?' — '+truncate(r.objective,50):'')+'\nThis cannot be undone.'))return;
+  d.objectives=(d.objectives||[]).filter(x=>x.id!==id);
+  saveData(d);renderObjectives(objPage);
+}
+function editObjective(id){
+  const d=getData()||getDefaultData();const r=(d.objectives||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('obj-f-edit-id').value=id;
+  document.getElementById('obj-f-pillar').value=r.pillar||'Safety';
+  document.getElementById('obj-f-standard').value=r.standard||'';
+  document.getElementById('obj-f-objective').value=r.objective||'';
+  document.getElementById('obj-f-kpi').value=r.kpi||'';
+  document.getElementById('obj-f-unit').value=r.unit||'';
+  document.getElementById('obj-f-baseline').value=r.baseline||0;
+  document.getElementById('obj-f-target').value=r.target||0;
+  document.getElementById('obj-f-current').value=r.current||0;
+  document.getElementById('obj-f-progress').value=r.progress||0;
+  document.getElementById('obj-f-due').value=r.due||'';
+  document.getElementById('obj-f-owner').value=r.owner||'';
+  document.getElementById('obj-f-status').value=r.status||'Not Started';
+  document.getElementById('obj-f-notes').value=r.notes||'';
+  openModal('objective-modal');
+}
+function renderObjectives(page=1){
+  objPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('obj-search').value||'').toLowerCase();
+  const fPillar=document.getElementById('obj-filter-pillar').value;
+  const fStatus=document.getElementById('obj-filter-status').value;
+  let items=(d.objectives||[]).filter(r=>{
+    const ms=!search||[r.id,r.pillar,r.objective,r.kpi,r.owner].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fPillar||r.pillar===fPillar)&&(!fStatus||r.status===fStatus);
+  }).sort((a,b)=>(a.pillar||'').localeCompare(b.pillar||''));
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('obj-tbody').innerHTML=rows.length?rows.map(r=>{
+    const pillColor=r.status==='Achieved'?'pill-green':r.status==='On Track'?'pill-green':r.status==='At Risk'?'pill-orange':r.status==='Behind'?'pill-red':'pill-blue';
+    const pct=Math.min(r.progress||0,100);
+    const barColor=pct>=80?'#16a34a':pct>=50?'#f59e0b':'#ef4444';
+    return`<tr>
+      <td><strong>${r.id}</strong></td>
+      <td><span class="pill pill-blue" style="font-size:10px">${r.pillar}</span></td>
+      <td style="max-width:200px">${truncate(r.objective,70)}</td>
+      <td>${escapeHtml(r.kpi||'—')}</td>
+      <td>${r.baseline}</td>
+      <td>${r.target}</td>
+      <td>${r.current}</td>
+      <td style="min-width:80px">
+        <div style="background:var(--card2);border-radius:4px;height:8px;overflow:hidden">
+          <div style="width:${pct}%;background:${barColor};height:100%;border-radius:4px"></div>
+        </div>
+        <div style="font-size:10px;text-align:center;margin-top:2px">${pct}%</div>
+      </td>
+      <td>${fmtDate(r.due)}</td>
+      <td>${escapeHtml(r.owner||'—')}</td>
+      <td><span class="pill ${pillColor}">${r.status}</span></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editObjective('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteObjective('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:24px">No objectives found</td></tr>`;
+  renderPagination('obj-pagination',total,page,renderObjectives);
+}
+document.getElementById('obj-search').addEventListener('input',()=>renderObjectives(1));
+document.getElementById('obj-filter-pillar').addEventListener('change',()=>renderObjectives(1));
+document.getElementById('obj-filter-status').addEventListener('change',()=>renderObjectives(1));
 
 // ============================================================
 // ANNUAL ESG REPORT
@@ -11938,7 +12676,7 @@ function importJSON(){
         const missing=REQUIRED_KEYS.filter(k=>!(k in data));
         if(missing.length&&!data.initialized){throw new Error('Not a valid ESG Management Systems - SHEQ backup file.');}
         // API-13: per-module schema validation
-        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics','wellness','suppliers','energyLog','communityLog','medSurveillance','exposureLog','firstAidLog'];
+        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics','wellness','suppliers','energyLog','communityLog','medSurveillance','exposureLog','firstAidLog','calibrationReg','documentLib','mgmtReviews','objectives'];
         for(const k of ALL_ARRAY_KEYS){
           if(!(k in data)) continue;
           const check=_validateImportModule(k,data[k]);
@@ -12106,6 +12844,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     setTimeout(checkTrainingBadge, 200);
     setTimeout(checkLegalAlerts, 200);
     setTimeout(checkMedBadge, 200);
+    setTimeout(checkCalBadge, 200);
     const k=sessionStorage.getItem('sheqai_apikey');
     if(k)document.getElementById('api-key-input').value=k;
     updateSyncStatus();
