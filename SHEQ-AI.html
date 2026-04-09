@@ -5742,8 +5742,9 @@
     <div class="form-group"><label>Outcome / Response</label><textarea id="se-f-outcome" placeholder="What was agreed, committed, or resolved…"></textarea></div>
     <div class="form-row">
       <div class="form-group"><label>Follow-up Action</label><input type="text" id="se-f-followup" placeholder="e.g. Site visit scheduled for 2026-04-20"></div>
-      <div class="form-group"><label>Responsible</label><input type="text" id="se-f-responsible" placeholder="Name / Role"></div>
+      <div class="form-group"><label>Follow-up Due Date</label><input type="date" id="se-f-followup-date"></div>
     </div>
+    <div class="form-group"><label>Responsible</label><input type="text" id="se-f-responsible" placeholder="Name / Role"></div>
     <div class="form-group"><label>Status</label>
       <select id="se-f-status"><option value="Open">Open</option><option value="Closed">Closed</option><option value="Pending">Pending</option></select>
     </div>
@@ -7823,11 +7824,15 @@ function renderDashboard(){
   const _seOpen=_seAll.filter(r=>r.status==='Open').length;
   const _seComplaints=_seAll.filter(r=>r.type==='Complaint'||r.type==='Grievance').length;
   const _seClosed=_seAll.filter(r=>r.status==='Closed').length;
+  const _seFollowUpOverdue=(d.stakeholders||[]).filter(r=>r.followUpDate&&r.followUpDate<today()&&r.status!=='Closed').length;
 
   // --- Wellness ---
   const _wellMo=(d.wellness||[]).filter(r=>inPeriod(r.date));
   const _wellDays=_wellMo.reduce((s,r)=>s+(parseFloat(r.days_lost)||0),0);
   const _wellCount=_wellMo.length;
+  const _wellHeadcount=(_wfLatest?.totalEmployees)||100;
+  const _wellWorkingDays=dashPeriod==='30'?20:dashPeriod==='90'?60:240;
+  const _wellAbsRate=_wellHeadcount>0?Math.round(_wellDays/(_wellWorkingDays*_wellHeadcount)*10000)/100:0;
 
   // --- Medical Surveillance ---
   const _ms=(d.medSurveillance||[]).map(r=>({...r,_st:getMedStatus(r.next_due)}));
@@ -8033,10 +8038,10 @@ function renderDashboard(){
       <div class="kpi-label">Exposure Monitoring</div><div class="kpi-value">${_expTotal}</div>
       <div class="kpi-breakdown"><span class="kpib ${_expExcOpen>0?'kpib-red':'kpib-green'}">Exceedances: ${_expExcOpen}</span></div>${_Arr}
     </div>
-    <div class="kpi-card" style="--kpi-color:${_wellDays>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('wellness')">
+    <div class="kpi-card" style="--kpi-color:${_wellAbsRate>2?'var(--red)':_wellDays>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('wellness')">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
-      <div class="kpi-label">Wellness</div><div class="kpi-value">${_wellCount}</div>
-      <div class="kpi-breakdown"><span class="kpib ${_wellDays>0?'kpib-orange':'kpib-green'}">Days Lost: ${_wellDays}</span></div>${_Arr}
+      <div class="kpi-label">Absenteeism Rate</div><div class="kpi-value">${_wellAbsRate.toFixed(1)}<span style="font-size:.75rem;margin-left:3px">%</span></div>
+      <div class="kpi-breakdown"><span class="kpib ${_wellDays>0?'kpib-orange':'kpib-green'}">Days Lost: ${_wellDays}</span><span class="kpib kpib-gray">${_wellCount} entries</span></div>${_Arr}
     </div>
     <div class="kpi-card" style="--kpi-color:var(--teal)" onclick="navigateTo('toolbox')">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
@@ -8136,10 +8141,10 @@ function renderDashboard(){
       <div class="kpi-label">Suppliers</div><div class="kpi-value">${_suppAll.length}</div>
       <div class="kpi-breakdown"><span class="kpib kpib-green">Approved: ${_suppApproved}</span><span class="kpib ${_suppWarn>0?'kpib-red':'kpib-gray'}">Warnings: ${_suppWarn}</span></div>${_Arr}
     </div>
-    <div class="kpi-card" style="--kpi-color:${_seComplaints>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('stakeholder')">
+    <div class="kpi-card" style="--kpi-color:${_seFollowUpOverdue>0?'var(--red)':_seComplaints>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('stakeholder')">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#7dd3fc)"></div>
       <div class="kpi-label">Stakeholders</div><div class="kpi-value">${_seAll.length}</div>
-      <div class="kpi-breakdown"><span class="kpib ${_seComplaints>0?'kpib-orange':'kpib-gray'}">Complaints: ${_seComplaints}</span><span class="kpib kpib-gray">Open: ${_seOpen}</span></div>${_Arr}
+      <div class="kpi-breakdown"><span class="kpib ${_seComplaints>0?'kpib-orange':'kpib-gray'}">Complaints: ${_seComplaints}</span><span class="kpib kpib-gray">Open: ${_seOpen}</span>${_seFollowUpOverdue>0?`<span class="kpib kpib-red">Overdue F/U: ${_seFollowUpOverdue}</span>`:''}</div>${_Arr}
     </div>
     <div class="kpi-card" style="--kpi-color:${_commLogOpen>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('community')">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
@@ -9424,6 +9429,7 @@ function saveStakeholder(){
     summary:document.getElementById('se-f-summary').value||'',
     outcome:document.getElementById('se-f-outcome').value||'',
     followUp:document.getElementById('se-f-followup').value||'',
+    followUpDate:document.getElementById('se-f-followup-date').value||'',
     responsible:document.getElementById('se-f-responsible').value||'',
     status:document.getElementById('se-f-status').value,
     evidenceFiles:evCollect('stakeholder')
@@ -9453,6 +9459,7 @@ function editStakeholder(id){
   document.getElementById('se-f-summary').value=r.summary||'';
   document.getElementById('se-f-outcome').value=r.outcome||'';
   document.getElementById('se-f-followup').value=r.followUp||'';
+  document.getElementById('se-f-followup-date').value=r.followUpDate||'';
   document.getElementById('se-f-responsible').value=r.responsible||'';
   document.getElementById('se-f-status').value=r.status||'Open';
   evLoad('stakeholder',r.evidenceFiles||[]);
@@ -9480,7 +9487,7 @@ function renderStakeholder(page=1){
       <td>${truncate(r.topic,35)}</td>
       <td>${SE_TYPE_ICON[r.type]||''} ${r.type}</td>
       <td>${truncate(r.outcome,40)}</td>
-      <td>${truncate(r.followUp,35)||'—'}</td>
+      <td>${truncate(r.followUp,35)||'—'}${r.followUpDate&&r.followUpDate<today()&&r.status!=='Closed'?'<br><span style="color:#dc2626;font-size:10px;font-weight:700">⚠ Overdue '+fmtDate(r.followUpDate)+'</span>':r.followUpDate?'<br><span style="color:var(--muted);font-size:10px">Due: '+fmtDate(r.followUpDate)+'</span>':''}</td>
       <td>${r.responsible||'—'}</td>
       <td>${statusPill(r.status)}</td>
       <td>
@@ -11511,6 +11518,11 @@ function updateAlertsCount(){
   const badgeIds=['capa-badge','training-badge','legal-badge','med-badge','cal-badge'];
   let total=0;
   badgeIds.forEach(id=>{const el=document.getElementById(id);if(el&&el.style.display!=='none')total+=parseInt(el.textContent)||0;});
+  // Add dynamic counts: expired permits + supplier warnings
+  const _dd=getData()||getDefaultData();
+  total+=(_dd.permits||[]).filter(p=>getPTWStatus(p)==='EXPIRED').length;
+  total+=(_dd.suppliers||[]).filter(s=>getSupplierWarning(s)).length;
+  total+=(_dd.stakeholders||[]).filter(r=>r.followUpDate&&r.followUpDate<today()&&r.status!=='Closed').length;
   const cnt=document.getElementById('alerts-count');
   if(cnt){cnt.style.display=total>0?'inline-block':'none';cnt.textContent=total;}
 }
@@ -11650,6 +11662,8 @@ function buildAlertsPanel(){
   if(ptwExpired.length) html+=_alertRow('🟠','Expired Permits',`${ptwExpired.length} permit${ptwExpired.length>1?'s':''} expired`,`permits`);
   const suppWarn=(d.suppliers||[]).filter(s=>getSupplierWarning(s));
   if(suppWarn.length) html+=_alertRow('🟡','Supplier Warnings',`${suppWarn.length} supplier${suppWarn.length>1?'s':''} with issues`,`suppliers`);
+  const seOverdue=(d.stakeholders||[]).filter(r=>r.followUpDate&&r.followUpDate<new Date().toISOString().substring(0,10)&&r.status!=='Closed');
+  if(seOverdue.length) html+=_alertRow('🟠','Stakeholder Follow-ups',`${seOverdue.length} overdue follow-up${seOverdue.length>1?'s':''}`,`stakeholder`);
   if(!html) html='<p style="color:var(--muted);font-size:13px;text-align:center;padding:8px 0">✅ No active alerts</p>';
   document.getElementById('alerts-list').innerHTML=html;
 }
@@ -13915,7 +13929,73 @@ function generateReport(){
       </ul>
     </div>
 
-    <h2 style="border-left:4px solid #2563eb;padding-left:10px">P. Management Actions Required</h2>
+    ${(()=>{
+      const ghgM=(d.ghgEntries||[]).filter(r=>r.date&&r.date.startsWith(ym));
+      const ghgPrev=(d.ghgEntries||[]).filter(r=>r.date&&r.date.startsWith(prevYm));
+      const ghgTotal=ghgM.reduce((s,r)=>s+(r.tCO2e||0),0);
+      const ghgPrevTotal=ghgPrev.reduce((s,r)=>s+(r.tCO2e||0),0);
+      const ghgS1=ghgM.filter(r=>r.scope==='Scope 1').reduce((s,r)=>s+(r.tCO2e||0),0);
+      const ghgS2=ghgM.filter(r=>r.scope==='Scope 2').reduce((s,r)=>s+(r.tCO2e||0),0);
+      const ghgS3=ghgM.filter(r=>r.scope==='Scope 3').reduce((s,r)=>s+(r.tCO2e||0),0);
+      const ghgDelta=ghgPrevTotal>0?Math.round((ghgTotal-ghgPrevTotal)/ghgPrevTotal*100):0;
+      return`<h2 style="border-left:4px solid #16a34a;padding-left:10px">P. GHG Emissions — ${monthName} ${year}</h2>
+      <table><thead><tr><th>Metric</th><th>This Month</th><th>Prev Month</th><th>Trend</th></tr></thead><tbody>
+        <tr><td>Total tCO₂e</td><td><strong>${ghgTotal.toFixed(2)}</strong></td><td>${ghgPrevTotal.toFixed(2)}</td><td style="color:${ghgDelta>0?'#dc2626':'#16a34a'}">${ghgDelta>0?'↑':'↓'} ${Math.abs(ghgDelta)}%</td></tr>
+        <tr><td>Scope 1 (Direct)</td><td>${ghgS1.toFixed(2)}</td><td>—</td><td>—</td></tr>
+        <tr><td>Scope 2 (Electricity)</td><td>${ghgS2.toFixed(2)}</td><td>—</td><td>—</td></tr>
+        <tr><td>Scope 3 (Other)</td><td>${ghgS3.toFixed(2)}</td><td>—</td><td>—</td></tr>
+        <tr><td>Entries Logged</td><td>${ghgM.length}</td><td>${ghgPrev.length}</td><td>—</td></tr>
+      </tbody></table>`;
+    })()}
+
+    ${(()=>{
+      const waterM=(d.waterReg||[]).filter(r=>r.date&&r.date.startsWith(ym));
+      const waterPrev=(d.waterReg||[]).filter(r=>r.date&&r.date.startsWith(prevYm));
+      const waterKL=waterM.reduce((s,r)=>s+(parseFloat(r.volume_kl)||0),0);
+      const waterKLPrev=waterPrev.reduce((s,r)=>s+(parseFloat(r.volume_kl)||0),0);
+      const waterDelta=waterKLPrev>0?Math.round((waterKL-waterKLPrev)/waterKLPrev*100):0;
+      const bySrc={};waterM.forEach(r=>{bySrc[r.source]=(bySrc[r.source]||0)+(parseFloat(r.volume_kl)||0);});
+      return`<h2 style="border-left:4px solid #1d4ed8;padding-left:10px">Q. Water Consumption — ${monthName} ${year}</h2>
+      <table><thead><tr><th>Metric</th><th>This Month</th><th>Prev Month</th><th>Trend</th></tr></thead><tbody>
+        <tr><td>Total Volume</td><td><strong>${waterKL.toFixed(1)} kL</strong></td><td>${waterKLPrev.toFixed(1)} kL</td><td style="color:${waterDelta>0?'#dc2626':'#16a34a'}">${waterKLPrev>0?(waterDelta>0?'↑':'↓')+Math.abs(waterDelta)+'%':'New'}</td></tr>
+        <tr><td>Readings Logged</td><td>${waterM.length}</td><td>${waterPrev.length}</td><td>—</td></tr>
+        ${Object.entries(bySrc).map(([src,vol])=>`<tr><td>— ${src}</td><td>${vol.toFixed(1)} kL</td><td>—</td><td>—</td></tr>`).join('')}
+      </tbody></table>`;
+    })()}
+
+    ${(()=>{
+      const wasteM=(d.wasteLog||[]).filter(r=>r.date&&r.date.startsWith(ym));
+      const wasteTotal=wasteM.reduce((s,r)=>s+(parseFloat(r.weight_kg)||0),0);
+      const wasteDiverted=wasteM.filter(r=>r.disposal_method&&r.disposal_method!=='Landfill').reduce((s,r)=>s+(parseFloat(r.weight_kg)||0),0);
+      const wasteDivPct=wasteTotal>0?Math.round(wasteDiverted/wasteTotal*100):0;
+      const wasteHaz=wasteM.filter(r=>r.type==='Hazardous').reduce((s,r)=>s+(parseFloat(r.weight_kg)||0),0);
+      return`<h2 style="border-left:4px solid #16a34a;padding-left:10px">R. Waste Management — ${monthName} ${year}</h2>
+      <table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+        <tr><td>Total Waste Generated</td><td><strong>${wasteTotal.toFixed(0)} kg</strong></td></tr>
+        <tr style="background:${wasteDivPct>=50?'#f0fdf4':'#fef9c3'}"><td>Landfill Diversion Rate</td><td><strong style="color:${wasteDivPct>=50?'#16a34a':'#d97706'}">${wasteDivPct}%</strong></td></tr>
+        <tr style="background:${wasteHaz>0?'#fee2e2':''}"><td>Hazardous Waste</td><td>${wasteHaz.toFixed(0)} kg ${wasteHaz>0?'<strong style="color:#dc2626">⚠ Requires manifest verification</strong>':''}</td></tr>
+        <tr><td>Waste Entries Logged</td><td>${wasteM.length}</td></tr>
+      </tbody></table>`;
+    })()}
+
+    ${(()=>{
+      const trAll=(d.trainingReg||[]).map(r=>({...r,_st:getTrainingStatus(r.expiry_date)}));
+      const trM=trAll.filter(r=>r.date&&r.date.startsWith(ym));
+      const trValid=trAll.filter(r=>r._st==='Valid').length;
+      const trExpiring=trAll.filter(r=>r._st==='Expiring').length;
+      const trExpired=trAll.filter(r=>r._st==='Expired').length;
+      const trPct=trAll.length>0?Math.round(trValid/trAll.length*100):0;
+      return`<h2 style="border-left:4px solid #7c3aed;padding-left:10px">S. Training &amp; Competency — ${monthName} ${year}</h2>
+      <table><thead><tr><th>Status</th><th>Count</th><th>% of Register</th></tr></thead><tbody>
+        <tr style="background:#f0fdf4"><td>✅ Valid</td><td>${trValid}</td><td>${trPct}%</td></tr>
+        <tr style="background:${trExpiring>0?'#fef9c3':''}"><td>⚠ Expiring (≤30 days)</td><td>${trExpiring}</td><td>${trAll.length>0?Math.round(trExpiring/trAll.length*100):0}%</td></tr>
+        <tr style="background:${trExpired>0?'#fee2e2':''}"><td>❌ Expired</td><td>${trExpired}</td><td>${trAll.length>0?Math.round(trExpired/trAll.length*100):0}%</td></tr>
+        <tr style="font-weight:700"><td>Training Compliance</td><td colspan="2" style="color:${trPct>=90?'#16a34a':trPct>=70?'#d97706':'#dc2626'}">${trPct}%</td></tr>
+        <tr><td>New Completions (this month)</td><td>${trM.length}</td><td>—</td></tr>
+      </tbody></table>`;
+    })()}
+
+    <h2 style="border-left:4px solid #2563eb;padding-left:10px">T. Management Actions Required</h2>
     <p style="line-height:1.7;margin-bottom:10px">The following items require management decision, resource allocation, or escalation based on the findings of this report:</p>
     <table><thead><tr><th>#</th><th>Action Item</th><th>Priority</th><th>Responsible</th></tr></thead><tbody>
       ${overdueCapas.length>0?`<tr style="background:#fee2e2"><td>1</td><td>Close or provide written update on all <strong>${overdueCapas.length} overdue CAPA(s)</strong> immediately</td><td>CRITICAL</td><td>Responsible Persons / HODs</td></tr>`:''}
