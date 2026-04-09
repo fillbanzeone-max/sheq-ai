@@ -10000,7 +10000,7 @@ function renderMedSurveillance(page=1){
     return`<tr style="${rowBg}">
       <td><strong>${r.id}</strong></td>
       <td>${fmtDate(r.date)}</td>
-      <td>${maskPII?maskName(r.employee_name):escapeHtml(r.employee_name)}</td>
+      <td>${maskPII(r.employee_name||'')}</td>
       <td>${r.employee_id||'—'}</td>
       <td><span class="kpib kpib-blue" style="font-size:10px">${r.exam_type}</span></td>
       <td>${escapeHtml(r.provider||'—')}</td>
@@ -10234,7 +10234,7 @@ function renderFirstAid(page=1){
       <td><strong>${r.id}</strong></td>
       <td>${fmtDate(r.date)}</td>
       <td>${r.time||'—'}</td>
-      <td>${maskPII?maskName(r.employee_name):escapeHtml(r.employee_name)}</td>
+      <td>${maskPII(r.employee_name||'')}</td>
       <td style="max-width:160px;font-size:11px">${truncate(r.description,60)}</td>
       <td>${escapeHtml(r.body_part||'—')}</td>
       <td style="max-width:150px;font-size:11px">${truncate(r.treatment,50)}</td>
@@ -15354,6 +15354,260 @@ window.renderEmptyState = function(container, opts){
 })();
 
 console.log('[Design v2] runtime loaded — Ctrl+K for command palette');
+})();
+</script>
+<script>
+/* ── Attachment Adapter v1 ─────────────────────────────────────
+   Adds evidence-upload widgets to modules whose save functions
+   don't natively collect evidence. Wraps save/edit/openModal at
+   runtime so no modal HTML needs editing. */
+(function(){
+  if(typeof evWidgetHTML!=='function'||typeof evCollect!=='function'){
+    console.warn('[AttachAdapter] evidence helpers not found — skipped');
+    return;
+  }
+  const MODULES=[
+    {save:'savePermit',          prefix:'ptw',   modal:'ptw-modal',              arr:'permits',          editField:'ptw-f-edit-id'},
+    {save:'saveRisk',            prefix:'risk',  modal:'risk-modal',             arr:'risks',            editField:'risk-f-edit-id'},
+    {save:'saveWellness',        prefix:'wel',   modal:'wellness-modal',         arr:'wellness',         editField:'wel-f-edit-id'},
+    {save:'saveSupplier',        prefix:'sup',   modal:'supplier-modal',         arr:'suppliers',        editField:'sup-f-edit-id'},
+    {save:'saveMedSurveillance', prefix:'ms',    modal:'med-modal',              arr:'medSurveillance',  editField:'ms-f-edit-id'},
+    {save:'saveExposure',        prefix:'exp',   modal:'exposure-modal',         arr:'exposureLog',      editField:'exp-f-edit-id'},
+    {save:'saveFirstAid',        prefix:'fa',    modal:'firstaid-modal',         arr:'firstAidLog',      editField:'fa-f-edit-id'},
+    {save:'saveCommunity',       prefix:'comm',  modal:'community-modal',        arr:'communityLog',     editField:'comm-f-edit-id'},
+    {save:'saveCalibration',     prefix:'cal',   modal:'calibration-modal',      arr:'calibrationReg',   editField:'cal-f-edit-id'},
+    {save:'saveDocument',        prefix:'doc',   modal:'document-modal',         arr:'documentLib',      editField:'doc-f-edit-id'},
+    {save:'saveMgmtReview',      prefix:'mr',    modal:'mgmt-review-modal',      arr:'mgmtReviews',      editField:'mr-f-edit-id'},
+    {save:'saveObjective',       prefix:'obj',   modal:'objective-modal',        arr:'objectives',       editField:'obj-f-edit-id'},
+    {save:'saveEmergencyDrill',  prefix:'ed',    modal:'emergency-drills-modal', arr:'emergencyDrills',  editField:'ed-f-edit-id'},
+    {save:'saveNcr',             prefix:'ncr',   modal:'ncr-modal',              arr:'ncrRegister',      editField:'ncr-f-edit-id'},
+    {save:'saveLesson',          prefix:'ll',    modal:'lessons-modal',          arr:'lessonsLearned',   editField:'ll-f-edit-id'},
+    {save:'saveChemical',        prefix:'chem',  modal:'chemical-modal',         arr:'chemicalReg',      editField:'chem-f-edit-id'},
+    {save:'saveEnvMonitoring',   prefix:'envm',  modal:'env-monitoring-modal',   arr:'envMonitoring',    editField:'envm-f-edit-id'},
+    {save:'saveCommunication',   prefix:'comm2', modal:'communication-modal',    arr:'communicationLog', editField:'comm2-f-edit-id'},
+    {save:'saveGhg',             prefix:'ghg',   modal:'ghg-modal',              arr:'ghgEntries',       editField:'ghg-f-edit-id'},
+    {save:'saveWater',           prefix:'wr',    modal:'water-modal',            arr:'waterReg',         editField:'wr-f-edit-id'},
+    {save:'saveDei',             prefix:'dei',   modal:'dei-modal',              arr:'deiMetrics',       editField:'dei-f-edit-id'},
+    {save:'saveInduction',       prefix:'ind',   modal:'ind-modal',              arr:'inductions',       editField:'ind-f-edit-id'},
+    {save:'saveEnergy',          prefix:'ene',   modal:'energy-modal',           arr:'energyLog',        editField:'ene-f-edit-id'},
+    {save:'saveWorkforce',       prefix:'wf',    modal:'workforce-modal',        arr:'workforceMetrics', editField:'wf-f-edit-id'}
+  ];
+  const byModal={},byPrefix={};
+  MODULES.forEach(m=>{byModal[m.modal]=m;byPrefix[m.prefix]=m;});
+
+  // Inject widget into modal body (once) above .modal-actions
+  function ensureWidget(m){
+    const modal=document.getElementById(m.modal);if(!modal)return false;
+    if(modal.querySelector('[data-ev-widget="'+m.prefix+'"]'))return true;
+    const host=modal.querySelector('.modal');if(!host)return false;
+    const actions=host.querySelector('.modal-actions');
+    const wrap=document.createElement('div');
+    wrap.setAttribute('data-ev-widget',m.prefix);
+    wrap.style.marginTop='12px';
+    wrap.innerHTML=evWidgetHTML(m.prefix);
+    if(actions)host.insertBefore(wrap,actions);else host.appendChild(wrap);
+    return true;
+  }
+
+  // Wrap openModal to sync evidence state on open
+  const _openModal=window.openModal;
+  window.openModal=function(id){
+    const r=_openModal.apply(this,arguments);
+    const m=byModal[id];if(!m)return r;
+    try{
+      ensureWidget(m);
+      const editEl=document.getElementById(m.editField);
+      const editId=editEl?editEl.value:'';
+      if(!editId){ if(typeof evClear==='function')evClear(m.prefix); }
+      else{
+        const d=(typeof getData==='function')?getData():null;
+        const rec=d&&d[m.arr]?(d[m.arr].find(x=>x.id===editId)):null;
+        if(typeof evClear==='function')evClear(m.prefix);
+        if(rec&&rec.evidenceFiles&&typeof evLoad==='function'){
+          evLoad(m.prefix,rec.evidenceFiles);
+        }
+      }
+    }catch(e){console.warn('[AttachAdapter] openModal hook failed for '+id,e);}
+    return r;
+  };
+
+  // Wrap each save fn to patch evidence post-save
+  MODULES.forEach(m=>{
+    const orig=window[m.save];
+    if(typeof orig!=='function')return;
+    window[m.save]=function(){
+      const editEl=document.getElementById(m.editField);
+      const editIdBefore=editEl?editEl.value:'';
+      const result=orig.apply(this,arguments);
+      try{
+        const files=evCollect(m.prefix);
+        if(!files||!files.length)return result;
+        const d=(typeof getData==='function')?getData():null;
+        if(!d||!d[m.arr]||!d[m.arr].length)return result;
+        let rec=null;
+        if(editIdBefore){rec=d[m.arr].find(x=>x.id===editIdBefore);}
+        if(!rec){rec=d[m.arr][d[m.arr].length-1];}
+        if(rec){
+          rec.evidenceFiles=files;
+          if(typeof saveData==='function')saveData(d);
+        }
+      }catch(e){console.warn('[AttachAdapter] save hook failed for '+m.save,e);}
+      return result;
+    };
+  });
+
+  // Expose for debugging
+  window._attachAdapter={MODULES:MODULES,ensureWidget:ensureWidget};
+  console.log('[AttachAdapter] attached evidence upload to '+MODULES.length+' modules');
+})();
+</script>
+<style>
+/* Consolidation sub-tabs */
+.sub-tabbar{display:flex;flex-wrap:wrap;gap:6px;padding:8px 18px 0;margin-top:-6px;border-bottom:1px solid var(--border);background:var(--card);}
+.sub-tab{padding:8px 14px;border-radius:10px 10px 0 0;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border:1px solid transparent;border-bottom:none;background:transparent;transition:all .15s;}
+.sub-tab:hover{color:var(--text);background:var(--card2);}
+.sub-tab.active{color:var(--primary);background:var(--card2);border-color:var(--border);position:relative;top:1px;}
+.sub-tab .tab-icon{margin-right:4px;}
+.nav-item-hidden{display:none !important;}
+</style>
+<script>
+/* ── Consolidation Adapter v1 ─────────────────────────────────
+   Groups related modules under one parent page with sub-tabs.
+   Hides duplicate sidebar entries, injects sub-tab bar, keeps
+   all underlying data + save functions untouched. */
+(function(){
+  const GROUPS=[
+    {id:'events', label:'Hazard Reports',
+     tabs:[{page:'observations',label:'Observations',icon:'👁️'},
+           {page:'nearmiss',    label:'Near Miss',   icon:'⚠️'}]},
+    {id:'capa', label:'CAPA & NCR',
+     tabs:[{page:'capa',label:'CAPA',icon:'✅'},
+           {page:'ncr', label:'NCR', icon:'🚫'}]},
+    {id:'training', label:'Training',
+     tabs:[{page:'training',  label:'All Training',icon:'🎓'},
+           {page:'inductions',label:'Inductions',  icon:'🪪'}]},
+    {id:'oh', label:'Occupational Health',
+     tabs:[{page:'wellness',        label:'Wellness',     icon:'🏥'},
+           {page:'med-surveillance',label:'Med Surv.',    icon:'🩺'},
+           {page:'exposure',        label:'Exposure',     icon:'☢️'},
+           {page:'first-aid',       label:'First Aid',    icon:'🩹'}]},
+    {id:'engagement', label:'Engagement',
+     tabs:[{page:'stakeholder',  label:'Stakeholders', icon:'🤝'},
+           {page:'community',    label:'Community',    icon:'🏘️'},
+           {page:'communication',label:'Internal Comms',icon:'📢'}]}
+  ];
+
+  // Hidden child pages (first tab = parent, rest hidden from sidebar)
+  const hiddenPages=new Set();
+  GROUPS.forEach(g=>{g.tabs.slice(1).forEach(t=>hiddenPages.add(t.page));});
+
+  // Map: page → group
+  const pageToGroup={};
+  GROUPS.forEach(g=>{g.tabs.forEach(t=>{pageToGroup[t.page]=g;});});
+
+  function hideNavEntries(){
+    // Sidebar
+    document.querySelectorAll('.nav-link[data-page]').forEach(el=>{
+      const p=el.getAttribute('data-page');
+      if(hiddenPages.has(p)){
+        const li=el.closest('.nav-item');
+        if(li)li.classList.add('nav-item-hidden');
+      }
+    });
+    // Mobile drawer
+    document.querySelectorAll('.mob-drawer-item[data-page]').forEach(el=>{
+      const p=el.getAttribute('data-page');
+      if(hiddenPages.has(p))el.classList.add('nav-item-hidden');
+    });
+  }
+
+  function relabelParents(){
+    const rename={
+      'observations':'Hazard Reports',
+      'wellness':'Occupational Health',
+      'stakeholder':'Engagement',
+      'capa':'CAPA & NCR'
+    };
+    Object.keys(rename).forEach(page=>{
+      document.querySelectorAll('.nav-link[data-page="'+page+'"] .nav-label').forEach(l=>{l.textContent=rename[page];});
+      document.querySelectorAll('.mob-drawer-item[data-page="'+page+'"]').forEach(el=>{
+        // Replace trailing text (after icon)
+        const icon=el.querySelector('.nav-icon');
+        if(icon){el.innerHTML='';el.appendChild(icon);el.appendChild(document.createTextNode(rename[page]));}
+      });
+      // Update pageTitles map so topbar title matches
+      if(typeof pageTitles==='object'&&pageTitles){pageTitles[page]=rename[page];}
+    });
+  }
+
+  function injectSubTabs(page){
+    const group=pageToGroup[page];if(!group)return;
+    const pageEl=document.getElementById('page-'+page);if(!pageEl)return;
+    // Remove any stale sub-tabbars from other pages (keeps DOM clean)
+    document.querySelectorAll('.sub-tabbar[data-group]').forEach(b=>{
+      if(b.closest('.page')!==pageEl)b.remove();
+    });
+    let bar=pageEl.querySelector(':scope > .sub-tabbar[data-group="'+group.id+'"]');
+    if(!bar){
+      bar=document.createElement('div');
+      bar.className='sub-tabbar';
+      bar.setAttribute('data-group',group.id);
+      bar.innerHTML=group.tabs.map(t=>
+        '<button class="sub-tab" data-nav="'+t.page+'"><span class="tab-icon">'+t.icon+'</span>'+t.label+'</button>'
+      ).join('');
+      bar.addEventListener('click',function(e){
+        const btn=e.target.closest('.sub-tab');if(!btn)return;
+        const target=btn.getAttribute('data-nav');
+        if(target&&target!==currentPage)navigateTo(target);
+      });
+      const hdr=pageEl.querySelector(':scope > .section-header');
+      if(hdr&&hdr.nextSibling)pageEl.insertBefore(bar,hdr.nextSibling);
+      else if(hdr)pageEl.appendChild(bar);
+      else pageEl.insertBefore(bar,pageEl.firstChild);
+    }
+    // Update active state
+    bar.querySelectorAll('.sub-tab').forEach(b=>{
+      b.classList.toggle('active',b.getAttribute('data-nav')===page);
+    });
+  }
+
+  function highlightParentNav(page){
+    const group=pageToGroup[page];if(!group)return;
+    const parentPage=group.tabs[0].page;
+    // If current page is a child, activate the parent nav link too
+    if(page!==parentPage){
+      document.querySelectorAll('.nav-link[data-page="'+parentPage+'"]').forEach(l=>l.classList.add('active'));
+    }
+  }
+
+  // Hook navigateTo to inject tabs after the page renders
+  const _orig=window.navigateTo;
+  window.navigateTo=function(page){
+    const r=_orig.apply(this,arguments);
+    try{
+      injectSubTabs(page);
+      highlightParentNav(page);
+    }catch(e){console.warn('[Consolidation] hook failed',e);}
+    return r;
+  };
+
+  // Run on DOM ready
+  function init(){
+    try{
+      hideNavEntries();
+      relabelParents();
+      // If we're already on a grouped page, inject tabs now
+      if(typeof currentPage!=='undefined'&&pageToGroup[currentPage]){
+        injectSubTabs(currentPage);
+        highlightParentNav(currentPage);
+      }
+      console.log('[Consolidation] '+GROUPS.length+' groups active; '+hiddenPages.size+' child pages consolidated');
+    }catch(e){console.warn('[Consolidation] init failed',e);}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+  else init();
+
+  window._consolidation={GROUPS:GROUPS,hiddenPages:Array.from(hiddenPages)};
 })();
 </script>
 </body>

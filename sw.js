@@ -2,7 +2,7 @@
 // Strategy: cache-first for app shell; stale-while-revalidate for CDN assets.
 // Offline banner and Firebase write-queue handled in the app layer.
 
-const CACHE_NAME = 'esg-sheq-v2';
+const CACHE_NAME = 'esg-sheq-v3-consolidation';
 
 // App shell (same-origin)
 const SHELL = [
