@@ -63,6 +63,22 @@
       --orange:    #ea580c;
       --teal:      #0891b2;
 
+      /* ── Semantic status tokens (use these, not raw colors) ── */
+      --status-ok:       #16a34a;
+      --status-info:     #2563eb;
+      --status-pending:  #f59e0b;
+      --status-warn:     #ea580c;
+      --status-danger:   #dc2626;
+      --status-neutral:  #64748b;
+      --status-closed:   #94a3b8;
+      --status-ok-bg:       rgba(22,163,74,0.10);
+      --status-info-bg:     rgba(37,99,235,0.10);
+      --status-pending-bg:  rgba(245,158,11,0.12);
+      --status-warn-bg:     rgba(234,88,12,0.12);
+      --status-danger-bg:   rgba(220,38,38,0.10);
+      --status-neutral-bg:  rgba(100,116,139,0.10);
+      --status-closed-bg:   rgba(148,163,184,0.12);
+
       /* Sidebar dark-theme tokens */
       --sb-text:        rgba(255,255,255,0.65);
       --sb-text-active: #ffffff;
@@ -2667,6 +2683,83 @@
     #esg-annual-report table { page-break-inside: auto; }
     #esg-annual-report tr { page-break-inside: avoid; break-inside: avoid; }
   }
+
+  /* ═══════════════════════════════════════════════════════════════
+     DESIGN v2 — semantic chips, sparklines, empty states,
+     command palette, mobile bottom nav, responsive tables
+  ═══════════════════════════════════════════════════════════════ */
+
+  /* ── Semantic status chips (use these going forward) ── */
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-pill);font-size:var(--fs-xs);font-weight:600;line-height:1.5;white-space:nowrap}
+  .chip-ok{background:var(--status-ok-bg);color:var(--status-ok)}
+  .chip-info{background:var(--status-info-bg);color:var(--status-info)}
+  .chip-pending{background:var(--status-pending-bg);color:var(--status-pending)}
+  .chip-warn{background:var(--status-warn-bg);color:var(--status-warn)}
+  .chip-danger{background:var(--status-danger-bg);color:var(--status-danger)}
+  .chip-neutral{background:var(--status-neutral-bg);color:var(--status-neutral)}
+  .chip-closed{background:var(--status-closed-bg);color:var(--status-closed)}
+
+  /* ── KPI sparkline container ── */
+  .kpi-card .kpi-spark{position:absolute;left:12px;right:12px;bottom:8px;height:24px;pointer-events:none;opacity:.75}
+  .kpi-card .kpi-spark canvas{width:100% !important;height:100% !important}
+  .kpi-card[data-has-spark="true"]{padding-bottom:40px}
+
+  /* ── Empty states ── */
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp-4) var(--sp-2);text-align:center;color:var(--muted);min-height:200px;background:var(--card2);border:1px dashed var(--border);border-radius:var(--radius-lg)}
+  .empty-state .empty-icon{font-size:3rem;margin-bottom:var(--sp-1);opacity:.7}
+  .empty-state .empty-title{font-size:var(--fs-md);font-weight:700;color:var(--text);margin-bottom:var(--sp-0)}
+  .empty-state .empty-desc{font-size:var(--fs-sm);margin-bottom:var(--sp-2);max-width:360px}
+  .empty-state .btn{min-width:160px}
+
+  /* ── Command palette (Ctrl+K) ── */
+  .cmdk-overlay{position:fixed;inset:0;z-index:9500;background:rgba(10,18,38,.55);backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;padding-top:12vh}
+  .cmdk-overlay.open{display:flex}
+  .cmdk-panel{width:92%;max-width:620px;background:var(--card);border-radius:14px;box-shadow:0 25px 60px -12px rgba(0,0,0,.35);overflow:hidden;animation:cmdkIn .15s ease-out}
+  @keyframes cmdkIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .cmdk-input{width:100%;padding:18px 20px;font-size:1rem;border:0;outline:0;border-bottom:1px solid var(--border);background:transparent;color:var(--text)}
+  .cmdk-list{max-height:56vh;overflow-y:auto;padding:6px}
+  .cmdk-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:.9375rem;color:var(--text)}
+  .cmdk-item:hover,.cmdk-item.active{background:var(--status-info-bg);color:var(--status-info)}
+  .cmdk-item .icon{width:22px;text-align:center;font-size:1.05rem}
+  .cmdk-item .group{margin-left:auto;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .cmdk-empty{padding:24px;text-align:center;color:var(--muted);font-size:.875rem}
+  .cmdk-hint{display:flex;gap:12px;padding:8px 16px;background:var(--card2);border-top:1px solid var(--border);font-size:.7rem;color:var(--muted)}
+  .cmdk-hint kbd{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:inherit;font-size:.7rem}
+
+  /* ── Mobile bottom nav ── */
+  .mobile-bottom-nav{display:none}
+  @media (max-width:768px){
+    .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -4px 12px rgba(0,0,0,.08);z-index:800;justify-content:space-around;align-items:center;padding:4px 0 max(4px,env(safe-area-inset-bottom))}
+    .mobile-bottom-nav button{background:transparent;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:.625rem;padding:4px 8px;cursor:pointer;flex:1;font-weight:600}
+    .mobile-bottom-nav button .mbn-icon{font-size:1.25rem;line-height:1}
+    .mobile-bottom-nav button.active{color:var(--status-info)}
+    .mobile-bottom-nav .mbn-fab{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-radius:50%;width:52px;height:52px;box-shadow:0 6px 18px rgba(37,99,235,.4);margin-top:-18px;flex:0 0 52px}
+    .mobile-bottom-nav .mbn-fab .mbn-icon{font-size:1.5rem}
+    body.has-mobile-nav #main-content{padding-bottom:72px}
+  }
+
+  /* ── Responsive tables → cards on mobile ── */
+  @media (max-width:640px){
+    .table-responsive table thead{display:none}
+    .table-responsive table tr{display:block;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:var(--sp-1);padding:var(--sp-1);box-shadow:var(--shadow-sm)}
+    .table-responsive table td{display:flex;justify-content:space-between;align-items:center;padding:6px 4px;border:0;border-bottom:1px dashed var(--border);font-size:.8125rem}
+    .table-responsive table td:last-child{border-bottom:0}
+    .table-responsive table td::before{content:attr(data-label);font-weight:600;color:var(--muted);text-transform:uppercase;font-size:.6875rem;letter-spacing:.03em}
+  }
+
+  /* ── Nav pillar collapse ── */
+  .nav-group-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.45);user-select:none}
+  .nav-group-header:hover{color:rgba(255,255,255,.7)}
+  .nav-group-header .chev{transition:transform .15s;font-size:.7rem}
+  .nav-group.collapsed .chev{transform:rotate(-90deg)}
+  .nav-group.collapsed ul{display:none}
+
+  /* ── Command palette trigger in topbar ── */
+  .cmdk-trigger{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);color:var(--muted);font-size:.8125rem;cursor:pointer;min-width:180px;transition:all .15s}
+  .cmdk-trigger:hover{border-color:var(--accent);color:var(--text)}
+  .cmdk-trigger kbd{margin-left:auto;background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:inherit;font-size:.65rem}
+  @media (max-width:768px){.cmdk-trigger .cmdk-trigger-label,.cmdk-trigger kbd{display:none}.cmdk-trigger{min-width:0;padding:6px 8px}}
+
   </style>
 
 </head>
@@ -14902,6 +14995,365 @@ window.addEventListener('DOMContentLoaded',()=>{
       if (input) input.setAttribute('aria-required', 'true');
     }
   });
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     DESIGN v2 RUNTIME — command palette, sparklines, chart palette,
+     empty states, sidebar groups, mobile bottom nav, a11y sweep
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+'use strict';
+
+/* ── 1. Unified chart palette + base options ──────────────────── */
+window.CHART_PALETTE = {
+  ok:       '#16a34a', info: '#2563eb', warn: '#ea580c',
+  danger:   '#dc2626', pending: '#f59e0b', neutral: '#64748b',
+  env:      ['#16a34a','#0891b2','#0284c7','#7c3aed','#ec4899','#f59e0b'],
+  status:   ['#16a34a','#f59e0b','#dc2626','#64748b'],
+  sequence: ['#2563eb','#16a34a','#f59e0b','#dc2626','#7c3aed','#0891b2','#ec4899','#64748b']
+};
+window.baseChartOpts = function(extra){
+  const base = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{font:{family:'Inter, system-ui',size:11},color:'#475569',boxWidth:12,padding:10}},
+      tooltip:{backgroundColor:'rgba(15,23,42,0.95)',titleFont:{size:12,weight:'600'},bodyFont:{size:11},padding:10,cornerRadius:8,displayColors:true}
+    },
+    scales:{
+      x:{grid:{color:'#e2e8f0',drawBorder:false},ticks:{color:'#64748b',font:{size:10}}},
+      y:{grid:{color:'#e2e8f0',drawBorder:false},ticks:{color:'#64748b',font:{size:10}},beginAtZero:true}
+    }
+  };
+  return Object.assign({},base,extra||{});
+};
+
+/* ── 2. Sparkline helper for KPI cards ────────────────────────── */
+window.renderSparkline = function(canvasEl, values, color){
+  if(!canvasEl || typeof Chart==='undefined' || !Array.isArray(values) || values.length<2) return;
+  try{ if(canvasEl._chart) canvasEl._chart.destroy(); }catch(e){}
+  const ctx = canvasEl.getContext('2d');
+  canvasEl._chart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: values.map((_,i)=>i),
+      datasets:[{
+        data: values,
+        borderColor: color || '#2563eb',
+        backgroundColor: (color||'#2563eb')+'20',
+        borderWidth: 1.5, fill: true, tension: 0.35,
+        pointRadius: 0, pointHoverRadius: 0
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      animation:{duration:300},
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      scales:{x:{display:false},y:{display:false,beginAtZero:false}},
+      elements:{line:{borderJoinStyle:'round'}}
+    }
+  });
+};
+
+/* Inject sparklines into the hero KPI row after dashboard renders */
+window.dashInjectSparklines = function(){
+  try{
+    const d = (typeof getData==='function' ? getData() : null) || {};
+    const hero = document.getElementById('dash-hero-row');
+    if(!hero) return;
+    // Build 12-bucket series (last 12 months) for key metrics
+    const months = 12;
+    const now = new Date();
+    const bucket = (arr, dateKey) => {
+      const out = new Array(months).fill(0);
+      (arr||[]).forEach(r=>{
+        const dt = new Date(r[dateKey]||r.date||r.created||r.when);
+        if(isNaN(dt)) return;
+        const diffMo = (now.getFullYear()-dt.getFullYear())*12 + (now.getMonth()-dt.getMonth());
+        if(diffMo>=0 && diffMo<months) out[months-1-diffMo]++;
+      });
+      return out;
+    };
+    const series = {
+      ltifr:  bucket(d.incidents,'date'),
+      capa:   bucket((d.capas||[]).filter(c=>c.status==='Open'||c.status==='Overdue'),'created'),
+      train:  bucket(d.trainingReg,'date_trained'),
+      legal:  bucket(d.legalItems,'last_review_date'),
+      ghg:    (()=>{ const out=new Array(months).fill(0);
+                     (d.ghgEntries||[]).forEach(r=>{
+                       const dt=new Date(r.date); if(isNaN(dt))return;
+                       const diffMo=(now.getFullYear()-dt.getFullYear())*12+(now.getMonth()-dt.getMonth());
+                       if(diffMo>=0 && diffMo<months) out[months-1-diffMo]+=parseFloat(r.tCO2e)||0;
+                     });
+                     return out;})()
+    };
+    const colors = [CHART_PALETTE.danger, CHART_PALETTE.pending, CHART_PALETTE.ok, CHART_PALETTE.info, CHART_PALETTE.ok];
+    const keys = ['ltifr','capa','train','legal','ghg'];
+    Array.from(hero.children).forEach((card,i)=>{
+      if(i>=keys.length) return;
+      const vals = series[keys[i]];
+      if(!vals || vals.every(v=>v===0)) return;
+      let sp = card.querySelector('.kpi-spark');
+      if(!sp){
+        sp = document.createElement('div'); sp.className='kpi-spark';
+        const cv = document.createElement('canvas'); sp.appendChild(cv);
+        card.appendChild(sp); card.setAttribute('data-has-spark','true');
+      }
+      renderSparkline(sp.querySelector('canvas'), vals, colors[i]);
+    });
+  }catch(e){ console.warn('sparkline inject failed',e); }
+};
+// Auto-hook after renderDashboard (if it exists)
+(function hookSparkline(){
+  if(typeof renderDashboard!=='function'){ setTimeout(hookSparkline,500); return; }
+  const _orig = window.renderDashboard;
+  window.renderDashboard = function(){
+    const r = _orig.apply(this,arguments);
+    setTimeout(window.dashInjectSparklines, 50);
+    return r;
+  };
+})();
+
+/* ── 3. Empty state helper ────────────────────────────────────── */
+window.renderEmptyState = function(container, opts){
+  if(typeof container==='string') container = document.querySelector(container);
+  if(!container) return;
+  const o = Object.assign({icon:'📋',title:'No records yet',desc:'Get started by adding your first entry.',buttonText:null,onClick:null}, opts||{});
+  const btn = o.buttonText ? `<button class="btn btn-primary" onclick="(${o.onClick||'()=>{}'})()">${o.buttonText}</button>` : '';
+  container.innerHTML = `<div class="empty-state"><div class="empty-icon">${o.icon}</div><div class="empty-title">${o.title}</div><div class="empty-desc">${o.desc}</div>${btn}</div>`;
+};
+
+/* ── 4. Command palette (Ctrl+K / Cmd+K) ──────────────────────── */
+(function buildCmdK(){
+  const MODULES = [
+    {t:'Dashboard',p:'dashboard',i:'📊',g:'Main'},
+    {t:'Observations',p:'observations',i:'👁️',g:'Safety'},
+    {t:'Near Miss',p:'nearmiss',i:'⚠️',g:'Safety'},
+    {t:'Incidents',p:'incidents',i:'🚨',g:'Safety'},
+    {t:'Permit to Work',p:'permits',i:'📋',g:'Safety'},
+    {t:'CAPA Tracker',p:'capa',i:'✅',g:'Quality'},
+    {t:'NCR Register',p:'ncr',i:'🚫',g:'Quality'},
+    {t:'Risk Register',p:'risks',i:'⚖️',g:'Governance'},
+    {t:'Legal Register',p:'legal',i:'⚖️',g:'Governance'},
+    {t:'Audits',p:'audits',i:'📝',g:'Quality'},
+    {t:'Training',p:'training',i:'🎓',g:'Social'},
+    {t:'GHG Tracker',p:'ghg',i:'🌱',g:'Environment'},
+    {t:'Water Register',p:'water',i:'💧',g:'Environment'},
+    {t:'Waste',p:'waste',i:'♻️',g:'Environment'},
+    {t:'Chemical Register',p:'chemical',i:'⚗️',g:'Environment'},
+    {t:'Env. Monitoring',p:'env-monitoring',i:'📡',g:'Environment'},
+    {t:'Emergency Drills',p:'emergency-drills',i:'🧯',g:'Safety'},
+    {t:'First Aid Log',p:'first-aid',i:'🩹',g:'Health'},
+    {t:'Medical Surveillance',p:'med-surveillance',i:'🩺',g:'Health'},
+    {t:'Wellness',p:'wellness',i:'🏥',g:'Health'},
+    {t:'DEI Metrics',p:'dei',i:'🌈',g:'Social'},
+    {t:'Workforce',p:'workforce',i:'👥',g:'Social'},
+    {t:'Suppliers',p:'suppliers',i:'🏭',g:'Social'},
+    {t:'Stakeholder Engagement',p:'stakeholder',i:'🤝',g:'Social'},
+    {t:'Community',p:'community',i:'🏘️',g:'Social'},
+    {t:'ESG Board',p:'esg-board',i:'📊',g:'Reports'},
+    {t:'ESG Annual Report',p:'esg-report',i:'📄',g:'Reports'},
+    {t:'Management Reviews',p:'mgmt-reviews',i:'🏛️',g:'Governance'},
+    {t:'Objectives & Targets',p:'objectives',i:'🎯',g:'Governance'},
+    {t:'Documents',p:'documents',i:'📂',g:'Quality'},
+    {t:'Calibration',p:'calibration',i:'🔬',g:'Quality'},
+    {t:'Assets',p:'assets',i:'🔧',g:'Quality'},
+    {t:'Toolbox Talks',p:'toolbox',i:'🗣️',g:'Safety'},
+    {t:'Inductions',p:'inductions',i:'🪪',g:'Safety'},
+    {t:'Lessons Learned',p:'lessons',i:'💡',g:'Quality'},
+    {t:'AI Assistant',p:'ai-chat',i:'🤖',g:'Tools'},
+    {t:'Settings',p:'__settings',i:'⚙️',g:'Tools'},
+  ];
+  let overlay, input, list, activeIdx=0, filtered=[];
+  function build(){
+    if(overlay) return;
+    overlay = document.createElement('div'); overlay.className='cmdk-overlay'; overlay.id='cmdk-overlay';
+    overlay.innerHTML = `
+      <div class="cmdk-panel" role="dialog" aria-label="Command palette">
+        <input type="text" class="cmdk-input" id="cmdk-input" placeholder="Jump to a module, search SHEQ…" autocomplete="off" />
+        <div class="cmdk-list" id="cmdk-list"></div>
+        <div class="cmdk-hint"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
+      </div>`;
+    document.body.appendChild(overlay);
+    input = overlay.querySelector('#cmdk-input');
+    list  = overlay.querySelector('#cmdk-list');
+    overlay.addEventListener('click', e => { if(e.target===overlay) close(); });
+    input.addEventListener('input', render);
+    input.addEventListener('keydown', onKey);
+  }
+  function render(){
+    const q = (input.value||'').trim().toLowerCase();
+    filtered = q ? MODULES.filter(m => m.t.toLowerCase().includes(q) || m.g.toLowerCase().includes(q)) : MODULES.slice();
+    activeIdx = 0;
+    if(filtered.length===0){ list.innerHTML = '<div class="cmdk-empty">No matches</div>'; return; }
+    list.innerHTML = filtered.map((m,i)=>`<div class="cmdk-item ${i===0?'active':''}" data-idx="${i}"><span class="icon">${m.i}</span><span>${m.t}</span><span class="group">${m.g}</span></div>`).join('');
+    list.querySelectorAll('.cmdk-item').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{activeIdx=parseInt(el.dataset.idx);highlight();});
+      el.addEventListener('click',()=>{activeIdx=parseInt(el.dataset.idx);pick();});
+    });
+  }
+  function highlight(){ list.querySelectorAll('.cmdk-item').forEach((el,i)=>el.classList.toggle('active',i===activeIdx));
+    const el = list.querySelector('.cmdk-item.active'); if(el) el.scrollIntoView({block:'nearest'}); }
+  function onKey(e){
+    if(e.key==='Escape'){ e.preventDefault(); close(); }
+    else if(e.key==='ArrowDown'){ e.preventDefault(); activeIdx=Math.min(activeIdx+1, filtered.length-1); highlight(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); activeIdx=Math.max(activeIdx-1, 0); highlight(); }
+    else if(e.key==='Enter'){ e.preventDefault(); pick(); }
+  }
+  function pick(){
+    const m = filtered[activeIdx]; if(!m) return;
+    close();
+    if(m.p==='__settings'){ if(typeof openSettings==='function') openSettings(); return; }
+    if(typeof navigateTo==='function') navigateTo(m.p);
+  }
+  function open(){ build(); overlay.classList.add('open'); input.value=''; render(); setTimeout(()=>input.focus(),50); }
+  function close(){ if(overlay) overlay.classList.remove('open'); }
+  window.openCmdK = open;
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){
+      e.preventDefault(); open();
+    }
+  });
+})();
+
+/* ── 5. Mobile bottom nav ─────────────────────────────────────── */
+(function buildBottomNav(){
+  function init(){
+    if(document.querySelector('.mobile-bottom-nav')) return;
+    const nav = document.createElement('nav'); nav.className='mobile-bottom-nav'; nav.setAttribute('aria-label','Primary mobile navigation');
+    nav.innerHTML = `
+      <button data-action="dashboard" aria-label="Dashboard"><span class="mbn-icon">📊</span><span>Home</span></button>
+      <button data-action="alerts" aria-label="Alerts"><span class="mbn-icon">🔔</span><span>Alerts</span></button>
+      <button class="mbn-fab" data-action="quickadd" aria-label="Quick add"><span class="mbn-icon">+</span></button>
+      <button data-action="cmdk" aria-label="Search"><span class="mbn-icon">🔍</span><span>Search</span></button>
+      <button data-action="menu" aria-label="Menu"><span class="mbn-icon">☰</span><span>Menu</span></button>
+    `;
+    document.body.appendChild(nav);
+    document.body.classList.add('has-mobile-nav');
+    nav.addEventListener('click', e => {
+      const btn = e.target.closest('button'); if(!btn) return;
+      const a = btn.dataset.action;
+      if(a==='dashboard' && typeof navigateTo==='function') navigateTo('dashboard');
+      else if(a==='alerts'){ const b=document.getElementById('alerts-btn'); if(b) b.click(); }
+      else if(a==='cmdk' && typeof openCmdK==='function') openCmdK();
+      else if(a==='menu'){ const sb=document.getElementById('sidebar'); if(sb) sb.classList.toggle('mobile-open'); }
+      else if(a==='quickadd'){ if(typeof openCmdK==='function') openCmdK(); }
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else init();
+})();
+
+/* ── 6. Sidebar pillar collapse (persisted) ───────────────────── */
+(function sidebarPillars(){
+  function init(){
+    const sb = document.getElementById('sidebar'); if(!sb) return;
+    const state = JSON.parse(localStorage.getItem('sheq_sidebar_groups')||'{}');
+    // Find the existing pillar section headers (styled as non-link h3/h4/divider)
+    const headers = sb.querySelectorAll('.nav-section-title, h3.nav-group, .nav-pillar-header');
+    // Fallback: don't collapse if headers aren't found — the app uses flat list
+    headers.forEach(h=>{
+      const key = (h.textContent||'').trim().slice(0,20);
+      if(!key) return;
+      h.classList.add('nav-group-header');
+      const chev = document.createElement('span'); chev.className='chev'; chev.textContent='▾'; h.appendChild(chev);
+      // Wrap following siblings until next header
+      const group = document.createElement('div'); group.className='nav-group';
+      let el = h.nextElementSibling;
+      const collect = [];
+      while(el && !el.classList.contains('nav-group-header') && !el.matches('.nav-section-title')){
+        const nx = el.nextElementSibling; collect.push(el); el = nx;
+      }
+      if(collect.length){
+        h.parentNode.insertBefore(group, collect[0]);
+        collect.forEach(c=>group.appendChild(c));
+      }
+      if(state[key]) group.classList.add('collapsed');
+      h.addEventListener('click', () => {
+        group.classList.toggle('collapsed');
+        state[key] = group.classList.contains('collapsed');
+        localStorage.setItem('sheq_sidebar_groups', JSON.stringify(state));
+      });
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else setTimeout(init, 200);
+})();
+
+/* ── 7. Topbar ⌘K trigger ─────────────────────────────────────── */
+(function addCmdkTrigger(){
+  function init(){
+    if(document.querySelector('.cmdk-trigger')) return;
+    const topbar = document.querySelector('.topbar, #topbar, header.topbar');
+    if(!topbar) return;
+    const mac = /Mac|iP(hone|od|ad)/.test(navigator.platform);
+    const btn = document.createElement('button');
+    btn.type='button'; btn.className='cmdk-trigger';
+    btn.innerHTML = `<span>🔍</span><span class="cmdk-trigger-label">Search modules…</span><kbd>${mac?'⌘':'Ctrl'}+K</kbd>`;
+    btn.addEventListener('click', ()=>{ if(typeof openCmdK==='function') openCmdK(); });
+    // Insert at the start of topbar after any menu button
+    const firstChild = topbar.firstElementChild;
+    topbar.insertBefore(btn, firstChild ? firstChild.nextSibling : null);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init);
+  else setTimeout(init, 300);
+})();
+
+/* ── 8. A11y label sweep ──────────────────────────────────────── */
+(function a11ySweep(){
+  function sweep(){
+    document.querySelectorAll('input:not([type=hidden]), select, textarea').forEach(el=>{
+      if(el.getAttribute('aria-label') || el.getAttribute('aria-labelledby')) return;
+      if(el.id && document.querySelector(`label[for="${el.id}"]`)) return;
+      if(el.closest('label')) return;
+      const ph = el.getAttribute('placeholder');
+      if(ph) { el.setAttribute('aria-label', ph); return; }
+      const nm = el.getAttribute('name');
+      if(nm) el.setAttribute('aria-label', nm.replace(/[_-]/g,' '));
+    });
+    // Buttons with only emoji / no text → title fallback
+    document.querySelectorAll('button').forEach(b=>{
+      const txt = (b.textContent||'').trim();
+      if(txt && !b.getAttribute('aria-label')) return;
+      if(!b.getAttribute('aria-label') && b.title) b.setAttribute('aria-label', b.title);
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(sweep,500));
+  else setTimeout(sweep,500);
+  // Re-run after navigations (new content injected)
+  const _orig = window.navigateTo;
+  if(typeof _orig==='function'){
+    window.navigateTo = function(){ const r=_orig.apply(this,arguments); setTimeout(sweep,300); return r; };
+  }
+})();
+
+/* ── 9. renderTable wrapper — add responsive data-labels ──────── */
+(function responsiveTableLabels(){
+  function tagTables(){
+    document.querySelectorAll('table').forEach(tbl=>{
+      if(tbl.dataset.responsiveTagged) return;
+      const wrapper = tbl.closest('.table-responsive, .table-wrap, .card') || tbl.parentElement;
+      if(wrapper && !wrapper.classList.contains('table-responsive')) wrapper.classList.add('table-responsive');
+      const headers = Array.from(tbl.querySelectorAll('thead th')).map(th=>(th.textContent||'').trim());
+      if(!headers.length) return;
+      tbl.querySelectorAll('tbody tr').forEach(tr=>{
+        Array.from(tr.children).forEach((td,i)=>{
+          if(!td.dataset.label && headers[i]) td.setAttribute('data-label', headers[i]);
+        });
+      });
+      tbl.dataset.responsiveTagged = '1';
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(tagTables,500));
+  else setTimeout(tagTables,500);
+  const _orig = window.navigateTo;
+  if(typeof _orig==='function'){
+    window.navigateTo = function(){ const r=_orig.apply(this,arguments); setTimeout(tagTables,400); return r; };
+  }
+})();
+
+console.log('[Design v2] runtime loaded — Ctrl+K for command palette');
 })();
 </script>
 </body>
