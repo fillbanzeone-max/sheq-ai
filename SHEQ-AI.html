@@ -683,6 +683,13 @@
     .kpib-gray   { background:#f1f5f9; color:#475569; }
     .kpib-teal   { background:#ccfbf1; color:#0f766e; }
 
+    .dash-tab-bar { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:12px; overflow-x:auto; scrollbar-width:none; }
+    .dash-tab-bar::-webkit-scrollbar { display:none; }
+    .dash-tab { padding:8px 16px; border:none; background:transparent; font-size:.78rem; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; transition:color .15s,border-color .15s,background .15s; }
+    .dash-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:rgba(37,99,235,.06); border-radius:6px 6px 0 0; }
+    .dash-tab:hover:not(.active) { color:var(--text); background:var(--card2); border-radius:6px 6px 0 0; }
+    .kpi-grid-hero { grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); }
+
     .kpi-card {
       background: var(--card);
       border: 1px solid rgba(226,232,240,0.8);
@@ -2818,6 +2825,14 @@
     <button id="dash-toggle-30" class="btn btn-ghost btn-sm" onclick="setDashPeriod('30')">30 Days</button>
     <button id="dash-toggle-90" class="btn btn-ghost btn-sm" onclick="setDashPeriod('90')">90 Days</button>
     <button id="dash-toggle-year" class="btn btn-ghost btn-sm" onclick="setDashPeriod('year')">This Year</button>
+  </div>
+  <div class="kpi-grid kpi-grid-hero" id="dash-hero-row" style="margin-bottom:var(--sp-2)"></div>
+  <div class="dash-tab-bar" id="dash-tab-bar">
+    <button class="dash-tab active" data-tab="safety" onclick="setDashTab('safety')">🦺 Safety &amp; Health</button>
+    <button class="dash-tab" data-tab="environmental" onclick="setDashTab('environmental')">🌍 Environmental</button>
+    <button class="dash-tab" data-tab="quality" onclick="setDashTab('quality')">✅ Quality</button>
+    <button class="dash-tab" data-tab="social" onclick="setDashTab('social')">👥 Social</button>
+    <button class="dash-tab" data-tab="governance" onclick="setDashTab('governance')">⚖️ Governance</button>
   </div>
   <div class="kpi-grid" id="dash-kpi-row"></div>
   <div class="charts-row">
@@ -7576,6 +7591,12 @@ function setDashPeriod(p){
   });
   renderDashboard();
 }
+let _dashTab='safety';
+function setDashTab(tab){
+  _dashTab=tab;
+  document.querySelectorAll('.dash-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  if(window._dashTabHtml&&window._dashTabHtml[tab])document.getElementById('dash-kpi-row').innerHTML=window._dashTabHtml[tab];
+}
 function renderDashboard(){
   const d=getData()||getDefaultData();
   const now=new Date();
@@ -7742,330 +7763,275 @@ function renderDashboard(){
   }).length;
   const _suppApproved=_suppAll.filter(s=>s.standing==='Approved').length;
 
-  document.getElementById('dash-kpi-row').innerHTML=`
-    <div class="kpi-card" style="--kpi-color:var(--accent)" onclick="navigateTo('observations')" title="Go to Job Observations">
-      <div class="kpi-label">Observations</div>
-      <div class="kpi-value">${obs.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Safe: ${obsSafe}</span>
-        <span class="kpib kpib-red">At-Risk: ${obsRisk}</span>
-        <span class="kpib kpib-blue">Impr: ${obsImpr}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--yellow)" onclick="navigateTo('nearmiss')" title="Go to Near Miss Register">
-      <div class="kpi-label">Near Misses</div>
-      <div class="kpi-value">${nms.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">Open: ${nmOpen}</span>
-        <span class="kpib kpib-red">Overdue: ${nmOverdue}</span>
-        <span class="kpib kpib-green">Closed: ${nmClosed}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--orange)" onclick="navigateTo('incidents')" title="Go to Incident Register">
-      <div class="kpi-label">Incidents</div>
-      <div class="kpi-value">${incs.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">Open: ${incOpen}</span>
-        <span class="kpib kpib-green">Closed: ${incClosed}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--teal)" onclick="navigateTo('permits')" title="Go to Permit to Work">
-      <div class="kpi-label">Permits (PTW)</div>
-      <div class="kpi-value">${permits.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-teal">Active: ${ptwActive}</span>
-        <span class="kpib kpib-red">Expired: ${ptwExpired}</span>
-        <span class="kpib kpib-gray">Closed: ${ptwClosed}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${rExt>0?'var(--red)':'var(--accent)'}" onclick="navigateTo('risks')" title="Go to Risk Register">
-      <div class="kpi-label">Risk Register</div>
-      <div class="kpi-value">${risks.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-red">Critical: ${rExt}</span>
-        <span class="kpib kpib-orange">High: ${rHigh}</span>
-        <span class="kpib kpib-yellow">Med: ${rMed}</span>
-        <span class="kpib kpib-green">Low: ${rLow}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${capaOverdue>0?'var(--red)':'var(--green)'}" onclick="navigateTo('capa')" title="Go to CAPA Tracker">
-      <div class="kpi-label">CAPAs</div>
-      <div class="kpi-value">${capas.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">Open: ${capaOpen}</span>
-        <span class="kpib kpib-red">Overdue: ${capaOverdue}</span>
-        <span class="kpib kpib-green">Closed: ${capaClosed}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:var(--teal)" onclick="navigateTo('toolbox')" title="Go to Toolbox Talks">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#0e7490)"></div>
-      <div class="kpi-label">Toolbox Talks</div>
-      <div class="kpi-value">${_tbt.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Done: ${_tbtCompleted}</span>
-        <span class="kpib kpib-blue">Planned: ${_tbtPlanned}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_indExpired>0?'var(--red)':'var(--green)'}" onclick="navigateTo('inductions')" title="Go to Inductions">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,${_indExpired>0?'#ef4444,#dc2626':'#22c55e,#15803d'})"></div>
-      <div class="kpi-label">Inductions</div>
-      <div class="kpi-value">${_ind.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Valid: ${_indValid}</span>
-        <span class="kpib kpib-yellow">Expiring: ${_indExpiring}</span>
-        <span class="kpib kpib-red">Expired: ${_indExpired}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_mocPending>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('moc')" title="Go to Management of Change">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,${_mocPending>0?'#f59e0b,#d97706':'#2563eb,#7c3aed'})"></div>
-      <div class="kpi-label">Mgmt of Change</div>
-      <div class="kpi-value">${_mocs.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">Open: ${_mocOpen}</span>
-        <span class="kpib kpib-yellow">Pending: ${_mocPending}</span>
-        <span class="kpib kpib-green">Done: ${_mocCompleted}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:rgba(74,222,128,.9)" onclick="navigateTo('ghg')" title="Go to GHG Tracker">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#15803d,#4ade80)"></div>
-      <div class="kpi-label">GHG Emissions</div>
-      <div class="kpi-value">${_ghgCO2.toFixed(2)}</div>
-      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">tCO₂e</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-red">S1: ${_ghgS1.toFixed(1)}</span>
-        <span class="kpib kpib-orange">S2: ${_ghgS2.toFixed(1)}</span>
-        <span class="kpib kpib-yellow">S3: ${_ghgS3.toFixed(1)}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:#2563eb" onclick="navigateTo('water')" title="Go to Water Register">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#60a5fa)"></div>
-      <div class="kpi-label">Water Usage</div>
-      <div class="kpi-value">${_waterKL.toFixed(1)}</div>
-      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">kL total</div>
-      <div class="kpi-breakdown"><span class="kpib kpib-blue">${_water.length} readings</span></div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_trExpired>0?'var(--red)':_trExpiring>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('training')" title="Go to Training Register">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,${_trExpired>0?'#ef4444,#dc2626':_trExpiring>0?'#f59e0b,#d97706':'#22c55e,#15803d'})"></div>
-      <div class="kpi-label">Training</div>
-      <div class="kpi-value">${_trPct}%</div>
-      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">valid records</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Valid: ${_trValid}</span>
-        <span class="kpib kpib-yellow">Expiring: ${_trExpiring}</span>
-        <span class="kpib kpib-red">Expired: ${_trExpired}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_envHigh>0?'var(--red)':'rgba(74,222,128,.9)'}" onclick="navigateTo('env-aspects')" title="Go to Environmental Aspects">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
-      <div class="kpi-label">Env. Aspects</div>
-      <div class="kpi-value">${_envA.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-red">High: ${_envHigh}</span>
-        <span class="kpib kpib-yellow">Med: ${_envMed}</span>
-        <span class="kpib kpib-orange">Review: ${_envReview}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_wasteNC>0?'var(--red)':_wastePending>0?'var(--orange)':'rgba(74,222,128,.9)'}" onclick="navigateTo('waste')" title="Go to Waste Management">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#15803d,#22c55e)"></div>
-      <div class="kpi-label">Waste Log</div>
-      <div class="kpi-value">${_waste.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-red">Hazardous: ${_wasteHaz}</span>
-        <span class="kpib kpib-yellow">Pending: ${_wastePending}</span>
-        <span class="kpib ${_wasteNC>0?'kpib-red':'kpib-gray'}">NC: ${_wasteNC}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:rgba(96,165,250,.9)" onclick="navigateTo('workforce')" title="Go to Workforce Metrics">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#2563eb,#60a5fa)"></div>
-      <div class="kpi-label">Workforce</div>
-      <div class="kpi-value">${_wfLatest?_wfLatest.totalEmployees:'—'}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-blue">${_wfLatest?_wfLatest.period:'No data'}</span>
-        <span class="kpib ${_wfLatest&&_wfLatest.ltiCount>0?'kpib-red':'kpib-green'}">LTI: ${_wfLatest?_wfLatest.ltiCount:0}</span>
-        <span class="kpib kpib-teal">${_wfLatest?_wfLatest.trainingHours+'h train':'—'}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_seComplaints>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('stakeholder')" title="Go to Stakeholder Engagement">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#93c5fd)"></div>
-      <div class="kpi-label">Stakeholders</div>
-      <div class="kpi-value">${_seAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">Open: ${_seOpen}</span>
-        <span class="kpib ${_seComplaints>0?'kpib-red':'kpib-gray'}">Complaints: ${_seComplaints}</span>
-        <span class="kpib kpib-green">Closed: ${_seClosed}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_wellDays>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('wellness')" title="Go to Wellness & Absenteeism">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div>
-      <div class="kpi-label">Wellness</div>
-      <div class="kpi-value">${_wellDays}</div>
-      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">days lost</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">${_wellCount} absences</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_suppWarn>0?'var(--red)':'var(--green)'}" onclick="navigateTo('suppliers')" title="Go to Supplier Scorecard">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#b45309,#fbbf24)"></div>
-      <div class="kpi-label">Suppliers</div>
-      <div class="kpi-value">${_suppAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Approved: ${_suppApproved}</span>
-        <span class="kpib ${_suppWarn>0?'kpib-red':'kpib-gray'}">Warnings: ${_suppWarn}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_msOverdue>0?'var(--red)':_msDueSoon>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('med-surveillance')" title="Go to Medical Surveillance">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#ea580c,#fb923c)"></div>
-      <div class="kpi-label">Medical Surveillance</div>
-      <div class="kpi-value">${_ms.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Current: ${_msCurrent}</span>
-        <span class="kpib kpib-yellow">Due Soon: ${_msDueSoon}</span>
-        <span class="kpib ${_msOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${_msOverdue}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_expExcOpen>0?'var(--red)':'var(--accent)'}" onclick="navigateTo('exposure')" title="Go to Exposure Monitoring">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#7c3aed,#c084fc)"></div>
-      <div class="kpi-label">Exposure Monitoring</div>
-      <div class="kpi-value">${_expTotal}</div>
-      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">measurements</div>
-      <div class="kpi-breakdown">
-        <span class="kpib ${_expExcOpen>0?'kpib-red':'kpib-gray'}">OEL Exceeded: ${_expExcOpen}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_faFollowUp>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('first-aid')" title="Go to First Aid Log">
+  // ── Extra pre-computes ────────────────────────────────────────────────────
+  const _legalAll=d.legalItems||[];
+  const _legalNC=_legalAll.filter(r=>r.status==='Non-Compliant').length;
+  const _legalPending=_legalAll.filter(r=>r.status==='Pending').length;
+  const _legalCompliant=_legalAll.filter(r=>r.status==='Compliant').length;
+  const _legalPct=_legalAll.length>0?Math.round(_legalCompliant/_legalAll.length*100):100;
+  const _deiAll=d.deiMetrics||[];
+  const _deiFemale=_deiAll.length>0?Math.round(_deiAll.filter(r=>r.gender==='Female').length/_deiAll.length*100):0;
+  const _deiDisabled=_deiAll.filter(r=>r.disability==='Yes').length;
+  const _audAll=(d.audits||[]).filter(r=>inPeriod(r.date));
+  const _audComplete=_audAll.filter(r=>r.status==='Complete').length;
+  const _audCritFails=_audAll.filter(r=>(r.critFails||0)>0).length;
+  const _audScored=_audAll.filter(r=>r.score!=null);
+  const _audAvgScore=_audScored.length?Math.round(_audScored.reduce((s,a)=>s+(a.score||0),0)/_audScored.length):null;
+  const _assetsAll=d.assets||[];
+  const _assetsOverdue=_assetsAll.filter(r=>r.next_inspection&&r.next_inspection<today()&&r.status!=='Decommissioned').length;
+  const _commLogAll=(d.communityLog||[]).filter(r=>inPeriod(r.date));
+  const _commLogOpen=_commLogAll.filter(r=>r.status==='Open').length;
+  const _ltiCount=(d.incidents||[]).filter(i=>i.lti||(i.severity||'').toLowerCase().includes('lost time')||(i.type||'').toLowerCase().includes('lti')).length;
+  const _wfLt=_wfAll[0]||null;
+  const _mhrs=_wfLt?((parseFloat(_wfLt.total_employees||_wfLt.totalEmployees||50))*8*22*12):200000;
+  const _ltifr=_ltiCount>0?(_ltiCount/_mhrs*1000000).toFixed(2):'0.00';
+  const _hs_capa=capaOverdue>0?Math.max(0,100-capaOverdue*15-Math.max(0,capaOpen-1)*3):100;
+  const _hs_training=_tr.length>0?Math.min(100,Math.round(_trValid/_tr.length*100)):100;
+  const _hs_audit=_audAvgScore!==null?_audAvgScore:100;
+  const _hs_incidents=Math.max(0,100-incOpen*10-_ltiCount*20);
+  const sheqScore=Math.round(_hs_capa*0.25+_hs_training*0.20+_legalPct*0.20+_hs_audit*0.20+_hs_incidents*0.15);
+  const sheqColor=sheqScore>=80?'var(--green)':sheqScore>=60?'var(--yellow)':'var(--red)';
+  const sheqLabel=sheqScore>=80?'Established':sheqScore>=60?'Developing':'At Risk';
+
+  // ── Hero row (always visible) ─────────────────────────────────────────────
+  document.getElementById('dash-hero-row').innerHTML=`
+    <div class="kpi-card" style="--kpi-color:${parseFloat(_ltifr)>0?'var(--red)':'var(--green)'}">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#dc2626,#f87171)"></div>
-      <div class="kpi-label">First Aid</div>
-      <div class="kpi-value">${_fa.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">Follow-up: ${_faFollowUp}</span>
-        <span class="kpib kpib-yellow">Referred: ${_faReferred}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+      <div class="kpi-label">LTIFR</div>
+      <div class="kpi-value">${_ltifr}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_ltiCount>0?'kpib-red':'kpib-green'}">LTIs: ${_ltiCount}</span><span class="kpib kpib-gray">per 1M hrs</span></div>
     </div>
-    <div class="kpi-card" style="--kpi-color:${_calOverdue>0?'var(--red)':_calDueSoon>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('calibration')" title="Go to Calibration Register">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
-      <div class="kpi-label">Calibration</div>
-      <div class="kpi-value">${_calAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Current: ${_calCurrent}</span>
-        <span class="kpib kpib-orange">Due Soon: ${_calDueSoon}</span>
-        <span class="kpib ${_calOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${_calOverdue}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_docOverdue>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('documents')" title="Go to Document Library">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1e40af,#60a5fa)"></div>
-      <div class="kpi-label">Documents</div>
-      <div class="kpi-value">${_docAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-blue">Under Review: ${_docUnderReview}</span>
-        <span class="kpib ${_docOverdue>0?'kpib-red':'kpib-gray'}">Review Overdue: ${_docOverdue}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:rgba(139,92,246,.9)" onclick="navigateTo('mgmt-review')" title="Go to Management Review">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#6d28d9,#a78bfa)"></div>
-      <div class="kpi-label">Mgmt Reviews</div>
-      <div class="kpi-value">${_mrAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Completed: ${_mrCompleted}</span>
-        <span class="kpib kpib-blue">Planned: ${_mrPlanned}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_objBehind>0?'var(--red)':_objAtRisk>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('objectives')" title="Go to Objectives & Targets">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
-      <div class="kpi-label">Objectives</div>
-      <div class="kpi-value">${_objAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">On Track: ${_objOnTrack}</span>
-        <span class="kpib kpib-orange">At Risk: ${_objAtRisk}</span>
-        <span class="kpib ${_objBehind>0?'kpib-red':'kpib-gray'}">Behind: ${_objBehind}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_edNeedsImprovement>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('emergency-drills')" title="Go to Emergency Drills">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#dc2626,#fb923c)"></div>
-      <div class="kpi-label">Emergency Drills</div>
-      <div class="kpi-value">${_edAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Satisfactory: ${_edSatisfactory}</span>
-        <span class="kpib ${_edNeedsImprovement>0?'kpib-orange':'kpib-gray'}">Needs Impr: ${_edNeedsImprovement}</span>
-        <span class="kpib ${_edOpen>0?'kpib-red':'kpib-gray'}">Open Actions: ${_edOpen}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_ncrMajor>0?'var(--red)':_ncrOpen>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('ncr')" title="Go to NCR Register">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#b91c1c,#f87171)"></div>
-      <div class="kpi-label">NCRs</div>
-      <div class="kpi-value">${_ncrAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib ${_ncrMajor>0?'kpib-red':'kpib-gray'}">Major: ${_ncrMajor}</span>
-        <span class="kpib kpib-orange">Open: ${_ncrOpen}</span>
-        <span class="kpib kpib-green">Closed: ${_ncrClosed}</span>
-      </div>
-      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
-    </div>
-    <div class="kpi-card" style="--kpi-color:${_llNotStarted>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('lessons')" title="Go to Lessons Learned">
+    <div class="kpi-card" style="--kpi-color:${capaOverdue>0?'var(--red)':capaOpen>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('capa')">
       <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#d97706,#fde68a)"></div>
-      <div class="kpi-label">Lessons Learned</div>
-      <div class="kpi-value">${_llAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Completed: ${_llCompleted}</span>
-        <span class="kpib ${_llNotStarted>0?'kpib-orange':'kpib-gray'}">Pending: ${_llNotStarted}</span>
-      </div>
+      <div class="kpi-label">Open CAPAs</div>
+      <div class="kpi-value">${capaOpen+capaOverdue}</div>
+      <div class="kpi-breakdown"><span class="kpib ${capaOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${capaOverdue}</span><span class="kpib kpib-green">Closed: ${capaClosed}</span></div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:${_chemNoSds>0?'var(--red)':'var(--green)'}" onclick="navigateTo('chemical')" title="Go to Chemical Register">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#4338ca,#818cf8)"></div>
-      <div class="kpi-label">Chemicals</div>
-      <div class="kpi-value">${_chemAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Active: ${_chemActive}</span>
-        <span class="kpib ${_chemNoSds>0?'kpib-red':'kpib-gray'}">No SDS: ${_chemNoSds}</span>
-      </div>
+    <div class="kpi-card" style="--kpi-color:${_trExpired>0?'var(--red)':_trExpiring>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('training')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">Training Valid</div>
+      <div class="kpi-value">${_trPct}%</div>
+      <div class="kpi-breakdown"><span class="kpib ${_trExpired>0?'kpib-red':'kpib-gray'}">Expired: ${_trExpired}</span><span class="kpib kpib-orange">Expiring: ${_trExpiring}</span></div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:${_envmNC>0?'var(--red)':'var(--green)'}" onclick="navigateTo('env-monitoring')" title="Go to Environmental Monitoring">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#065f46,#34d399)"></div>
-      <div class="kpi-label">Env. Monitoring</div>
-      <div class="kpi-value">${_envmAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-green">Compliant: ${_envmCompliant}</span>
-        <span class="kpib ${_envmNC>0?'kpib-red':'kpib-gray'}">Exceedances: ${_envmNC}</span>
-      </div>
+    <div class="kpi-card" style="--kpi-color:${_legalNC>0?'var(--red)':_legalPending>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('legal')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1e40af,#60a5fa)"></div>
+      <div class="kpi-label">Legal Compliance</div>
+      <div class="kpi-value">${_legalPct}%</div>
+      <div class="kpi-breakdown"><span class="kpib ${_legalNC>0?'kpib-red':'kpib-gray'}">Non-Compliant: ${_legalNC}</span><span class="kpib kpib-orange">Pending: ${_legalPending}</span></div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>
-    <div class="kpi-card" style="--kpi-color:${_commOpen>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('communication')" title="Go to Communication Register">
-      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#7dd3fc)"></div>
-      <div class="kpi-label">Communications</div>
-      <div class="kpi-value">${_commAll.length}</div>
-      <div class="kpi-breakdown">
-        <span class="kpib kpib-orange">Open: ${_commOpen}</span>
-        <span class="kpib kpib-blue">External: ${_commExternal}</span>
-      </div>
+    <div class="kpi-card" style="--kpi-color:rgba(74,222,128,.9)" onclick="navigateTo('ghg')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">GHG ${periodLabel}</div>
+      <div class="kpi-value">${_ghgCO2.toFixed(1)}<span style="font-size:.75rem;margin-left:3px">tCO₂e</span></div>
+      <div class="kpi-breakdown"><span class="kpib kpib-gray">S1:${_ghgS1.toFixed(1)}</span><span class="kpib kpib-gray">S2:${_ghgS2.toFixed(1)}</span><span class="kpib kpib-gray">S3:${_ghgS3.toFixed(1)}</span></div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${sheqColor}">
+      <div class="kpi-accent-bar" style="background:${sheqColor}"></div>
+      <div class="kpi-label">SHEQ Health Score</div>
+      <div class="kpi-value" style="color:${sheqColor}">${sheqScore}</div>
+      <div class="kpi-breakdown"><span class="kpib" style="background:${sheqScore>=80?'#dcfce7':sheqScore>=60?'#fef9c3':'#fee2e2'};color:${sheqScore>=80?'#166534':sheqScore>=60?'#854d0e':'#991b1b'}">${sheqLabel}</span></div>
     </div>`;
+
+  // ── Pillar tab HTML ──────────────────────────────────────────────────────
+  const _Arr='<span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>';
+  window._dashTabHtml={
+  safety:`
+    <div class="kpi-card" style="--kpi-color:var(--accent)" onclick="navigateTo('observations')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#2563eb,#60a5fa)"></div>
+      <div class="kpi-label">Observations</div><div class="kpi-value">${obs.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Safe: ${obsSafe}</span><span class="kpib ${obsRisk>0?'kpib-red':'kpib-gray'}">At-Risk: ${obsRisk}</span><span class="kpib kpib-blue">Impr: ${obsImpr}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--yellow)" onclick="navigateTo('nearmiss')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#d97706,#fde68a)"></div>
+      <div class="kpi-label">Near Misses</div><div class="kpi-value">${nms.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${nmOpen>0?'kpib-orange':'kpib-gray'}">Open: ${nmOpen}</span><span class="kpib ${nmOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${nmOverdue}</span><span class="kpib kpib-green">Closed: ${nmClosed}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${incOpen>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('incidents')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#ef4444,#fca5a5)"></div>
+      <div class="kpi-label">Incidents</div><div class="kpi-value">${incs.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${incOpen>0?'kpib-orange':'kpib-gray'}">Open: ${incOpen}</span><span class="kpib kpib-green">Closed: ${incClosed}</span><span class="kpib ${_ltiCount>0?'kpib-red':'kpib-gray'}">LTIs: ${_ltiCount}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--teal)" onclick="navigateTo('permits')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
+      <div class="kpi-label">Permits (PTW)</div><div class="kpi-value">${permits.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Active: ${ptwActive}</span><span class="kpib kpib-gray">Closed: ${ptwClosed}</span><span class="kpib ${ptwExpired>0?'kpib-red':'kpib-gray'}">Expired: ${ptwExpired}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${rExt>0?'var(--red)':rHigh>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('risks')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#dc2626,#f87171)"></div>
+      <div class="kpi-label">Risks</div><div class="kpi-value">${risks.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${rExt>0?'kpib-red':'kpib-gray'}">Critical: ${rExt}</span><span class="kpib ${rHigh>0?'kpib-orange':'kpib-gray'}">High: ${rHigh}</span><span class="kpib kpib-yellow">Med: ${rMed}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_edNeedsImprovement>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('emergency-drills')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#dc2626,#fb923c)"></div>
+      <div class="kpi-label">Emergency Drills</div><div class="kpi-value">${_edAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">OK: ${_edSatisfactory}</span><span class="kpib ${_edNeedsImprovement>0?'kpib-orange':'kpib-gray'}">Needs Impr: ${_edNeedsImprovement}</span><span class="kpib ${_edOpen>0?'kpib-red':'kpib-gray'}">Open: ${_edOpen}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_faFollowUp>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('first-aid')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#e11d48,#fda4af)"></div>
+      <div class="kpi-label">First Aid</div><div class="kpi-value">${_fa.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_faFollowUp>0?'kpib-orange':'kpib-gray'}">Follow-up: ${_faFollowUp}</span><span class="kpib kpib-gray">Referred: ${_faReferred}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_msOverdue>0?'var(--red)':_msDueSoon>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('med-surveillance')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
+      <div class="kpi-label">Medical Surveillance</div><div class="kpi-value">${_ms.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_msOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${_msOverdue}</span><span class="kpib kpib-orange">Due Soon: ${_msDueSoon}</span><span class="kpib kpib-green">Current: ${_msCurrent}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_expExcOpen>0?'var(--red)':'var(--accent)'}" onclick="navigateTo('exposure')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#7c3aed,#c4b5fd)"></div>
+      <div class="kpi-label">Exposure Monitoring</div><div class="kpi-value">${_expTotal}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_expExcOpen>0?'kpib-red':'kpib-green'}">Exceedances: ${_expExcOpen}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_wellDays>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('wellness')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
+      <div class="kpi-label">Wellness</div><div class="kpi-value">${_wellCount}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_wellDays>0?'kpib-orange':'kpib-green'}">Days Lost: ${_wellDays}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:var(--teal)" onclick="navigateTo('toolbox')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
+      <div class="kpi-label">Toolbox Talks</div><div class="kpi-value">${_tbt.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Done: ${_tbtCompleted}</span><span class="kpib kpib-blue">Planned: ${_tbtPlanned}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_indExpired>0?'var(--red)':'var(--green)'}" onclick="navigateTo('inductions')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">Inductions</div><div class="kpi-value">${_ind.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Valid: ${_indValid}</span><span class="kpib kpib-orange">Expiring: ${_indExpiring}</span><span class="kpib ${_indExpired>0?'kpib-red':'kpib-gray'}">Expired: ${_indExpired}</span></div>${_Arr}
+    </div>`,
+  environmental:`
+    <div class="kpi-card" style="--kpi-color:rgba(74,222,128,.9)" onclick="navigateTo('ghg')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">GHG Emissions</div><div class="kpi-value">${_ghgCO2.toFixed(1)}<span style="font-size:.75rem;margin-left:3px">tCO₂e</span></div>
+      <div class="kpi-breakdown"><span class="kpib kpib-gray">S1:${_ghgS1.toFixed(1)}</span><span class="kpib kpib-gray">S2:${_ghgS2.toFixed(1)}</span><span class="kpib kpib-gray">S3:${_ghgS3.toFixed(1)}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:#2563eb" onclick="navigateTo('water')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#7dd3fc)"></div>
+      <div class="kpi-label">Water</div><div class="kpi-value">${_waterKL.toFixed(0)}<span style="font-size:.75rem;margin-left:3px">kL</span></div>
+      <div class="kpi-breakdown"><span class="kpib kpib-gray">${_water.length} reading${_water.length!==1?'s':''}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_wasteNC>0?'var(--red)':_wastePending>0?'var(--orange)':'rgba(74,222,128,.9)'}" onclick="navigateTo('waste')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">Waste</div><div class="kpi-value">${_waste.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_wasteHaz>0?'kpib-red':'kpib-gray'}">Hazardous: ${_wasteHaz}</span><span class="kpib kpib-orange">Pending: ${_wastePending}</span><span class="kpib ${_wasteNC>0?'kpib-red':'kpib-gray'}">NC: ${_wasteNC}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_envHigh>0?'var(--red)':'rgba(74,222,128,.9)'}" onclick="navigateTo('env-aspects')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#065f46,#34d399)"></div>
+      <div class="kpi-label">Env. Aspects</div><div class="kpi-value">${_envA.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_envHigh>0?'kpib-red':'kpib-gray'}">High: ${_envHigh}</span><span class="kpib kpib-orange">Med: ${_envMed}</span><span class="kpib kpib-blue">Review: ${_envReview}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_envmNC>0?'var(--red)':'var(--green)'}" onclick="navigateTo('env-monitoring')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#065f46,#34d399)"></div>
+      <div class="kpi-label">Env. Monitoring</div><div class="kpi-value">${_envmAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Compliant: ${_envmCompliant}</span><span class="kpib ${_envmNC>0?'kpib-red':'kpib-gray'}">Exceedances: ${_envmNC}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_chemNoSds>0?'var(--red)':'var(--green)'}" onclick="navigateTo('chemical')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#4338ca,#818cf8)"></div>
+      <div class="kpi-label">Chemicals</div><div class="kpi-value">${_chemAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Active: ${_chemActive}</span><span class="kpib ${_chemNoSds>0?'kpib-red':'kpib-gray'}">No SDS: ${_chemNoSds}</span></div>${_Arr}
+    </div>`,
+  quality:`
+    <div class="kpi-card" style="--kpi-color:${_audCritFails>0?'var(--red)':'var(--accent)'}" onclick="navigateTo('audits')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#2563eb,#60a5fa)"></div>
+      <div class="kpi-label">Audits</div><div class="kpi-value">${_audAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Complete: ${_audComplete}</span><span class="kpib ${_audCritFails>0?'kpib-red':'kpib-gray'}">Crit.Fails: ${_audCritFails}</span>${_audAvgScore!==null?'<span class="kpib '+(_audAvgScore>=80?'kpib-green':_audAvgScore>=60?'kpib-orange':'kpib-red')+'">Avg: '+_audAvgScore+'%</span>':''}</div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_ncrMajor>0?'var(--red)':_ncrOpen>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('ncr')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#b91c1c,#f87171)"></div>
+      <div class="kpi-label">NCRs</div><div class="kpi-value">${_ncrAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_ncrMajor>0?'kpib-red':'kpib-gray'}">Major: ${_ncrMajor}</span><span class="kpib kpib-orange">Open: ${_ncrOpen}</span><span class="kpib kpib-green">Closed: ${_ncrClosed}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_llNotStarted>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('lessons')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#d97706,#fde68a)"></div>
+      <div class="kpi-label">Lessons Learned</div><div class="kpi-value">${_llAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Completed: ${_llCompleted}</span><span class="kpib ${_llNotStarted>0?'kpib-orange':'kpib-gray'}">Pending: ${_llNotStarted}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_calOverdue>0?'var(--red)':_calDueSoon>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('calibration')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
+      <div class="kpi-label">Calibration</div><div class="kpi-value">${_calAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Current: ${_calCurrent}</span><span class="kpib kpib-orange">Due Soon: ${_calDueSoon}</span><span class="kpib ${_calOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${_calOverdue}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_docOverdue>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('documents')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1e40af,#60a5fa)"></div>
+      <div class="kpi-label">Documents</div><div class="kpi-value">${_docAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-blue">Under Review: ${_docUnderReview}</span><span class="kpib ${_docOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${_docOverdue}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_mocPending>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('moc')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0f766e,#2dd4bf)"></div>
+      <div class="kpi-label">Mgmt of Change</div><div class="kpi-value">${_mocs.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_mocPending>0?'kpib-orange':'kpib-gray'}">Pending: ${_mocPending}</span><span class="kpib kpib-green">Done: ${_mocCompleted}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_assetsOverdue>0?'var(--red)':'var(--accent)'}" onclick="navigateTo('assets')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#7c3aed,#c4b5fd)"></div>
+      <div class="kpi-label">Assets</div><div class="kpi-value">${_assetsAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_assetsOverdue>0?'kpib-red':'kpib-gray'}">Insp. Overdue: ${_assetsOverdue}</span></div>${_Arr}
+    </div>`,
+  social:`
+    <div class="kpi-card" style="--kpi-color:${_trExpired>0?'var(--red)':_trExpiring>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('training')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">Training</div><div class="kpi-value">${_tr.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Valid: ${_trValid}</span><span class="kpib kpib-orange">Expiring: ${_trExpiring}</span><span class="kpib ${_trExpired>0?'kpib-red':'kpib-gray'}">Expired: ${_trExpired}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:rgba(167,139,250,.9)" onclick="navigateTo('dei')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#7c3aed,#c4b5fd)"></div>
+      <div class="kpi-label">DEI Records</div><div class="kpi-value">${_deiAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-gray">Female: ${_deiFemale}%</span><span class="kpib kpib-gray">Disabled: ${_deiDisabled}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:rgba(96,165,250,.9)" onclick="navigateTo('workforce')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#7dd3fc)"></div>
+      <div class="kpi-label">Workforce Metrics</div><div class="kpi-value">${_wfAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-gray">${_wfAll.length>0?'Latest: '+(_wfAll[0].period||'—'):'No data yet'}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_suppWarn>0?'var(--red)':'var(--green)'}" onclick="navigateTo('suppliers')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#d97706,#fde68a)"></div>
+      <div class="kpi-label">Suppliers</div><div class="kpi-value">${_suppAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Approved: ${_suppApproved}</span><span class="kpib ${_suppWarn>0?'kpib-red':'kpib-gray'}">Warnings: ${_suppWarn}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_seComplaints>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('stakeholder')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#7dd3fc)"></div>
+      <div class="kpi-label">Stakeholders</div><div class="kpi-value">${_seAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_seComplaints>0?'kpib-orange':'kpib-gray'}">Complaints: ${_seComplaints}</span><span class="kpib kpib-gray">Open: ${_seOpen}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_commLogOpen>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('community')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#0891b2,#67e8f9)"></div>
+      <div class="kpi-label">Community</div><div class="kpi-value">${_commLogAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib ${_commLogOpen>0?'kpib-orange':'kpib-gray'}">Open: ${_commLogOpen}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_commOpen>0?'var(--orange)':'rgba(96,165,250,.9)'}" onclick="navigateTo('communication')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1d4ed8,#7dd3fc)"></div>
+      <div class="kpi-label">Communications</div><div class="kpi-value">${_commAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-orange">Open: ${_commOpen}</span><span class="kpib kpib-blue">External: ${_commExternal}</span></div>${_Arr}
+    </div>`,
+  governance:`
+    <div class="kpi-card" style="--kpi-color:${_legalNC>0?'var(--red)':_legalPending>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('legal')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#1e40af,#60a5fa)"></div>
+      <div class="kpi-label">Legal Compliance</div><div class="kpi-value">${_legalPct}%</div>
+      <div class="kpi-breakdown"><span class="kpib ${_legalNC>0?'kpib-red':'kpib-gray'}">Non-Compliant: ${_legalNC}</span><span class="kpib kpib-orange">Pending: ${_legalPending}</span><span class="kpib kpib-green">Compliant: ${_legalCompliant}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_objBehind>0?'var(--red)':_objAtRisk>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('objectives')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      <div class="kpi-label">Objectives</div><div class="kpi-value">${_objAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">On Track: ${_objOnTrack}</span><span class="kpib kpib-orange">At Risk: ${_objAtRisk}</span><span class="kpib ${_objBehind>0?'kpib-red':'kpib-gray'}">Behind: ${_objBehind}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:rgba(139,92,246,.9)" onclick="navigateTo('mgmt-review')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#6d28d9,#a78bfa)"></div>
+      <div class="kpi-label">Mgmt Reviews</div><div class="kpi-value">${_mrAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Completed: ${_mrCompleted}</span><span class="kpib kpib-blue">Planned: ${_mrPlanned}</span></div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_audCritFails>0?'var(--red)':'var(--accent)'}" onclick="navigateTo('audits')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#2563eb,#60a5fa)"></div>
+      <div class="kpi-label">Audits</div><div class="kpi-value">${_audAll.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-green">Complete: ${_audComplete}</span><span class="kpib ${_audCritFails>0?'kpib-red':'kpib-gray'}">Crit.Fails: ${_audCritFails}</span>${_audAvgScore!==null?'<span class="kpib '+(_audAvgScore>=80?'kpib-green':_audAvgScore>=60?'kpib-orange':'kpib-red')+'">Avg: '+_audAvgScore+'%</span>':''}</div>${_Arr}
+    </div>
+    <div class="kpi-card" style="--kpi-color:${capaOverdue>0?'var(--red)':capaOpen>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('capa')">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#d97706,#fde68a)"></div>
+      <div class="kpi-label">CAPAs</div><div class="kpi-value">${capas.length}</div>
+      <div class="kpi-breakdown"><span class="kpib kpib-orange">Open: ${capaOpen}</span><span class="kpib ${capaOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${capaOverdue}</span><span class="kpib kpib-green">Closed: ${capaClosed}</span></div>${_Arr}
+    </div>`
+  };
+  document.querySelectorAll('.dash-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===_dashTab));
+  document.getElementById('dash-kpi-row').innerHTML=window._dashTabHtml[_dashTab]||'';
 
   // Combined monthly trend — Observations, Near Misses, Incidents (last 6 months)
   const months=[],obsCounts=[],nmCounts=[],incCounts=[];
