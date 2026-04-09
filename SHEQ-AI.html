@@ -2648,6 +2648,12 @@
     a { text-decoration: none; color: inherit; }
     .badge, .status-badge { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     .report-doc { border: none !important; max-width: 100%; padding: 0; }
+
+    /* ESG Annual Report print — full width, hide board chrome */
+    #page-esg-board .section-header { display: none !important; }
+    #esg-annual-report { max-width: 100% !important; font-size: 10pt; }
+    #esg-annual-report table { page-break-inside: auto; }
+    #esg-annual-report tr { page-break-inside: avoid; break-inside: avoid; }
   }
   </style>
 
@@ -2921,6 +2927,13 @@
         <tbody id="dash-module-tbody"></tbody>
       </table>
     </div>
+  </div>
+  <div class="card" style="margin-top:var(--sp-2)" data-print="hide">
+    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>🕐 Recent Activity</span>
+      <span id="activity-feed-ts" style="font-size:11px;color:var(--muted);font-weight:400"></span>
+    </div>
+    <div class="activity-feed" id="dash-activity-feed"><p style="color:var(--muted);font-size:13px;padding:8px 0">No recent activity.</p></div>
   </div>
 </div>
 
@@ -8276,6 +8289,48 @@ function renderDashboard(){
       <td class="num">${r.closed}</td>
       <td>${moduleStatus(r.overdue, r.open, r.total||1)}</td>
     </tr>`).join('');
+  buildActivityFeed();
+}
+function buildActivityFeed(){
+  const d=getData()||getDefaultData();
+  const now=new Date();
+  const modules=[
+    {key:'observations',   icon:'👁️', label:'Observation',    dateField:'date',    nav:'observations'},
+    {key:'nearMisses',     icon:'⚠️', label:'Near Miss',      dateField:'date',    nav:'nearmiss'},
+    {key:'incidents',      icon:'🚨', label:'Incident',       dateField:'date',    nav:'incidents'},
+    {key:'capas',          icon:'✅', label:'CAPA',           dateField:'created', nav:'capa'},
+    {key:'permits',        icon:'📋', label:'Permit (PTW)',   dateField:'from',    nav:'permits'},
+    {key:'risks',          icon:'🎯', label:'Risk',           dateField:'reviewDate',nav:'risks'},
+    {key:'legalItems',     icon:'⚖️', label:'Legal Item',     dateField:'lastComplied',nav:'legal'},
+    {key:'trainingReg',    icon:'🎓', label:'Training',       dateField:'date',    nav:'training'},
+    {key:'ghgEntries',     icon:'🌱', label:'GHG Entry',      dateField:'date',    nav:'ghg'},
+    {key:'waterReg',       icon:'💧', label:'Water Reading',  dateField:'date',    nav:'water'},
+    {key:'suppliers',      icon:'🏭', label:'Supplier',       dateField:'last_audit_date',nav:'suppliers'},
+    {key:'audits',         icon:'📝', label:'Audit',          dateField:'date',    nav:'audits'},
+  ];
+  let events=[];
+  modules.forEach(m=>{
+    (d[m.key]||[]).forEach(rec=>{
+      const dt=rec[m.dateField]||rec.date||rec.created||'';
+      if(dt) events.push({date:dt,id:rec.id||'',icon:m.icon,label:m.label,nav:m.nav,who:rec.createdBy||rec.reporter||rec.employee_name||rec.auditor||'',status:rec.status||''});
+    });
+  });
+  events.sort((a,b)=>b.date.localeCompare(a.date));
+  const recent=events.slice(0,15);
+  const feedEl=document.getElementById('dash-activity-feed');
+  if(!feedEl) return;
+  if(!recent.length){feedEl.innerHTML='<p style="color:var(--muted);font-size:13px;padding:8px 0">No recent activity.</p>';return;}
+  const dotColor={Observation:'blue','Near Miss':'yellow',Incident:'red',CAPA:'green','Permit (PTW)':'orange',Risk:'orange','Legal Item':'teal',Training:'blue','GHG Entry':'teal','Water Reading':'blue',Supplier:'gray',Audit:'blue'};
+  feedEl.innerHTML=recent.map(e=>`
+    <div class="activity-item" style="cursor:pointer" onclick="navigateTo('${e.nav}')">
+      <div class="activity-dot ${dotColor[e.label]||'blue'}"></div>
+      <div class="activity-content">
+        <div class="activity-text"><strong>${e.icon} ${e.label}</strong>${e.id?' — '+e.id:''} ${e.status?'<span style="font-size:10px;color:var(--muted)">['+escapeHtml(e.status)+']</span>':''}</div>
+        <div class="activity-meta">${fmtDate(e.date)}${e.who?' · '+maskPII(e.who):''}</div>
+      </div>
+    </div>`).join('');
+  const ts=document.getElementById('activity-feed-ts');
+  if(ts) ts.textContent='Updated '+now.toLocaleTimeString();
 }
 
 // ============================================================
