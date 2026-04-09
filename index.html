@@ -1749,59 +1749,92 @@
     /* ============================================================
        MOBILE NAV (hidden by default)
     ============================================================ */
+    /* ── Mobile bottom bar — 5 tabs + drawer ─────────────── */
     #mobile-nav {
       display: none;
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      bottom: 0; left: 0; right: 0;
       height: 62px;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-top: 1px solid #dde2ea;
       box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
       z-index: 300;
       flex-direction: row;
       align-items: stretch;
+      overflow: visible;
     }
-
-    #mobile-nav {
-      overflow-x: auto;
-      overflow-y: hidden;
-      scrollbar-width: none;
-    }
-    #mobile-nav::-webkit-scrollbar { display: none; }
-
     .mobile-nav-item {
-      flex: 0 0 auto;
-      min-width: 64px;
+      flex: 1 1 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 2px;
       color: var(--muted);
-      font-size: var(--fs-xs);
-      font-weight: 500;
+      font-size: .6rem;
+      font-weight: 600;
       cursor: pointer;
-      padding: 6px 8px;
-      transition: color 0.15s;
+      padding: 6px 4px;
+      transition: color .15s, background .15s;
       border: none;
       background: none;
+      position: relative;
     }
+    .mobile-nav-item .nav-icon { font-size: 1.15rem; }
+    .mobile-nav-item.active { color: var(--accent); }
+    .mobile-nav-item.active::after {
+      content:''; position:absolute; bottom:0; left:20%; right:20%;
+      height:2px; background:var(--accent); border-radius:2px 2px 0 0;
+    }
+    .mobile-nav-item:hover { color: var(--accent); background: rgba(37,99,235,.05); }
 
-    .mobile-nav-item .nav-icon {
-      font-size: 1.1rem;
+    /* Drawer overlay */
+    #mob-drawer-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35);
+      z-index: 350; animation: fadeIn .15s ease;
     }
+    #mob-drawer-overlay.open { display: block; }
 
-    .mobile-nav-item.active {
-      color: var(--accent);
+    /* Slide-up drawer */
+    #mobile-drawer {
+      position: fixed; bottom: 62px; left: 0; right: 0;
+      background: var(--card);
+      border-radius: 18px 18px 0 0;
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -8px 32px rgba(0,0,0,.18);
+      z-index: 360;
+      max-height: 75vh;
+      overflow-y: auto;
+      padding: 0 0 8px;
+      transform: translateY(110%);
+      transition: transform .25s cubic-bezier(.32,.72,0,1);
     }
-
-    .mobile-nav-item:hover {
-      color: var(--accent);
+    #mobile-drawer.open { transform: translateY(0); }
+    .mob-drawer-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--border); margin: 10px auto 6px;
     }
+    .mob-drawer-section {
+      padding: 6px 14px 2px;
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--muted);
+    }
+    .mob-drawer-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 2px; padding: 4px 8px;
+    }
+    .mob-drawer-item {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 3px; padding: 8px 4px; border-radius: 8px;
+      font-size: .6rem; font-weight: 600; color: var(--text);
+      cursor: pointer; transition: background .12s, color .12s;
+      border: none; background: none; text-align: center;
+    }
+    .mob-drawer-item .nav-icon { font-size: 1.2rem; }
+    .mob-drawer-item:hover { background: var(--card2); color: var(--accent); }
+    .mob-drawer-item.active { color: var(--accent); background: rgba(37,99,235,.07); }
 
     /* ============================================================
        RESPONSIVE — MOBILE (max-width: 768px)
@@ -2719,54 +2752,72 @@
 </nav>
 
 <!-- ===== MOBILE BOTTOM NAV ===== -->
+<!-- Mobile overlay + drawer -->
+<div id="mob-drawer-overlay" onclick="closeMobileDrawer()"></div>
+<div id="mobile-drawer">
+  <div class="mob-drawer-handle"></div>
+  <div class="mob-drawer-section">🦺 Safety &amp; Health</div>
+  <div class="mob-drawer-grid">
+    <div class="mob-drawer-item" data-page="observations" onclick="closeMobileDrawer();navigateTo('observations')"><span class="nav-icon">👁️</span>Obs</div>
+    <div class="mob-drawer-item" data-page="nearmiss" onclick="closeMobileDrawer();navigateTo('nearmiss')"><span class="nav-icon">⚠️</span>Near Miss</div>
+    <div class="mob-drawer-item" data-page="permits" onclick="closeMobileDrawer();navigateTo('permits')"><span class="nav-icon">📋</span>PTW</div>
+    <div class="mob-drawer-item" data-page="emergency" onclick="closeMobileDrawer();navigateTo('emergency')"><span class="nav-icon">🚑</span>Emergency</div>
+    <div class="mob-drawer-item" data-page="toolbox" onclick="closeMobileDrawer();navigateTo('toolbox')"><span class="nav-icon">🗣️</span>Toolbox</div>
+    <div class="mob-drawer-item" data-page="inductions" onclick="closeMobileDrawer();navigateTo('inductions')"><span class="nav-icon">🪪</span>Inductions</div>
+    <div class="mob-drawer-item" data-page="emergency-drills" onclick="closeMobileDrawer();navigateTo('emergency-drills')"><span class="nav-icon">🧯</span>Drills</div>
+    <div class="mob-drawer-item" data-page="first-aid" onclick="closeMobileDrawer();navigateTo('first-aid')"><span class="nav-icon">🩹</span>First Aid</div>
+    <div class="mob-drawer-item" data-page="med-surveillance" onclick="closeMobileDrawer();navigateTo('med-surveillance')"><span class="nav-icon">🩺</span>Med Surv.</div>
+    <div class="mob-drawer-item" data-page="exposure" onclick="closeMobileDrawer();navigateTo('exposure')"><span class="nav-icon">☢️</span>Exposure</div>
+    <div class="mob-drawer-item" data-page="wellness" onclick="closeMobileDrawer();navigateTo('wellness')"><span class="nav-icon">🏥</span>Wellness</div>
+    <div class="mob-drawer-item" data-page="chemical" onclick="closeMobileDrawer();navigateTo('chemical')"><span class="nav-icon">⚗️</span>Chemical</div>
+  </div>
+  <div class="mob-drawer-section">🌍 Environmental</div>
+  <div class="mob-drawer-grid">
+    <div class="mob-drawer-item" data-page="ghg" onclick="closeMobileDrawer();navigateTo('ghg')"><span class="nav-icon">🌱</span>GHG</div>
+    <div class="mob-drawer-item" data-page="water" onclick="closeMobileDrawer();navigateTo('water')"><span class="nav-icon">💧</span>Water</div>
+    <div class="mob-drawer-item" data-page="waste" onclick="closeMobileDrawer();navigateTo('waste')"><span class="nav-icon">♻️</span>Waste</div>
+    <div class="mob-drawer-item" data-page="env-aspects" onclick="closeMobileDrawer();navigateTo('env-aspects')"><span class="nav-icon">🌍</span>Env Aspects</div>
+    <div class="mob-drawer-item" data-page="env-monitoring" onclick="closeMobileDrawer();navigateTo('env-monitoring')"><span class="nav-icon">📡</span>Env Mon.</div>
+  </div>
+  <div class="mob-drawer-section">✅ Quality &amp; Assets</div>
+  <div class="mob-drawer-grid">
+    <div class="mob-drawer-item" data-page="audits" onclick="closeMobileDrawer();navigateTo('audits')"><span class="nav-icon">📝</span>Audits</div>
+    <div class="mob-drawer-item" data-page="ncr" onclick="closeMobileDrawer();navigateTo('ncr')"><span class="nav-icon">🚫</span>NCR</div>
+    <div class="mob-drawer-item" data-page="lessons" onclick="closeMobileDrawer();navigateTo('lessons')"><span class="nav-icon">💡</span>Lessons</div>
+    <div class="mob-drawer-item" data-page="assets" onclick="closeMobileDrawer();navigateTo('assets')"><span class="nav-icon">🔧</span>Assets</div>
+    <div class="mob-drawer-item" data-page="calibration" onclick="closeMobileDrawer();navigateTo('calibration')"><span class="nav-icon">🔬</span>Calibration</div>
+    <div class="mob-drawer-item" data-page="documents" onclick="closeMobileDrawer();navigateTo('documents')"><span class="nav-icon">📂</span>Documents</div>
+    <div class="mob-drawer-item" data-page="moc" onclick="closeMobileDrawer();navigateTo('moc')"><span class="nav-icon">🔄</span>MoC</div>
+  </div>
+  <div class="mob-drawer-section">👥 Social &amp; HR</div>
+  <div class="mob-drawer-grid">
+    <div class="mob-drawer-item" data-page="training" onclick="closeMobileDrawer();navigateTo('training')"><span class="nav-icon">🎓</span>Training</div>
+    <div class="mob-drawer-item" data-page="dei" onclick="closeMobileDrawer();navigateTo('dei')"><span class="nav-icon">🌈</span>DEI</div>
+    <div class="mob-drawer-item" data-page="workforce" onclick="closeMobileDrawer();navigateTo('workforce')"><span class="nav-icon">👥</span>Workforce</div>
+    <div class="mob-drawer-item" data-page="suppliers" onclick="closeMobileDrawer();navigateTo('suppliers')"><span class="nav-icon">🏭</span>Suppliers</div>
+    <div class="mob-drawer-item" data-page="stakeholder" onclick="closeMobileDrawer();navigateTo('stakeholder')"><span class="nav-icon">🤝</span>Stakeholder</div>
+    <div class="mob-drawer-item" data-page="community" onclick="closeMobileDrawer();navigateTo('community')"><span class="nav-icon">🏘️</span>Community</div>
+    <div class="mob-drawer-item" data-page="communication" onclick="closeMobileDrawer();navigateTo('communication')"><span class="nav-icon">📢</span>Comms</div>
+  </div>
+  <div class="mob-drawer-section">⚖️ Governance &amp; Reports</div>
+  <div class="mob-drawer-grid">
+    <div class="mob-drawer-item" data-page="legal" onclick="closeMobileDrawer();navigateTo('legal')"><span class="nav-icon">⚖️</span>Legal</div>
+    <div class="mob-drawer-item" data-page="objectives" onclick="closeMobileDrawer();navigateTo('objectives')"><span class="nav-icon">🎯</span>Objectives</div>
+    <div class="mob-drawer-item" data-page="mgmt-review" onclick="closeMobileDrawer();navigateTo('mgmt-review')"><span class="nav-icon">🏛️</span>Mgmt Rev.</div>
+    <div class="mob-drawer-item" data-page="esg-board" onclick="closeMobileDrawer();navigateTo('esg-board')"><span class="nav-icon">📊</span>ESG Board</div>
+    <div class="mob-drawer-item" data-page="report" onclick="closeMobileDrawer();navigateTo('report')"><span class="nav-icon">📄</span>Report</div>
+    <div class="mob-drawer-item" data-page="calendar" onclick="closeMobileDrawer();navigateTo('calendar')"><span class="nav-icon">📅</span>Calendar</div>
+    <div class="mob-drawer-item" data-page="chat" onclick="closeMobileDrawer();navigateTo('chat')"><span class="nav-icon">🤖</span>AI Chat</div>
+  </div>
+</div>
+
+<!-- Mobile bottom bar — 5 tabs -->
 <div id="mobile-nav">
-  <div class="mobile-nav-item active" data-page="dashboard"><span class="nav-icon">📊</span>Dash</div>
-  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
-  <div class="mobile-nav-item" data-page="observations"><span class="nav-icon">👁️</span>Obs</div>
-  <div class="mobile-nav-item" data-page="nearmiss"><span class="nav-icon">⚠️</span>NM</div>
-  <div class="mobile-nav-item" data-page="incidents"><span class="nav-icon">🚨</span>Inc</div>
-  <div class="mobile-nav-item" data-page="permits"><span class="nav-icon">📋</span>PTW</div>
-  <div class="mobile-nav-item" data-page="emergency"><span class="nav-icon">🚑</span>SOS</div>
-  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
-  <div class="mobile-nav-item" data-page="toolbox"><span class="nav-icon">🗣️</span>TBT</div>
-  <div class="mobile-nav-item" data-page="inductions"><span class="nav-icon">🪪</span>Ind</div>
-  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
-  <div class="mobile-nav-item" data-page="capa"><span class="nav-icon">✅</span>CAPA</div>
-  <div class="mobile-nav-item" data-page="audits"><span class="nav-icon">📝</span>Audits</div>
-  <div class="mobile-nav-item" data-page="assets"><span class="nav-icon">🔧</span>Assets</div>
-  <div class="mobile-nav-item" data-page="moc"><span class="nav-icon">🔄</span>MoC</div>
-  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
-  <div class="mobile-nav-item" data-page="risks"><span class="nav-icon">🎯</span>Risk</div>
-  <div class="mobile-nav-item" data-page="legal"><span class="nav-icon">⚖️</span>Legal</div>
-  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
-  <div class="mobile-nav-item" data-page="report"><span class="nav-icon">📄</span>Report</div>
-  <div class="mobile-nav-item" data-page="calendar"><span class="nav-icon">📅</span>Cal</div>
-  <div style="width:1px;background:rgba(255,255,255,.15);margin:6px 2px;flex-shrink:0"></div>
-  <div class="mobile-nav-item" data-page="ghg"><span class="nav-icon">🌱</span>GHG</div>
-  <div class="mobile-nav-item" data-page="water"><span class="nav-icon">💧</span>H₂O</div>
-  <div class="mobile-nav-item" data-page="env-aspects"><span class="nav-icon">🌍</span>Env</div>
-  <div class="mobile-nav-item" data-page="waste"><span class="nav-icon">♻️</span>Waste</div>
-  <div class="mobile-nav-item" data-page="med-surveillance"><span class="nav-icon">🩺</span>Med</div>
-  <div class="mobile-nav-item" data-page="exposure"><span class="nav-icon">☢️</span>Exp</div>
-  <div class="mobile-nav-item" data-page="first-aid"><span class="nav-icon">🩹</span>FA</div>
-  <div class="mobile-nav-item" data-page="training"><span class="nav-icon">🎓</span>Train</div>
-  <div class="mobile-nav-item" data-page="dei"><span class="nav-icon">🌈</span>DEI</div>
-  <div class="mobile-nav-item" data-page="wellness"><span class="nav-icon">🏥</span>Well</div>
-  <div class="mobile-nav-item" data-page="workforce"><span class="nav-icon">👥</span>WF</div>
-  <div class="mobile-nav-item" data-page="stakeholder"><span class="nav-icon">🤝</span>Stk</div>
-  <div class="mobile-nav-item" data-page="community"><span class="nav-icon">🏘️</span>Comm</div>
-  <div class="mobile-nav-item" data-page="calibration"><span class="nav-icon">🔬</span>Cal</div>
-  <div class="mobile-nav-item" data-page="documents"><span class="nav-icon">📂</span>Docs</div>
-  <div class="mobile-nav-item" data-page="mgmt-review"><span class="nav-icon">🏛️</span>MgmtRev</div>
-  <div class="mobile-nav-item" data-page="objectives"><span class="nav-icon">🎯</span>Obj</div>
-  <div class="mobile-nav-item" data-page="emergency-drills"><span class="nav-icon">🧯</span>Drills</div>
-  <div class="mobile-nav-item" data-page="ncr"><span class="nav-icon">🚫</span>NCR</div>
-  <div class="mobile-nav-item" data-page="lessons"><span class="nav-icon">💡</span>Lessons</div>
-  <div class="mobile-nav-item" data-page="chemical"><span class="nav-icon">⚗️</span>Chem</div>
-  <div class="mobile-nav-item" data-page="env-monitoring"><span class="nav-icon">📡</span>EnvMon</div>
-  <div class="mobile-nav-item" data-page="communication"><span class="nav-icon">📢</span>Comms</div>
-  <div class="mobile-nav-item" data-page="suppliers"><span class="nav-icon">🏭</span>Sup</div>
-  <div class="mobile-nav-item" data-page="esg-board"><span class="nav-icon">📊</span>ESG</div>
+  <div class="mobile-nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')"><span class="nav-icon">📊</span>Dash</div>
+  <div class="mobile-nav-item" data-page="incidents" onclick="navigateTo('incidents')"><span class="nav-icon">🚨</span>Incidents</div>
+  <div class="mobile-nav-item" data-page="capa" onclick="navigateTo('capa')"><span class="nav-icon">✅</span>CAPA</div>
+  <div class="mobile-nav-item" data-page="risks" onclick="navigateTo('risks')"><span class="nav-icon">🎯</span>Risks</div>
+  <div class="mobile-nav-item" id="mob-more-btn" onclick="toggleMobileDrawer()"><span class="nav-icon">☰</span>More</div>
 </div>
 
 <!-- ===== MAIN ===== -->
@@ -8470,6 +8521,7 @@ function renderIncidents(page=1){
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('inc','${i.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editInc('${i.id}')">Edit</button>
+        <button class="btn btn-sm btn-ghost" style="color:var(--orange,#f97316)" onclick="raiseNcrFromIncident('${i.id}')" title="Raise NCR from this incident">→ NCR</button>
         <button class="btn btn-sm btn-danger" onclick="deleteInc('${i.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -10487,6 +10539,7 @@ function renderNcr(page=1){
     <td>${statusPill(r.status)}</td>
     <td>
       <button class="btn btn-sm btn-ghost" onclick="editNcr('${r.id}')">Edit</button>
+      <button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="logLessonFromNcr('${r.id}')" title="Log a Lesson Learned from this NCR">→ Lesson</button>
       <button class="btn btn-sm btn-danger" onclick="deleteNcr('${r.id}')">Del</button>
     </td>
   </tr>`).join(''):`<tr><td colspan="13" style="text-align:center;color:var(--muted);padding:24px">No NCRs found</td></tr>`;
@@ -11157,6 +11210,114 @@ function updateAlertsCount(){
   const cnt=document.getElementById('alerts-count');
   if(cnt){cnt.style.display=total>0?'inline-block':'none';cnt.textContent=total;}
 }
+/* ── Mobile drawer ───────────────────────────────────────── */
+function toggleMobileDrawer(){
+  const drawer=document.getElementById('mobile-drawer');
+  const overlay=document.getElementById('mob-drawer-overlay');
+  const btn=document.getElementById('mob-more-btn');
+  const isOpen=drawer.classList.contains('open');
+  if(isOpen){ closeMobileDrawer(); }
+  else {
+    overlay.classList.add('open');
+    drawer.classList.add('open');
+    if(btn) btn.style.color='var(--accent)';
+    // sync active state inside drawer
+    const cur=currentPage||'dashboard';
+    document.querySelectorAll('.mob-drawer-item').forEach(el=>{
+      el.classList.toggle('active',el.dataset.page===cur);
+    });
+  }
+}
+function closeMobileDrawer(){
+  document.getElementById('mobile-drawer').classList.remove('open');
+  document.getElementById('mob-drawer-overlay').classList.remove('open');
+  const btn=document.getElementById('mob-more-btn');
+  if(btn) btn.style.color='';
+}
+
+/* ── Incident → NCR → Lessons auto-chain ──────────────────── */
+function openAddNcr(){
+  document.getElementById('ncr-f-edit-id').value='';
+  document.getElementById('ncr-f-date').value=today();
+  document.getElementById('ncr-f-standard').value='ISO 45001';
+  document.getElementById('ncr-f-clause').value='';
+  document.getElementById('ncr-f-type').value='Minor';
+  document.getElementById('ncr-f-dept').value='';
+  document.getElementById('ncr-f-raised-by').value='';
+  document.getElementById('ncr-f-description').value='';
+  document.getElementById('ncr-f-root-cause').value='';
+  document.getElementById('ncr-f-correction').value='';
+  document.getElementById('ncr-f-corrective-action').value='';
+  document.getElementById('ncr-f-due-date').value='';
+  document.getElementById('ncr-f-status').value='Open';
+  if(window._ncrPreFill){
+    const pf=window._ncrPreFill;
+    if(pf.description) document.getElementById('ncr-f-description').value=pf.description;
+    if(pf.raised_by)   document.getElementById('ncr-f-raised-by').value=pf.raised_by;
+    if(pf.type)        document.getElementById('ncr-f-type').value=pf.type;
+    if(pf.standard)    document.getElementById('ncr-f-standard').value=pf.standard;
+    if(pf.root_cause)  document.getElementById('ncr-f-root-cause').value=pf.root_cause;
+    window._ncrPreFill=null;
+  }
+  openModal('ncr-modal');
+}
+function raiseNcrFromIncident(incId){
+  const d=getData()||getDefaultData();
+  const inc=(d.incidents||[]).find(x=>x.id===incId);if(!inc)return;
+  window._ncrPreFill={
+    description:`Non-conformance arising from ${inc.type} incident ${inc.id} (${inc.date}) at ${inc.location||'unknown location'}. ${inc.desc||''}`.trim(),
+    raised_by: inc.person?maskPII(inc.person):'SHEQ Team',
+    type: inc.sev<=2?'Major':'Minor',
+    standard:'ISO 45001',
+    root_cause: inc.rootCause||''
+  };
+  navigateTo('ncr');
+  setTimeout(openAddNcr,350);
+}
+
+function openAddLesson(){
+  document.getElementById('ll-f-edit-id').value='';
+  document.getElementById('ll-f-date').value=today();
+  document.getElementById('ll-f-source').value='Incident';
+  document.getElementById('ll-f-reference').value='';
+  document.getElementById('ll-f-pillar').value='Safety';
+  document.getElementById('ll-f-title').value='';
+  document.getElementById('ll-f-description').value='';
+  document.getElementById('ll-f-lesson').value='';
+  document.getElementById('ll-f-impact').value='MEDIUM';
+  document.getElementById('ll-f-shared-with').value='';
+  document.getElementById('ll-f-impl-date').value='';
+  document.getElementById('ll-f-owner').value='';
+  document.getElementById('ll-f-status').value='Not Started';
+  if(window._lessonPreFill){
+    const pf=window._lessonPreFill;
+    if(pf.source)      document.getElementById('ll-f-source').value=pf.source;
+    if(pf.reference)   document.getElementById('ll-f-reference').value=pf.reference;
+    if(pf.title)       document.getElementById('ll-f-title').value=pf.title;
+    if(pf.description) document.getElementById('ll-f-description').value=pf.description;
+    if(pf.lesson)      document.getElementById('ll-f-lesson').value=pf.lesson;
+    if(pf.impact)      document.getElementById('ll-f-impact').value=pf.impact;
+    if(pf.pillar)      document.getElementById('ll-f-pillar').value=pf.pillar;
+    window._lessonPreFill=null;
+  }
+  openModal('lessons-modal');
+}
+function logLessonFromNcr(ncrId){
+  const d=getData()||getDefaultData();
+  const ncr=(d.ncrRegister||[]).find(x=>x.id===ncrId);if(!ncr)return;
+  window._lessonPreFill={
+    source:'NCR',
+    reference: ncr.id,
+    title:`Lesson from NCR ${ncr.id} — ${truncate(ncr.description,60)}`,
+    description:`NCR ${ncr.id} (${ncr.date}): ${ncr.description||''}${ncr.root_cause?'\n\nRoot cause: '+ncr.root_cause:''}`.trim(),
+    lesson: ncr.corrective_action||'Review and update procedure to prevent recurrence.',
+    impact: ncr.type==='Major'?'HIGH':'MEDIUM',
+    pillar: ncr.standard==='ISO 14001'?'Environmental':ncr.standard==='ISO 45001'?'Safety':'Quality'
+  };
+  navigateTo('lessons');
+  setTimeout(openAddLesson,350);
+}
+
 function toggleAlertsPanel(){
   const panel=document.getElementById('alerts-panel');
   if(!panel)return;
