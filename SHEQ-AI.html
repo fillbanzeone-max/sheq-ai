@@ -978,6 +978,15 @@
       background: #fecaca;
     }
 
+    /* RBAC viewer mode — hide destructive and submit actions */
+    body[data-role="viewer"] .btn-danger { display:none !important; }
+    body[data-role="viewer"] .modal-actions .btn-primary { display:none !important; }
+    body[data-role="viewer"] [onclick*="openAdd"],
+    body[data-role="viewer"] [onclick*="openEdit"],
+    body[data-role="viewer"] [onclick*="raiseCapaFrom"],
+    body[data-role="viewer"] [onclick*="escalateTo"],
+    body[data-role="viewer"] [onclick*="raiseNmFrom"] { display:none !important; }
+
     .btn-ghost {
       background: #fff;
       color: var(--muted);
@@ -6170,6 +6179,8 @@ function _refreshRoleUI(){
   }
   const sel = document.getElementById('rbac-role-select');
   if(sel) sel.value = role;
+  // Set body data-role for CSS-driven button visibility
+  document.body.setAttribute('data-role', role);
   // Re-render active page so PII masking / delete buttons update immediately
   const cur = document.querySelector('.page.active');
   if(cur){
@@ -7277,8 +7288,10 @@ function today(){return new Date().toISOString().substring(0,10);}
 function daysOpen(created){if(!created)return 0;return Math.floor((new Date()-new Date(created))/(1000*60*60*24));}
 function getDaysUntil(d){if(!d)return 999;return Math.floor((new Date(d)-new Date())/(1000*60*60*24));}
 function getPTWStatus(p){
-  if(p.status==='CLOSED'||p.status==='SUSPENDED'||p.status==='EXPIRED') return 'CLOSED';
-  if(p.to && p.to < new Date().toISOString()) return 'CLOSED';
+  if(p.status==='CLOSED') return 'CLOSED';
+  if(p.status==='SUSPENDED') return 'SUSPENDED';
+  if(p.to && p.to < new Date().toISOString().substring(0,10)) return 'EXPIRED';
+  if(p.status==='EXPIRED') return 'EXPIRED';
   return p.status;
 }
 function capaBadge(capaRef, d){
@@ -8460,6 +8473,14 @@ function saveNearMiss(){
     const hasInv=(getData().investigations||[]).some(x=>x.incidentRef===rec.id);
     if(!hasInv) setTimeout(()=>openAddInvestigation(rec.id), 250);
   }
+  // Auto-prompt to raise CAPA for HiPo near miss without a CAPA
+  if(!editId && rec.hipo===1 && !rec.capaRef){
+    setTimeout(()=>{
+      if(confirm(`⚠ HiPo Near Miss logged (${rec.id}).\nRaise a CAPA to address this high-potential event?`)){
+        raiseCapaFromNm(rec.id);
+      }
+    }, 700);
+  }
 }
 function deleteNM(id){if(!requireRole('delete','Delete Near Miss'))return;const d=getData()||getDefaultData();const n=(d.nearMisses||[]).find(x=>x.id===id);if(!confirm('Delete near miss '+id+(n?': '+truncate(n.outcome||n.desc,50):'')+'\nThis cannot be undone.'))return;d.nearMisses=(d.nearMisses||[]).filter(x=>x.id!==id);saveData(d);renderNearMiss(nmPage);}
 function renderNearMiss(page=1){
@@ -8618,6 +8639,14 @@ function saveIncident(){
       setTimeout(()=>openAddInvestigation(rec.id), 250);
     }
   }
+  // Auto-prompt to raise CAPA for critical/high incidents without a CAPA
+  if(!editId && rec.sev<=2 && !rec.capaRef){
+    setTimeout(()=>{
+      if(confirm(`🚨 Severity ${rec.sev===1?'1 — Critical':'2 — High'} Incident logged (${rec.id}).\nRaise a CAPA for this incident?`)){
+        raiseCapaFromInc(rec.id);
+      }
+    }, 700);
+  }
 }
 function deleteInc(id){if(!requireRole('delete','Delete Incident'))return;const d=getData()||getDefaultData();const i=(d.incidents||[]).find(x=>x.id===id);if(!confirm('Delete incident '+id+(i?': '+truncate(i.desc,50):'')+'\nThis cannot be undone.'))return;d.incidents=(d.incidents||[]).filter(x=>x.id!==id);saveData(d);renderIncidents(incPage);}
 function editInc(id){
@@ -8763,6 +8792,8 @@ function savePermit(){
     d.permits.push(rec);
   }
   saveData(d);closeModal('ptw-modal');renderPermits(1);
+  if(rec.from) autoAddToCalendar('PTW Start: '+rec.id, rec.from);
+  if(rec.to) autoAddToCalendar('PTW Expiry: '+rec.id, rec.to);
 }
 function editPTW(id){
   const d=getData()||getDefaultData();const p=(d.permits||[]).find(x=>x.id===id);if(!p)return;
@@ -10796,6 +10827,7 @@ function saveLesson(){
   else d.lessonsLearned.push(rec);
   saveData(d);closeModal('lessons-modal');renderLessons(1);
   secLog('DATA_WRITE',{module:'lessonsLearned',id:rec.id,classification:'Internal'});
+  if(rec.implementation_date) autoAddToCalendar('Lesson: '+rec.id, rec.implementation_date);
 }
 function deleteLesson(id){
   if(!requireRole('delete','Delete Lesson'))return;
@@ -11559,6 +11591,10 @@ function buildAlertsPanel(){
   if(envExc.length) html+=_alertRow('🔴','Env. Exceedances',`${envExc.length} permit limit exceedance${envExc.length>1?'s':''}`,`env-monitoring`);
   const expExc=(d.exposureLog||[]).filter(r=>r.exceedance&&r.status==='Open');
   if(expExc.length) html+=_alertRow('🔴','Exposure OEL Breach',`${expExc.length} open OEL exceedance${expExc.length>1?'s':''}`,`exposure`);
+  const ptwExpired=(d.permits||[]).filter(p=>getPTWStatus(p)==='EXPIRED');
+  if(ptwExpired.length) html+=_alertRow('🟠','Expired Permits',`${ptwExpired.length} permit${ptwExpired.length>1?'s':''} expired`,`permits`);
+  const suppWarn=(d.suppliers||[]).filter(s=>getSupplierWarning(s));
+  if(suppWarn.length) html+=_alertRow('🟡','Supplier Warnings',`${suppWarn.length} supplier${suppWarn.length>1?'s':''} with issues`,`suppliers`);
   if(!html) html='<p style="color:var(--muted);font-size:13px;text-align:center;padding:8px 0">✅ No active alerts</p>';
   document.getElementById('alerts-list').innerHTML=html;
 }
@@ -11935,6 +11971,21 @@ function toggleCal(act,month){
   d.calendar[calYear][act][month]=states[(states.indexOf(cur)+1)%states.length];
   saveData(d);renderCalendar();
 }
+function autoAddToCalendar(title, dateStr){
+  if(!dateStr) return;
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dt=new Date(dateStr); if(isNaN(dt)) return;
+  const year=dt.getFullYear(); const month=months[dt.getMonth()];
+  let data=getData()||getDefaultData();
+  data.calendar=data.calendar||buildDefaultCalendar();
+  if(!data.calendar[year]) data.calendar[year]={};
+  if(!data.calendar[year][title]) data.calendar[year][title]={};
+  if(!data.calendar[year][title][month]||data.calendar[year][title][month]==='blank'){
+    data.calendar[year][title][month]='planned';
+  }
+  saveData(data);
+  if(currentPage==='calendar') renderCalendar();
+}
 
 // ============================================================
 // CAPA TRACKER
@@ -12013,6 +12064,7 @@ function saveCapa(){
   if(editId){const idx=d.capas.findIndex(x=>x.id===editId);if(idx>=0)d.capas[idx]=rec;else d.capas.push(rec);}
   else d.capas.push(rec);
   saveData(d);signAndUpdateRecord('capas',rec.id);closeModal('capa-modal');renderCapas(1);checkCapaBadge();
+  if(rec.when) autoAddToCalendar('CAPA: '+rec.id, rec.when);
 }
 function deleteCapa(id){if(!requireRole('delete','Delete CAPA'))return;const d=getData()||getDefaultData();const c=(d.capas||[]).find(x=>x.id===id);if(!confirm('Delete CAPA '+id+(c?' — '+truncate(c.what,50):'')+'\nThis cannot be undone.'))return;d.capas=(d.capas||[]).filter(x=>x.id!==id);saveData(d);renderCapas(capaPage);checkCapaBadge();}
 function renderCapas(page=1){
@@ -13370,6 +13422,26 @@ function renderAudits(page=1){
     </tr>`;
   }).join('');
   renderPagination('audit-pagination',total,page,renderAudits);
+}
+function raiseCapaFromNm(nmId){
+  const d=getData()||getDefaultData();
+  const n=(d.nearMisses||[]).find(x=>x.id===nmId);if(!n)return;
+  window._capaPreFill={
+    source:'NM',ref:nmId,
+    what:`Corrective action for HiPo Near Miss ${nmId}: ${n.outcome||n.desc||''}`,
+    priority:n.sev<=2?'High':'Medium'
+  };
+  navigateTo('capa');setTimeout(openAddCapa,350);
+}
+function raiseCapaFromInc(incId){
+  const d=getData()||getDefaultData();
+  const i=(d.incidents||[]).find(x=>x.id===incId);if(!i)return;
+  window._capaPreFill={
+    source:'INC',ref:incId,
+    what:`Corrective action for ${i.type||'Safety'} Incident ${incId}: ${truncate(i.desc||'',100)}`,
+    priority:i.sev===1?'Critical':i.sev===2?'High':'Medium'
+  };
+  navigateTo('capa');setTimeout(openAddCapa,350);
 }
 function raiseCapaFromAudit(auditId){
   const d=getData()||getDefaultData();
