@@ -689,6 +689,11 @@
     .dash-tab.active { color:var(--accent); border-bottom-color:var(--accent); background:rgba(37,99,235,.06); border-radius:6px 6px 0 0; }
     .dash-tab:hover:not(.active) { color:var(--text); background:var(--card2); border-radius:6px 6px 0 0; }
     .kpi-grid-hero { grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); }
+    /* Empty-card collapse */
+    .kpi-card[data-zero] { opacity:0.38; filter:grayscale(.4); }
+    #dash-kpi-row.hide-zero .kpi-card[data-zero] { display:none; }
+    /* Controls effectiveness badge */
+    .ctrl-badge { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:4px; margin-top:3px; }
 
     .kpi-card {
       background: var(--card);
@@ -2884,6 +2889,7 @@
     <button class="dash-tab" data-tab="quality" onclick="setDashTab('quality')">✅ Quality</button>
     <button class="dash-tab" data-tab="social" onclick="setDashTab('social')">👥 Social</button>
     <button class="dash-tab" data-tab="governance" onclick="setDashTab('governance')">⚖️ Governance</button>
+    <button id="zero-toggle-btn" class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:.68rem;white-space:nowrap;padding:4px 10px" onclick="toggleZeroCards()">Hide empty</button>
   </div>
   <div class="kpi-grid" id="dash-kpi-row"></div>
   <div class="charts-row">
@@ -7228,6 +7234,15 @@ const RS=[[1,3,6,10,15],[2,5,9,14,19],[4,8,13,18,22],[7,12,17,21,24],[11,16,20,2
 function getRiskScore(p,i){return RS[(p||1)-1][(i||1)-1]||1;}
 function riskRating(s){return s<=4?'LOW':s<=9?'MEDIUM':s<=16?'HIGH':'CRITICAL';}
 function riskCellClass(s){return s<=4?'cell-green':s<=9?'cell-yellow':s<=16?'cell-orange':'cell-red';}
+function controlsBadge(r){
+  const has=(r.controls||'').trim().length>0;
+  const highRes=r.rRating==='HIGH'||r.rRating==='CRITICAL';
+  const reduced=has&&(r.rScore<r.iScore);
+  if(!has&&highRes) return '<span class="ctrl-badge" style="background:#fee2e2;color:#dc2626">⚠ No Controls</span>';
+  if(!has)          return '<span style="color:var(--muted);font-size:11px">—</span>';
+  if(reduced)       return '<span class="ctrl-badge" style="background:#dcfce7;color:#16a34a">✓ Effective</span>';
+  return               '<span class="ctrl-badge" style="background:#ffedd5;color:#c2410c">⟲ Review</span>';
+}
 function ratingPill(r){const m={LOW:'pill-green',MEDIUM:'pill-yellow',HIGH:'pill-orange',CRITICAL:'pill-red'};return`<span class="pill ${m[r]||'pill-gray'}">${r}</span>`;}
 function sevPill(s){const l={1:'CRITICAL',2:'HIGH',3:'MEDIUM',4:'LOW'},c={1:'pill-red',2:'pill-orange',3:'pill-yellow',4:'pill-green'};return`<span class="pill ${c[s]||'pill-gray'}">${l[s]||s}</span>`;}
 function priorityPill(p){const m={Critical:'pill-red',High:'pill-orange',Medium:'pill-yellow',Low:'pill-green'};return`<span class="pill ${m[p]||'pill-gray'}">${p||'—'}</span>`;}
@@ -7643,10 +7658,26 @@ function setDashPeriod(p){
   renderDashboard();
 }
 let _dashTab='safety';
+let _hideZero=false;
 function setDashTab(tab){
   _dashTab=tab;
   document.querySelectorAll('.dash-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-  if(window._dashTabHtml&&window._dashTabHtml[tab])document.getElementById('dash-kpi-row').innerHTML=window._dashTabHtml[tab];
+  const row=document.getElementById('dash-kpi-row');
+  if(window._dashTabHtml&&window._dashTabHtml[tab]){
+    row.innerHTML=window._dashTabHtml[tab];
+    // Mark cards whose primary value is 0
+    row.querySelectorAll('.kpi-card').forEach(card=>{
+      const val=card.querySelector('.kpi-value');
+      if(val){const v=val.textContent.trim();if(v==='0'||v==='0.00'||v==='—')card.setAttribute('data-zero','');}
+    });
+    row.classList.toggle('hide-zero',_hideZero);
+  }
+}
+function toggleZeroCards(){
+  _hideZero=!_hideZero;
+  document.getElementById('dash-kpi-row').classList.toggle('hide-zero',_hideZero);
+  const btn=document.getElementById('zero-toggle-btn');
+  if(btn)btn.textContent=_hideZero?'Show all':'Hide empty';
 }
 function renderDashboard(){
   const d=getData()||getDefaultData();
@@ -8797,6 +8828,18 @@ function editRisk(id){
   openModal('risk-modal');
 }
 function deleteRisk(id){if(!requireRole('delete','Delete Risk'))return;const d=getData()||getDefaultData();const r=(d.risks||[]).find(x=>x.id===id);if(!confirm('Delete risk '+id+(r?' — '+truncate(r.hazard,50):'')+'\nThis cannot be undone.'))return;d.risks=(d.risks||[]).filter(x=>x.id!==id);saveData(d);renderRisks();renderRiskMatrix();}
+function raiseCapaFromRisk(riskId){
+  const d=getData()||getDefaultData();
+  const r=(d.risks||[]).find(x=>x.id===riskId);if(!r)return;
+  window._capaPreFill={
+    source:'RISK',
+    ref:riskId,
+    what:`Implement additional controls to reduce residual risk for: ${r.hazard}. Current residual rating: ${r.rRating} (score ${r.rScore}). Existing controls: ${r.controls||'None specified'}.`,
+    priority:r.rRating==='CRITICAL'?'Critical':'High'
+  };
+  navigateTo('capa');
+  setTimeout(openAddCapa,350);
+}
 function renderRisks(page=1){
   riskPage=page;let d=getData()||getDefaultData();
   const search=(document.getElementById('risk-search').value||'').toLowerCase();
@@ -8817,7 +8860,7 @@ function renderRisks(page=1){
       <td>${r.category}</td>
       <td class="num">${r.iScore}</td>
       <td>${ratingPill(r.iRating)}</td>
-      <td>${truncate(r.controls,30)}</td>
+      <td><div>${truncate(r.controls,28)||''}</div>${controlsBadge(r)}</td>
       <td class="num">${r.rScore}</td>
       <td>${ratingPill(r.rRating)}</td>
       <td>${r.owner}</td>
@@ -8826,6 +8869,7 @@ function renderRisks(page=1){
       <td>
         <button class="btn btn-sm btn-ghost" onclick="openView('risk','${r.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editRisk('${r.id}')">Edit</button>
+        ${(r.rRating==='HIGH'||r.rRating==='CRITICAL')&&!r.capaRef?`<button class="btn btn-sm btn-ghost" style="color:var(--red,#dc2626)" onclick="raiseCapaFromRisk('${r.id}')" title="Raise CAPA for this high-risk item">→ CAPA</button>`:''}
         <button class="btn btn-sm btn-danger" onclick="deleteRisk('${r.id}')">Del</button>
       </td>
     </tr>`).join('');
