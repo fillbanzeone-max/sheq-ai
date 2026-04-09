@@ -2902,6 +2902,7 @@
     <div class="card"><div class="card-title">📈 Obs / Near Miss / Incidents — Monthly Trend</div><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
     <div class="card"><div class="card-title">📋 Permits to Work — by Status</div><div class="chart-wrap"><canvas id="chart-ratio"></canvas></div></div>
     <div class="card"><div class="card-title">🎯 Risk Register — by Rating</div><div class="chart-wrap"><canvas id="chart-risk"></canvas></div></div>
+    <div class="card"><div class="card-title">🌱 GHG Emissions — Monthly tCO₂e (12 months)</div><div class="chart-wrap"><canvas id="chart-ghg"></canvas></div></div>
   </div>
   <div class="card" style="margin-top:var(--sp-2)">
     <div class="card-title" id="dash-module-title">Module Activity Overview</div>
@@ -5378,7 +5379,13 @@
       <div class="form-group"><label>Chairperson</label><input type="text" id="mr-f-chair" placeholder="e.g. CEO / Site Manager"></div>
       <div class="form-group"><label>Attendees</label><input type="text" id="mr-f-attendees" placeholder="e.g. SHEQ Manager, HR, Operations"></div>
     </div>
-    <div class="form-group"><label>Agenda / Topics Covered</label><textarea id="mr-f-agenda" placeholder="List agenda items discussed…"></textarea></div>
+    <div class="form-group">
+      <label style="display:flex;justify-content:space-between;align-items:center">
+        Agenda / Topics Covered
+        <button type="button" class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:2px 8px" onclick="snapshotMrKpis()" title="Auto-fill agenda with live KPI snapshot from all modules">📊 Snapshot KPIs</button>
+      </label>
+      <textarea id="mr-f-agenda" placeholder="List agenda items discussed…"></textarea>
+    </div>
     <div class="form-group"><label>Key Decisions &amp; Outcomes</label><textarea id="mr-f-decisions" placeholder="Summarise key decisions, approvals, and management commitments…"></textarea></div>
     <div class="form-group"><label>Action Items</label><textarea id="mr-f-actions" placeholder="List action items, owners, and due dates…"></textarea></div>
     <div class="form-row">
@@ -7661,7 +7668,7 @@ document.getElementById('topbar-date').textContent=new Date().toLocaleDateString
 // ============================================================
 // DASHBOARD
 // ============================================================
-let trendChart,ratioChart,riskChart;
+let trendChart,ratioChart,riskChart,ghgChart;
 let dashPeriod='all';
 function setDashPeriod(p){
   dashPeriod=p;
@@ -8174,6 +8181,23 @@ function renderDashboard(){
   if(riskChart)riskChart.destroy();
   riskChart=new Chart(document.getElementById('chart-risk').getContext('2d'),{type:'pie',data:{labels:['Low','Medium','High','Critical'],datasets:[{data:[rLow,rMed,rHigh,rExt],backgroundColor:['#22c55e','#fde047','#f97316','#ef4444'],borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,font:{size:11}}}}}});
 
+  // GHG monthly trend — last 12 months
+  if(ghgChart)ghgChart.destroy();
+  const ghgMonthly=months.map(m=>{
+    const [yr,mo]=m.split('-');
+    return (d.ghgEntries||[]).filter(r=>{
+      if(!r.date)return false;
+      const [ry,rm]=r.date.split('-');return ry===yr&&rm===mo;
+    }).reduce((s,r)=>s+(r.tCO2e||0),0);
+  });
+  const ghgMonthlyS1=months.map(m=>{const [yr,mo]=m.split('-');return (d.ghgEntries||[]).filter(r=>r.date&&r.scope==='Scope 1'&&r.date.startsWith(yr+'-'+mo)).reduce((s,r)=>s+(r.tCO2e||0),0);});
+  const ghgMonthlyS2=months.map(m=>{const [yr,mo]=m.split('-');return (d.ghgEntries||[]).filter(r=>r.date&&r.scope==='Scope 2'&&r.date.startsWith(yr+'-'+mo)).reduce((s,r)=>s+(r.tCO2e||0),0);});
+  ghgChart=new Chart(document.getElementById('chart-ghg').getContext('2d'),{type:'bar',data:{labels:months.map(m=>m.substring(0,7)),datasets:[
+    {label:'Scope 1',data:ghgMonthlyS1,backgroundColor:'rgba(239,68,68,.75)',borderRadius:3,stack:'ghg'},
+    {label:'Scope 2',data:ghgMonthlyS2,backgroundColor:'rgba(249,115,22,.75)',borderRadius:3,stack:'ghg'},
+    {label:'Other',data:ghgMonthly.map((t,i)=>Math.max(0,t-ghgMonthlyS1[i]-ghgMonthlyS2[i])),backgroundColor:'rgba(234,179,8,.75)',borderRadius:3,stack:'ghg'}
+  ]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:12,font:{size:11}}}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9}}},y:{stacked:true,beginAtZero:true,title:{display:true,text:'tCO₂e',font:{size:10}},ticks:{font:{size:9}}}}}});
+
   // Module Activity Overview table
   const incOverdue=incs.filter(i=>i.status==='Overdue').length;
   const ptwOpen=permits.filter(p=>p.status==='ACTIVE'||p.status==='PENDING').length;
@@ -8359,6 +8383,7 @@ function renderObservations(page=1){
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('obs','${o.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editObs('${o.id}')">Edit</button>
+        ${o.type!=='SAFE'?`<button class="btn btn-sm btn-ghost" style="color:#d97706" onclick="raiseNmFromObs('${o.id}')" title="Escalate to Near Miss">→ NM</button>`:''}
         ${o.capa==='Y'?(invBadge(o.id,d)||`<button class="btn btn-sm btn-ghost" style="color:var(--accent)" onclick="openAddInvestigation('${o.id}')" title="Start RCA investigation">🔍 RCA</button>`):''}
         <button class="btn btn-sm btn-danger" onclick="deleteObs('${o.id}')">Del</button>
       </td>
@@ -8383,6 +8408,17 @@ function openAddNM(){
   document.getElementById('nm-f-rca').value='';document.getElementById('nm-f-capa-what').value='';
   document.getElementById('nm-f-capa-who').value='';document.getElementById('nm-f-capa-when').value='';
   evClear('nm');
+  if(window._nmPreFill){
+    const pf=window._nmPreFill;
+    if(pf.reporter)  document.getElementById('nm-f-reporter').value=pf.reporter;
+    if(pf.date)      document.getElementById('nm-f-date').value=pf.date;
+    if(pf.location)  document.getElementById('nm-f-location').value=pf.location;
+    if(pf.desc)      document.getElementById('nm-f-desc').value=pf.desc;
+    if(pf.outcome)   document.getElementById('nm-f-outcome').value=pf.outcome;
+    if(pf.sev)       document.getElementById('nm-f-sev').value=pf.sev;
+    if(pf.hipo)      document.getElementById('nm-f-hipo').value=pf.hipo;
+    window._nmPreFill=null;
+  }
   openModal('nm-modal');
 }
 function saveNearMiss(){
@@ -8450,6 +8486,7 @@ function renderNearMiss(page=1){
       <td data-label="Actions">
         <button class="btn btn-sm btn-ghost" onclick="openView('nm','${n.id}')">View</button>
         <button class="btn btn-sm btn-ghost" onclick="editNM('${n.id}')">Edit</button>
+        <button class="btn btn-sm btn-ghost" style="color:#ef4444" onclick="escalateToIncident('${n.id}')" title="Escalate to Incident">→ Incident</button>
         <button class="btn btn-sm btn-danger" onclick="deleteNM('${n.id}')">Del</button>
       </td>
     </tr>`).join('');
@@ -8482,6 +8519,38 @@ document.getElementById('nm-search').addEventListener('input',()=>renderNearMiss
 document.getElementById('nm-filter-sev').addEventListener('change',()=>renderNearMiss(1));
 document.getElementById('nm-filter-status').addEventListener('change',()=>renderNearMiss(1));
 
+/* ── Safety escalation chain ── */
+function raiseNmFromObs(obsId){
+  const d=getData()||getDefaultData();
+  const o=(d.observations||[]).find(x=>x.id===obsId);if(!o)return;
+  window._nmPreFill={
+    reporter: o.observer||'',
+    date: o.date||today(),
+    location: o.location||'',
+    desc: `Near miss escalated from observation ${o.id} (${o.date||''}). Activity: ${o.activity||''}. ${o.desc||''}`.trim(),
+    outcome: o.action||'',
+    sev: o.priority==='High'?'2':o.priority==='Critical'?'1':'3',
+    hipo: o.priority==='High'||o.priority==='Critical'?'1':'0'
+  };
+  navigateTo('nearmiss');
+  setTimeout(openAddNM,350);
+}
+function escalateToIncident(nmId){
+  const d=getData()||getDefaultData();
+  const n=(d.nearMisses||[]).find(x=>x.id===nmId);if(!n)return;
+  window._incPreFill={
+    date: n.date||today(),
+    type: 'Safety',
+    sev: n.hipo?Math.min(n.sev||3,2):n.sev||3,
+    location: n.location||'',
+    desc: `Incident escalated from near miss ${n.id} (${n.date||''}). ${n.desc||''}${n.outcome?'\nPotential outcome: '+n.outcome:''}`.trim(),
+    person: n.reporter||'',
+    priority: n.hipo||n.sev<=2?'High':'Medium'
+  };
+  navigateTo('incidents');
+  setTimeout(openAddInc,350);
+}
+
 // ============================================================
 // INCIDENTS
 // ============================================================
@@ -8496,6 +8565,17 @@ function openAddInc(){
   document.getElementById('inc-f-priority').value='Medium';
   ['inc-f-location','inc-f-desc','inc-f-person','inc-f-rootcause','inc-f-capa-what','inc-f-capa-who','inc-f-capa-when','inc-f-capa-how'].forEach(id=>document.getElementById(id).value='');
   evClear('inc');
+  if(window._incPreFill){
+    const pf=window._incPreFill;
+    if(pf.date)      document.getElementById('inc-f-date').value=pf.date;
+    if(pf.type)      document.getElementById('inc-f-type').value=pf.type;
+    if(pf.sev)       document.getElementById('inc-f-sev').value=pf.sev;
+    if(pf.location)  document.getElementById('inc-f-location').value=pf.location;
+    if(pf.desc)      document.getElementById('inc-f-desc').value=pf.desc;
+    if(pf.person)    document.getElementById('inc-f-person').value=pf.person;
+    if(pf.priority)  document.getElementById('inc-f-priority').value=pf.priority;
+    window._incPreFill=null;
+  }
   openModal('inc-modal');
 }
 function saveIncident(){
@@ -10263,6 +10343,66 @@ document.getElementById('doc-filter-status').addEventListener('change',()=>rende
 // ============================================================
 let mrPage=1;
 function genMrId(arr){const nums=(arr||[]).map(r=>parseInt((r.id||'').replace('MR-',''))||0);return'MR-'+String((nums.length?Math.max(...nums):0)+1).padStart(3,'0');}
+function snapshotMrKpis(){
+  const d=getData()||getDefaultData();
+  const now=new Date();
+  const yr=now.getFullYear();
+  const mo=String(now.getMonth()+1).padStart(2,'0');
+  const yrStart=yr+'-01-01';
+  const moStart=yr+'-'+mo+'-01';
+  const inYr=dt=>dt&&dt>=yrStart;
+  const inMo=dt=>dt&&dt>=moStart;
+  // Safety
+  const incs=(d.incidents||[]);const incOpen=incs.filter(r=>r.status==='Open').length;
+  const ltiYr=incs.filter(r=>inYr(r.date)&&((r.type||'').toLowerCase().includes('lti')||(r.desc||'').toLowerCase().includes('lost time'))).length;
+  const nms=(d.nearMisses||[]);const nmMo=nms.filter(r=>inMo(r.date)).length;
+  const obs=(d.observations||[]);const obsMo=obs.filter(r=>inMo(r.date)).length;
+  // Compliance
+  const capas=(d.capas||[]);
+  const capaOpen=capas.filter(r=>r.status==='Open').length;
+  const capaOverdue=capas.filter(r=>r.status==='Overdue'||(r.status==='Open'&&r.when&&r.when<today())).length;
+  const capaTotal=capas.length;const capaClosed=capas.filter(r=>r.status==='Closed').length;
+  const capaRate=capaTotal>0?Math.round(capaClosed/capaTotal*100):0;
+  const legal=(d.legalItems||[]);
+  const legalNC=legal.filter(r=>r.status==='Non-Compliant').length;
+  const legalPct=legal.length>0?Math.round(legal.filter(r=>r.status==='Compliant').length/legal.length*100):100;
+  // Training
+  const tr=(d.trainingReg||[]).map(r=>({...r,_s:getTrainingStatus(r.expiry_date)}));
+  const trPct=tr.length>0?Math.round(tr.filter(r=>r._s==='Valid').length/tr.length*100):100;
+  const trExp=tr.filter(r=>r._s==='Expired').length;
+  // Environmental
+  const ghgYr=(d.ghgEntries||[]).filter(r=>inYr(r.date)).reduce((s,r)=>s+(r.tCO2e||0),0);
+  const waterMo=(d.waterReg||[]).filter(r=>inMo(r.date)).reduce((s,r)=>s+(r.volume_kl||0),0);
+  const audYr=(d.audits||[]).filter(r=>inYr(r.date));
+  const audScore=audYr.filter(r=>r.score!=null);
+  const avgAudit=audScore.length?Math.round(audScore.reduce((s,a)=>s+(a.score||0),0)/audScore.length):null;
+  // Risks
+  const riskHigh=(d.risks||[]).filter(r=>r.rRating==='HIGH'||r.rRating==='CRITICAL').length;
+  const snippet=`MANAGEMENT REVIEW — KPI SNAPSHOT — ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SAFETY & HEALTH
+• Observations this month: ${obsMo} | Near Misses: ${nmMo}
+• Open Incidents: ${incOpen} | LTIs year-to-date: ${ltiYr}
+• LTIFR YTD: see LTIFR hero card
+
+COMPLIANCE & GOVERNANCE
+• Open CAPAs: ${capaOpen} (${capaOverdue} overdue) | Closure rate: ${capaRate}%
+• Legal Compliance: ${legalPct}% (${legalNC} non-compliant items)
+
+TRAINING & COMPETENCY
+• Training Compliance: ${trPct}% | ${trExp} expired certificate${trExp!==1?'s':''}
+
+ENVIRONMENTAL
+• GHG Emissions YTD: ${ghgYr.toFixed(2)} tCO₂e
+• Water Consumption this month: ${waterMo.toFixed(1)} kL
+
+QUALITY
+• Internal Audits YTD: ${audYr.length}${avgAudit!=null?' | Avg Score: '+avgAudit+'%':''}
+• High/Critical Risks: ${riskHigh}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+  const ta=document.getElementById('mr-f-agenda');
+  if(ta) ta.value=(ta.value?ta.value+'\n\n':'')+snippet;
+}
 function saveMgmtReview(){
   if(!rateCheck('save-mgmt-review',100))return;
   if(!validateRequired([['mr-f-date','Review Date'],['mr-f-chair','Chairperson']]))return;
