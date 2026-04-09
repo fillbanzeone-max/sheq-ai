@@ -10941,11 +10941,39 @@ function renderLessons(page=1){
     <td>${fmtDate(r.implementation_date)}</td>
     <td><span class="pill ${stColor(r.implementation_status)}">${r.implementation_status}</span></td>
     <td>
+      <button class="btn btn-sm btn-ghost" onclick="shareLessonByEmail('${r.id}')" title="Share lesson by email">📧</button>
       <button class="btn btn-sm btn-ghost" onclick="editLesson('${r.id}')">Edit</button>
       <button class="btn btn-sm btn-danger" onclick="deleteLesson('${r.id}')">Del</button>
     </td>
   </tr>`).join(''):`<tr><td colspan="13" style="text-align:center;color:var(--muted);padding:24px">No lessons learned found</td></tr>`;
   renderPagination('ll-pagination',total,page,renderLessons);
+}
+function shareLessonByEmail(llId){
+  const d=getData()||getDefaultData();
+  const r=(d.lessonsLearned||[]).find(x=>x.id===llId);if(!r)return;
+  const defaultTo=r.shared_with||'';
+  const to=prompt(`Share Lesson "${truncate(r.title,50)}" via email.\nEnter recipient email(s), comma-separated:`,defaultTo);
+  if(!to||!to.trim())return;
+  const cfg=JSON.parse(localStorage.getItem(NOTIF_KEY)||'{}');
+  if(!cfg.pubkey||!cfg.service||!cfg.template){showToast('Email not configured — set up EmailJS in Settings first','warn');return;}
+  emailjs.init(cfg.pubkey);
+  const toList=to.split(',').map(e=>e.trim()).filter(Boolean);
+  const msgHtml=`<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px;max-width:600px;width:100%">
+    <tr style="background:#1e3a5f;color:#fff"><td colspan="2" style="padding:14px 18px;font-size:16px;font-weight:700">📚 Lesson Learned — ${escapeHtml(r.id)}</td></tr>
+    <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc;width:35%">Title</td><td style="padding:8px 18px">${escapeHtml(r.title)}</td></tr>
+    <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Date</td><td style="padding:8px 18px">${r.date}</td></tr>
+    <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Source</td><td style="padding:8px 18px">${escapeHtml(r.source)} ${r.reference?'— '+escapeHtml(r.reference):''}</td></tr>
+    <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Pillar</td><td style="padding:8px 18px">${escapeHtml(r.pillar)}</td></tr>
+    <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">What happened</td><td style="padding:8px 18px">${escapeHtml(r.description||'—')}</td></tr>
+    <tr style="background:#f0fdf4"><td style="padding:8px 18px;font-weight:700">The Lesson</td><td style="padding:8px 18px;font-weight:600">${escapeHtml(r.lesson)}</td></tr>
+    <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Impact</td><td style="padding:8px 18px">${escapeHtml(r.impact)}</td></tr>
+    <tr><td style="padding:8px 18px;font-weight:600;background:#f8fafc">Implementation</td><td style="padding:8px 18px">${escapeHtml(r.implementation_status)} — Owner: ${escapeHtml(r.owner||'—')}</td></tr>
+    <tr style="background:#f8fafc"><td colspan="2" style="padding:8px 18px;font-size:11px;color:#666">Shared by ${currentUser?.email||'SHEQ'} on ${new Date().toLocaleString()} | ESG Management Systems - SHEQ</td></tr>
+  </table>`;
+  const sendAll=toList.map(email=>emailjs.send(cfg.service,cfg.template,{to_email:email,subject:`[Lesson Learned] ${r.title} — ${r.id}`,message_html:msgHtml}));
+  Promise.all(sendAll)
+    .then(()=>{showToast(`📧 Lesson shared with ${toList.length} recipient${toList.length>1?'s':''}!`,'success');secLog('DATA_EXPORT',{module:'lessonsLearned',id:llId,recipients:toList.length,classification:'Internal'});})
+    .catch(e=>{showToast('Email send failed — check EmailJS settings','error');console.warn('shareLessonByEmail error:',e);});
 }
 document.getElementById('ll-search').addEventListener('input',()=>renderLessons(1));
 document.getElementById('ll-filter-pillar').addEventListener('change',()=>renderLessons(1));
@@ -11891,12 +11919,12 @@ function renderEsgBoard(){
   const water=(d.waterReg||[]).filter(r=>inP(r.date));
   const totalWater=water.reduce((s,r)=>s+(r.volume_kl||0),0);
   const waste=(d.wasteLog||[]).filter(r=>inP(r.date));
-  const wasteTotal=waste.reduce((s,r)=>s+(r.quantity||0),0);
-  const wasteLandfill=waste.filter(r=>r.disposalMethod==='Landfill').reduce((s,r)=>s+(r.quantity||0),0);
+  const wasteTotal=waste.reduce((s,r)=>s+(parseFloat(r.weight_kg)||0),0);
+  const wasteLandfill=waste.filter(r=>r.disposal_method==='Landfill').reduce((s,r)=>s+(parseFloat(r.weight_kg)||0),0);
   const wasteDivPct=wasteTotal>0?Math.round((wasteTotal-wasteLandfill)/wasteTotal*100):0;
   // --- Social ---
   const incs=(d.incidents||[]).filter(r=>inP(r.date));
-  const ltiCount=incs.filter(r=>(r.type||'').toLowerCase().includes('lti')||(r.desc||'').toLowerCase().includes('lost time')).length;
+  const ltiCount=incs.filter(r=>r.sev<=2).length;
   const nmAll=(d.nearMisses||[]).filter(r=>inP(r.date));
   const training=(d.trainingReg||[]).map(r=>({...r,_st:getTrainingStatus(r.expiry_date)}));
   const trValid=training.filter(r=>r._st==='Valid').length;
@@ -14505,6 +14533,84 @@ function exportCSV(module){
   } else if(module==='audits'){
     cols=['Audit ID','Type','Title','Auditor','Date','Location','Score %','Passes','Fails','Critical Fails','CAPAs Raised','Status','Notes'];
     rows=(d.audits||[]).map(a=>[a.id,a.template,a.title,a.auditor,a.date,a.location,a.score,a.passes,a.fails,a.critFails,(a.capaRefs||[]).join('; '),a.status,a.notes]);
+  } else if(module==='ghg'){
+    cols=['ID','Date','Scope','Source','Quantity','Unit','tCO2e','Notes'];
+    rows=(d.ghgEntries||[]).map(r=>[r.id,r.date,r.scope,r.source,r.quantity,r.unit,r.tCO2e,r.notes]);
+  } else if(module==='energy'){
+    cols=['ID','Date','Type','Quantity','Unit','Cost (ZAR)','Supplier','Meter Reading','tCO2e','Notes'];
+    rows=(d.energyLog||[]).map(r=>[r.id,r.date,r.type,r.quantity,r.unit,r.cost_zar,r.supplier,r.meter_reading,r.tCO2e,r.notes]);
+  } else if(module==='water'){
+    cols=['ID','Date','Source','Volume (kL)','Location','Meter Reading','Notes'];
+    rows=(d.waterReg||[]).map(r=>[r.id,r.date,r.source,r.volume_kl,r.location,r.meter_reading,r.notes]);
+  } else if(module==='waste'){
+    cols=['ID','Date','Type','Weight (kg)','Disposal Method','Contractor','Manifest No','Notes'];
+    rows=(d.wasteLog||[]).map(r=>[r.id,r.date,r.type,r.weight_kg,r.disposal_method,r.contractor,r.manifest_no,r.notes]);
+  } else if(module==='training'){
+    cols=['ID','Date','Employee Name','Employee ID','Training Type','Provider','Duration (hrs)','Certificate No','Expiry Date','Status'];
+    rows=(d.trainingReg||[]).map(r=>[r.id,r.date,r.employee_name,r.employee_id,r.training_type,r.provider,r.duration_hours,r.certificate_no,r.expiry_date,getTrainingStatus(r.expiry_date)]);
+  } else if(module==='dei'){
+    cols=['ID','Date','Department','Gender','Race Group','Role Level','Disability','Age Group'];
+    rows=(d.deiMetrics||[]).map(r=>[r.id,r.date,r.department,r.gender,r.race_group,r.role_level,r.disability,r.age_group]);
+  } else if(module==='wellness'){
+    cols=['ID','Employee ID','Employee Name','Date','Reason','Days Lost','Return Date','Notes'];
+    rows=(d.wellness||[]).map(r=>[r.id,r.employee_id,r.employee_name,r.date,r.reason,r.days_lost,r.return_date,r.notes]);
+  } else if(module==='suppliers'){
+    cols=['ID','Supplier Name','Service Type','Contact','Email','Last Audit','Safety Score','Insurance Expiry','Standing','Warning','Notes'];
+    rows=(d.suppliers||[]).map(r=>[r.id,r.supplier_name,r.service_type,r.contact_name,r.contact_email,r.last_audit_date,r.safety_score,r.insurance_expiry,r.standing,getSupplierWarning(r)||'',r.notes]);
+  } else if(module==='community'){
+    cols=['ID','Date','Community','Issue Type','Description','Response','Responsible','Status'];
+    rows=(d.communityLog||[]).map(r=>[r.id,r.date,r.community,r.issue_type,r.description,r.response,r.responsible,r.status]);
+  } else if(module==='stakeholder'){
+    cols=['ID','Date','Stakeholder','Category','Type','Topic','Summary','Outcome','Follow-up','Follow-up Date','Responsible','Status'];
+    rows=(d.stakeholders||[]).map(r=>[r.id,r.date,r.stakeholder,r.category,r.type,r.topic,r.summary,r.outcome,r.followUp,r.followUpDate||'',r.responsible,r.status]);
+  } else if(module==='medSurveillance'){
+    cols=['ID','Employee ID','Employee Name','Exam Type','Date','Next Due','Physician','Result','Status','Restrictions','Notes'];
+    rows=(d.medSurveillance||[]).map(r=>[r.id,r.employee_id,r.employee_name,r.exam_type,r.date,r.next_due,r.physician,r.result,getMedStatus&&getMedStatus(r.next_due)||r.status,r.restrictions,r.notes]);
+  } else if(module==='exposureLog'){
+    cols=['ID','Date','Employee ID','Employee Name','Agent','Exposure Level','OEL','Unit','Exceedance','Control Measure','Status'];
+    rows=(d.exposureLog||[]).map(r=>[r.id,r.date,r.employee_id,r.employee_name,r.agent,r.level,r.oel,r.unit,r.exceedance?'Yes':'No',r.control,r.status]);
+  } else if(module==='firstAidLog'||module==='firstAid'){
+    cols=['ID','Date','Time','Employee Name','Employee ID','Description','Body Part','Treatment','First Aider','Referred','Referral Destination','Follow-up Date','Status'];
+    rows=(d.firstAidLog||[]).map(r=>[r.id,r.date,r.time,r.employee_name,r.employee_id,r.description,r.body_part,r.treatment,r.first_aider,r.referred,r.referral_destination,r.follow_up_date,r.status]);
+  } else if(module==='calibration'){
+    cols=['ID','Instrument','Tag No','Location','Standard','Last Cal Date','Next Due','Calibrated By','Result','Certificate No','Status'];
+    rows=(d.calibrationReg||[]).map(r=>[r.id,r.instrument,r.tag_no,r.location,r.standard,r.last_cal_date,r.next_due,r.calibrated_by,r.result,r.certificate_no,getCalStatus&&getCalStatus(r.next_due)||r.status]);
+  } else if(module==='documents'){
+    cols=['ID','Title','Type','Reference No','Version','Effective Date','Review Date','Owner','Status','Notes'];
+    rows=(d.documentLib||[]).map(r=>[r.id,r.title,r.type,r.reference_no,r.version,r.effective_date,r.review_date,r.owner,r.status,r.notes]);
+  } else if(module==='mgmtReviews'){
+    cols=['ID','Date','Type','Chairperson','Attendees','Agenda','Minutes','Actions','Status'];
+    rows=(d.mgmtReviews||[]).map(r=>[r.id,r.date,r.type,r.chairperson,(r.attendees||[]).join('; '),r.agenda,r.minutes,(r.actions||[]).join('; '),r.status]);
+  } else if(module==='objectives'){
+    cols=['ID','Objective','Owner','Department','Target Date','KPI','Target Value','Actual Value','Progress %','Status'];
+    rows=(d.objectives||[]).map(r=>[r.id,r.objective,r.owner,r.department,r.target_date,r.kpi,r.target_value,r.actual_value,r.progress,r.status]);
+  } else if(module==='env-aspects'){
+    cols=['ID','Aspect','Activity','Category','Impact','Significance','Legal Req','Control','Responsible','Review Date','Status'];
+    rows=(d.envAspects||[]).map(r=>[r.id,r.aspect,r.activity,r.category,r.impact,r.significance,r.legalReq,r.control,r.responsible,r.reviewDate,r.status]);
+  } else if(module==='envMonitoring'){
+    cols=['ID','Date','Parameter','Location','Result','Unit','Limit','Exceedance','Method','Sampled By','Notes'];
+    rows=(d.envMonitoring||[]).map(r=>[r.id,r.date,r.parameter,r.location,r.result,r.unit,r.limit,r.exceedance?'Yes':'No',r.method,r.sampled_by,r.notes]);
+  } else if(module==='chemical'){
+    cols=['ID','Chemical Name','CAS No','Category','Hazard Class','Location','Quantity','Unit','SDS Available','SDS Review Date','OEL','PPE Required','Status'];
+    rows=(d.chemicalReg||[]).map(r=>[r.id,r.chemical_name,r.cas_no,r.category,r.hazard_class,r.location,r.quantity,r.unit,r.sds_available,r.sds_review_date,r.exposure_limit,r.ppe_required,r.status]);
+  } else if(module==='communication'){
+    cols=['ID','Date','Direction','Type','Audience','Topic','Method','Outcome','Follow-up','Responsible','Status'];
+    rows=(d.communicationLog||[]).map(r=>[r.id,r.date,r.direction,r.type,r.audience,r.topic,r.method,r.outcome,r.follow_up,r.responsible,r.status]);
+  } else if(module==='workforce'){
+    cols=['ID','Period','Total Employees','Male','Female','Contractors','New Hires','Terminations','Training Hours','Community Spend','LTI Count','Notes'];
+    rows=(d.workforceMetrics||[]).map(r=>[r.id,r.period,r.totalEmployees,r.male,r.female,r.contractors,r.newHires,r.terminations,r.trainingHours,r.communitySpend,r.ltiCount,r.notes]);
+  } else if(module==='ncr'){
+    cols=['ID','Date','Type','Standard','Source','Reference','Description','Root Cause','Disposition','Owner','Due Date','Closed Date','Status'];
+    rows=(d.ncrRegister||[]).map(r=>[r.id,r.date,r.type,r.standard,r.source,r.reference,r.description,r.root_cause,r.disposition,r.owner,r.due_date,r.closed_date,r.status]);
+  } else if(module==='lessons'){
+    cols=['ID','Date','Source','Reference','Pillar','Title','Description','Lesson','Impact','Shared With','Implementation Date','Owner','Status'];
+    rows=(d.lessonsLearned||[]).map(r=>[r.id,r.date,r.source,r.reference,r.pillar,r.title,r.description,r.lesson,r.impact,r.shared_with,r.implementation_date,r.owner,r.implementation_status]);
+  } else if(module==='emergencyDrills'){
+    cols=['ID','Date','Type','Location','Participants','Facilitator','Duration (min)','Outcome','Debrief Notes','Status'];
+    rows=(d.emergencyDrills||[]).map(r=>[r.id,r.date,r.type,r.location,r.participants,r.facilitator,r.duration,r.outcome,r.debrief,r.status]);
+  } else if(module==='investigations'){
+    cols=['ID','Date','Incident Ref','Title','Investigator','Method','Root Cause','Findings','Recommendations','Status'];
+    rows=(d.investigations||[]).map(r=>[r.id,r.date,r.incidentRef,r.title,r.investigator,r.method,r.rootCause5why||r.rootCauseFishbone,r.findings,r.recommendations,r.status]);
   }
   const csv=[cols,...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
