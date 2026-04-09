@@ -2939,7 +2939,6 @@
     <div class="mob-drawer-item" data-page="esg-board" onclick="closeMobileDrawer();navigateTo('esg-board')"><span class="nav-icon">📊</span>ESG Board</div>
     <div class="mob-drawer-item" data-page="report" onclick="closeMobileDrawer();navigateTo('report')"><span class="nav-icon">📄</span>Report</div>
     <div class="mob-drawer-item" data-page="calendar" onclick="closeMobileDrawer();navigateTo('calendar')"><span class="nav-icon">📅</span>Calendar</div>
-    <div class="mob-drawer-item" data-page="chat" onclick="closeMobileDrawer();navigateTo('chat')"><span class="nav-icon">🤖</span>AI Chat</div>
   </div>
 </div>
 
@@ -6541,14 +6540,9 @@ function showToast(msg,type='info',duration=4500){
 }
 
 function showOverdueBanner(count){
+  // CLAUDE.md rule: banner is permanently hidden; count surfaces via #capa-badge only
   const b=document.getElementById('overdue-banner');
-  if(count>0 && !sessionStorage.getItem('sheqai_banner_dismissed')){
-    document.getElementById('overdue-banner-text').textContent=`⚠ ${count} CAPA${count>1?'s are':' is'} overdue.`;
-    b.style.display='block';
-  } else if(count===0){
-    b.style.display='none';
-    sessionStorage.removeItem('sheqai_banner_dismissed');
-  }
+  if(b)b.style.display='none';
 }
 
 // ============================================================
@@ -6997,12 +6991,12 @@ function getDefaultData() {
       {id:'FA-005',date:'2026-03-18',time:'15:20',employee_name:'David Cumbe',employee_id:'EMP-028',description:'Minor burn to forearm from hot pipe surface contact.',body_part:'Forearm',treatment:'Cool running water applied for 20 minutes; non-adhesive dressing applied.',first_aider:'Ana Muchanga',referred:'No',referral_destination:'',follow_up_date:'2026-03-21',status:'Treated'}
     ],
     calibrationReg: [
-      {id:'CAL-001',equipment_name:'Noise Level Meter',equipment_id:'NLM-001',location:'Turbine Hall',measurement_type:'Noise',manufacturer:'Brüel & Kjær',model:'2250-L',serial_no:'BK2250-0341',last_calibrated:'2025-10-15',calibrated_by:'EnviroLab Mozambique',certificate_no:'CAL-2025-NLM-001',next_due:'2026-10-15',notes:'SANAS-accredited calibration certificate on file'},
-      {id:'CAL-002',equipment_name:'Gas Detector (4-gas)',equipment_id:'GD-003',location:'Confined Space Entry Kit',measurement_type:'Gas Detection',manufacturer:'MSA Safety',model:'Altair 4XR',serial_no:'MSA-4XR-0882',last_calibrated:'2026-01-20',calibrated_by:'MSA Distributor — Maputo',certificate_no:'CAL-2026-GD-003',next_due:'2026-07-20',notes:'Bump test daily; full calibration 6-monthly'},
-      {id:'CAL-003',equipment_name:'Pressure Gauge — Hydraulic Press',equipment_id:'PG-007',location:'Workshop',measurement_type:'Pressure',manufacturer:'Wika',model:'232.50',serial_no:'WK232-1145',last_calibrated:'2025-09-01',calibrated_by:'SHEQ Officer (in-house)',certificate_no:'CAL-2025-PG-007',next_due:'2026-09-01',notes:'Annual in-house calibration against reference gauge'},
-      {id:'CAL-004',equipment_name:'Thermometer — Process',equipment_id:'TH-011',location:'Water Treatment Plant',measurement_type:'Temperature',manufacturer:'Fluke',model:'52 II',serial_no:'FL52-3309',last_calibrated:'2026-02-10',calibrated_by:'SHEQ Officer (in-house)',certificate_no:'CAL-2026-TH-011',next_due:'2027-02-10',notes:'Annual calibration — ice bath and boiling water reference'},
-      {id:'CAL-005',equipment_name:'Personal Air Sampling Pump',equipment_id:'AS-002',location:'SHEQ Store',measurement_type:'Flow',manufacturer:'SKC',model:'Universal PCXR8',serial_no:'SKC-PCX-0567',last_calibrated:'2025-08-15',calibrated_by:'EnviroLab Mozambique',certificate_no:'CAL-2025-AS-002',next_due:'2026-08-15',notes:'Used for dust and chemical vapour sampling'},
-      {id:'CAL-006',equipment_name:'Electrical Insulation Tester',equipment_id:'ET-004',location:'Electrical Workshop',measurement_type:'Electrical',manufacturer:'Megger',model:'MIT410',serial_no:'MG410-2291',last_calibrated:'2025-12-01',calibrated_by:'Certified Electrician',certificate_no:'CAL-2025-ET-004',next_due:'2026-06-01',notes:'6-monthly calibration per electrical safety SOP'}
+      {id:'CAL-001',name:'Noise Level Meter',asset_id:'NLM-001',location:'Turbine Hall',type:'Noise',manufacturer:'Brüel & Kjær',model:'2250-L',serial:'BK2250-0341',interval_months:12,last_cal:'2025-10-15',cal_by:'EnviroLab Mozambique',cert_no:'CAL-2025-NLM-001',next_due:'2026-10-15',notes:'SANAS-accredited calibration certificate on file'},
+      {id:'CAL-002',name:'Gas Detector (4-gas)',asset_id:'GD-003',location:'Confined Space Entry Kit',type:'Gas Detection',manufacturer:'MSA Safety',model:'Altair 4XR',serial:'MSA-4XR-0882',interval_months:6,last_cal:'2026-01-20',cal_by:'MSA Distributor — Maputo',cert_no:'CAL-2026-GD-003',next_due:'2026-07-20',notes:'Bump test daily; full calibration 6-monthly'},
+      {id:'CAL-003',name:'Pressure Gauge — Hydraulic Press',asset_id:'PG-007',location:'Workshop',type:'Pressure',manufacturer:'Wika',model:'232.50',serial:'WK232-1145',interval_months:12,last_cal:'2025-09-01',cal_by:'SHEQ Officer (in-house)',cert_no:'CAL-2025-PG-007',next_due:'2026-09-01',notes:'Annual in-house calibration against reference gauge'},
+      {id:'CAL-004',name:'Thermometer — Process',asset_id:'TH-011',location:'Water Treatment Plant',type:'Temperature',manufacturer:'Fluke',model:'52 II',serial:'FL52-3309',interval_months:12,last_cal:'2026-02-10',cal_by:'SHEQ Officer (in-house)',cert_no:'CAL-2026-TH-011',next_due:'2027-02-10',notes:'Annual calibration — ice bath and boiling water reference'},
+      {id:'CAL-005',name:'Personal Air Sampling Pump',asset_id:'AS-002',location:'SHEQ Store',type:'Flow',manufacturer:'SKC',model:'Universal PCXR8',serial:'SKC-PCX-0567',interval_months:12,last_cal:'2025-08-15',cal_by:'EnviroLab Mozambique',cert_no:'CAL-2025-AS-002',next_due:'2026-08-15',notes:'Used for dust and chemical vapour sampling'},
+      {id:'CAL-006',name:'Electrical Insulation Tester',asset_id:'ET-004',location:'Electrical Workshop',type:'Electrical',manufacturer:'Megger',model:'MIT410',serial:'MG410-2291',interval_months:6,last_cal:'2025-12-01',cal_by:'Certified Electrician',cert_no:'CAL-2025-ET-004',next_due:'2026-06-01',notes:'6-monthly calibration per electrical safety SOP'}
     ],
     documentLib: [
       {id:'DOC-001',title:'SHEQ Policy Statement',type:'Policy',reference_no:'POL-SHEQ-001',version:'v3.1',effective_date:'2026-01-01',review_date:'2027-01-01',owner:'SHEQ Manager',status:'Active',file_url:'',notes:'Signed by CEO. Covers Safety, Health, Environment, Quality commitments.'},
@@ -7015,19 +7009,19 @@ function getDefaultData() {
       {id:'DOC-008',title:'Management of Change Procedure',type:'Procedure',reference_no:'SOP-MOC-001',version:'v1.5',effective_date:'2025-09-01',review_date:'2026-09-01',owner:'Operations Manager',status:'Active',file_url:''}
     ],
     mgmtReviews: [
-      {id:'MR-001',date:'2026-01-15',meeting_type:'Quarterly',chairperson:'CEO',attendees:'CEO, Operations Manager, SHEQ Manager, HR Manager, Environmental Officer',agenda:'Q4 2025 SHEQ performance; incident trend review; CAPA closure status; legal compliance update; resource requirements.',key_decisions:'Increase SHEQ training budget by 15% for 2026. Appoint additional SHEQ Officer. Prioritise PTW system upgrade.',action_items:'SHEQ Manager to present training plan by 2026-02-15. HR to initiate recruitment. Ops to review PTW procedure.',next_review_date:'2026-04-15',status:'Completed'},
-      {id:'MR-002',date:'2026-04-10',meeting_type:'Quarterly',chairperson:'CEO',attendees:'CEO, Operations Manager, SHEQ Manager, HR Manager, Environmental Officer, Quality Manager',agenda:'Q1 2026 SHEQ performance; new module launches (Wellness, Suppliers, Energy); ESG score review; audit findings.',key_decisions:'ESG score at 78% — target 85% by Q4 2026. Community register to be activated. Environmental data entry campaign to begin.',action_items:'SHEQ to complete data entry for GHG/Water/Waste by 2026-05-31. Community register go-live by 2026-04-30.',next_review_date:'2026-07-15',status:'Completed'},
-      {id:'MR-003',date:'2026-07-15',meeting_type:'Quarterly',chairperson:'CEO',attendees:'',agenda:'Q2 2026 SHEQ performance; mid-year targets review; ISO surveillance audit preparation.',key_decisions:'',action_items:'',next_review_date:'2026-10-15',status:'Planned'}
+      {id:'MR-001',date:'2026-01-15',type:'Quarterly',chair:'CEO',attendees:'CEO, Operations Manager, SHEQ Manager, HR Manager, Environmental Officer',agenda:'Q4 2025 SHEQ performance; incident trend review; CAPA closure status; legal compliance update; resource requirements.',decisions:'Increase SHEQ training budget by 15% for 2026. Appoint additional SHEQ Officer. Prioritise PTW system upgrade.',actions:'SHEQ Manager to present training plan by 2026-02-15. HR to initiate recruitment. Ops to review PTW procedure.',next_review:'2026-04-15',status:'Completed'},
+      {id:'MR-002',date:'2026-04-10',type:'Quarterly',chair:'CEO',attendees:'CEO, Operations Manager, SHEQ Manager, HR Manager, Environmental Officer, Quality Manager',agenda:'Q1 2026 SHEQ performance; new module launches (Wellness, Suppliers, Energy); ESG score review; audit findings.',decisions:'ESG score at 78% — target 85% by Q4 2026. Community register to be activated. Environmental data entry campaign to begin.',actions:'SHEQ to complete data entry for GHG/Water/Waste by 2026-05-31. Community register go-live by 2026-04-30.',next_review:'2026-07-15',status:'Completed'},
+      {id:'MR-003',date:'2026-07-15',type:'Quarterly',chair:'CEO',attendees:'',agenda:'Q2 2026 SHEQ performance; mid-year targets review; ISO surveillance audit preparation.',decisions:'',actions:'',next_review:'2026-10-15',status:'Planned'}
     ],
     objectives: [
-      {id:'OBJ-001',pillar:'Safety',objective:'Achieve zero Lost Time Injuries',kpi:'LTIFR',baseline:'2.1',target_value:'0',unit:'per million hours',current_value:'0.8',due_date:'2026-12-31',owner:'SHEQ Manager',status:'On Track',notes:'LTIFR trending down from baseline of 2.1 in 2024'},
-      {id:'OBJ-002',pillar:'Safety',objective:'100% CAPA closure within target date',kpi:'CAPA on-time closure rate',baseline:'62%',target_value:'90',unit:'%',current_value:'75',due_date:'2026-12-31',owner:'SHEQ Manager',status:'At Risk',notes:'Currently 7 overdue CAPAs — focused action plan required'},
-      {id:'OBJ-003',pillar:'Environmental',objective:'Reduce GHG Scope 1+2 emissions by 10%',kpi:'tCO2e (Scope 1+2)',baseline:'142',target_value:'128',unit:'tCO2e/yr',current_value:'0',due_date:'2026-12-31',owner:'Environmental Officer',status:'At Risk',notes:'No emissions data yet recorded — data entry campaign required'},
-      {id:'OBJ-004',pillar:'Environmental',objective:'Achieve 70% waste diversion from landfill',kpi:'Waste diversion %',baseline:'45%',target_value:'70',unit:'%',current_value:'0',due_date:'2026-12-31',owner:'Environmental Officer',status:'At Risk',notes:'Waste module live but no records entered yet'},
-      {id:'OBJ-005',pillar:'Health',objective:'100% of workers with valid medical surveillance',kpi:'Medical surveillance current %',baseline:'60%',target_value:'100',unit:'%',current_value:'67',due_date:'2026-12-31',owner:'Occupational Health Nurse',status:'On Track',notes:'1 overdue, 1 due soon — 4 of 6 currently valid'},
-      {id:'OBJ-006',pillar:'Quality',objective:'Achieve ISO 9001 surveillance audit with zero major NCRs',kpi:'Major NCR count',baseline:'2',target_value:'0',unit:'NCRs',current_value:'0',due_date:'2026-11-30',owner:'Quality Manager',status:'On Track',notes:'Previous audit had 2 minor NCRs. All closed.'},
-      {id:'OBJ-007',pillar:'Governance',objective:'Reach ESG maturity score of 85% (Established)',kpi:'ESG score %',baseline:'58%',target_value:'85',unit:'%',current_value:'80',due_date:'2026-12-31',owner:'SHEQ Manager',status:'On Track',notes:'Score at 80% following Phase 1 & 2 module builds'},
-      {id:'OBJ-008',pillar:'Social',objective:'Achieve 95% training compliance (valid records)',kpi:'Training valid %',baseline:'0%',target_value:'95',unit:'%',current_value:'0',due_date:'2026-12-31',owner:'HR Manager',status:'Behind',notes:'Training register live — data entry required to populate'}
+      {id:'OBJ-001',pillar:'Safety',objective:'Achieve zero Lost Time Injuries',kpi:'LTIFR',baseline:2.1,target:0,unit:'per million hours',current:0.8,progress:62,due:'2026-12-31',owner:'SHEQ Manager',status:'On Track',notes:'LTIFR trending down from baseline of 2.1 in 2024'},
+      {id:'OBJ-002',pillar:'Safety',objective:'100% CAPA closure within target date',kpi:'CAPA on-time closure rate',baseline:62,target:90,unit:'%',current:75,progress:46,due:'2026-12-31',owner:'SHEQ Manager',status:'At Risk',notes:'Currently 7 overdue CAPAs — focused action plan required'},
+      {id:'OBJ-003',pillar:'Environmental',objective:'Reduce GHG Scope 1+2 emissions by 10%',kpi:'tCO2e (Scope 1+2)',baseline:142,target:128,unit:'tCO2e/yr',current:0,progress:0,due:'2026-12-31',owner:'Environmental Officer',status:'At Risk',notes:'No emissions data yet recorded — data entry campaign required'},
+      {id:'OBJ-004',pillar:'Environmental',objective:'Achieve 70% waste diversion from landfill',kpi:'Waste diversion %',baseline:45,target:70,unit:'%',current:0,progress:0,due:'2026-12-31',owner:'Environmental Officer',status:'At Risk',notes:'Waste module live but no records entered yet'},
+      {id:'OBJ-005',pillar:'Health',objective:'100% of workers with valid medical surveillance',kpi:'Medical surveillance current %',baseline:60,target:100,unit:'%',current:67,progress:18,due:'2026-12-31',owner:'Occupational Health Nurse',status:'On Track',notes:'1 overdue, 1 due soon — 4 of 6 currently valid'},
+      {id:'OBJ-006',pillar:'Quality',objective:'Achieve ISO 9001 surveillance audit with zero major NCRs',kpi:'Major NCR count',baseline:2,target:0,unit:'NCRs',current:0,progress:100,due:'2026-11-30',owner:'Quality Manager',status:'On Track',notes:'Previous audit had 2 minor NCRs. All closed.'},
+      {id:'OBJ-007',pillar:'Governance',objective:'Reach ESG maturity score of 85% (Established)',kpi:'ESG score %',baseline:58,target:85,unit:'%',current:80,progress:81,due:'2026-12-31',owner:'SHEQ Manager',status:'On Track',notes:'Score at 80% following Phase 1 & 2 module builds'},
+      {id:'OBJ-008',pillar:'Social',objective:'Achieve 95% training compliance (valid records)',kpi:'Training valid %',baseline:0,target:95,unit:'%',current:0,progress:0,due:'2026-12-31',owner:'HR Manager',status:'Behind',notes:'Training register live — data entry required to populate'}
     ],
     ghgEntries: [
       {id:'GHG-001',date:'2026-01-15',scope:'Scope 1',source:'Diesel',quantity:850,unit:'litres',tCO2e:2.278,notes:'Generator fuel — January'},
@@ -7550,7 +7544,7 @@ function invBadge(sourceRef, d){
   const inv=(d.investigations||[]).find(x=>x.incidentRef===sourceRef||x.id===sourceRef);
   if(!inv) return '';
   const cls=inv.status==='Complete'?'pill-green':inv.status==='In Progress'?'pill-yellow':'pill-orange';
-  return `<span class="pill ${cls}" style="font-size:10px;cursor:pointer" onclick="navigateTo('investigation')" title="Investigation: ${escapeHtml(inv.id)} — ${escapeHtml(inv.status)}">🔍 ${escapeHtml(inv.id)}</span>`;
+  return `<span class="pill ${cls}" style="font-size:10px;cursor:pointer" onclick="viewInvestigationReport('${escapeHtml(inv.id)}')" title="Investigation: ${escapeHtml(inv.id)} — ${escapeHtml(inv.status)}">🔍 ${escapeHtml(inv.id)}</span>`;
 }
 // ── Investigation link row for view modal ─────────────────────
 function invViewRow(sourceRef, d){
@@ -7691,12 +7685,12 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register','med-surveillance':'Medical Surveillance Register',exposure:'Exposure Monitoring Register','first-aid':'First Aid Treatment Log',calibration:'Calibration Register',documents:'Document & Policy Library','mgmt-review':'Management Review Log',objectives:'Objectives & Targets Register','emergency-drills':'Emergency Response & Drill Register',ncr:'Non-Conformance Register',lessons:'Lessons Learned Register',chemical:'Chemical & Hazardous Substances Register','env-monitoring':'Environmental Monitoring Register',communication:'Communication Register','annual-report':'Annual ESG Report'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register','med-surveillance':'Medical Surveillance Register',exposure:'Exposure Monitoring Register','first-aid':'First Aid Treatment Log',calibration:'Calibration Register',documents:'Document & Policy Library','mgmt-review':'Management Review Log',objectives:'Objectives & Targets Register','emergency-drills':'Emergency Response & Drill Register',ncr:'Non-Conformance Register',lessons:'Lessons Learned Register',chemical:'Chemical & Hazardous Substances Register','env-monitoring':'Environmental Monitoring Register',communication:'Communication Register','annual-report':'Annual ESG Report'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
   const el=document.getElementById('page-'+page);
-  if(el){el.classList.add('active');el.style.display=page==='chat'?'flex':'block';}
+  if(el){el.classList.add('active');el.style.display='block';}
   document.querySelectorAll('.nav-link,.mobile-nav-item').forEach(l=>l.classList.remove('active'));
   document.querySelectorAll(`[data-page="${page}"]`).forEach(l=>l.classList.add('active'));
   document.getElementById('topbar-title').textContent=pageTitles[page]||page;
@@ -14706,8 +14700,9 @@ function exportCSV(module){
     cols=['ID','Title','Type','Reference No','Version','Effective Date','Review Date','Owner','Status','Notes'];
     rows=(d.documentLib||[]).map(r=>[r.id,r.title,r.type,r.reference_no,r.version,r.effective_date,r.review_date,r.owner,r.status,r.notes]);
   } else if(module==='mgmtReviews'){
-    cols=['ID','Date','Type','Chairperson','Attendees','Agenda','Minutes','Actions','Status'];
-    rows=(d.mgmtReviews||[]).map(r=>[r.id,r.date,r.type,r.chairperson,(r.attendees||[]).join('; '),r.agenda,r.minutes,(r.actions||[]).join('; '),r.status]);
+    cols=['ID','Date','Type','Chairperson','Attendees','Agenda','Key Decisions','Action Items','Next Review','Status'];
+    const _toStr=v=>Array.isArray(v)?v.join('; '):(v||'');
+    rows=(d.mgmtReviews||[]).map(r=>[r.id,r.date,r.type||r.meeting_type,r.chair||r.chairperson,_toStr(r.attendees),r.agenda,_toStr(r.decisions||r.key_decisions),_toStr(r.actions||r.action_items),r.next_review||r.next_review_date,r.status]);
   } else if(module==='objectives'){
     cols=['ID','Objective','Owner','Department','Target Date','KPI','Target Value','Actual Value','Progress %','Status'];
     rows=(d.objectives||[]).map(r=>[r.id,r.objective,r.owner,r.department,r.target_date,r.kpi,r.target_value,r.actual_value,r.progress,r.status]);
@@ -15184,7 +15179,6 @@ window.renderEmptyState = function(container, opts){
     {t:'Toolbox Talks',p:'toolbox',i:'🗣️',g:'Safety'},
     {t:'Inductions',p:'inductions',i:'🪪',g:'Safety'},
     {t:'Lessons Learned',p:'lessons',i:'💡',g:'Quality'},
-    {t:'AI Assistant',p:'ai-chat',i:'🤖',g:'Tools'},
     {t:'Settings',p:'__settings',i:'⚙️',g:'Tools'},
   ];
   let overlay, input, list, activeIdx=0, filtered=[];
