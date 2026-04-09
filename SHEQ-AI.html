@@ -2675,6 +2675,11 @@
     <li class="nav-item"><div class="nav-link" data-page="assets"><span class="nav-icon">🔧</span><span class="nav-label">Asset Inspections</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="moc"><span class="nav-icon">🔄</span><span class="nav-label">Management of Change</span></div></li>
 
+    <li class="nav-section-label" data-pillar="health" style="color:rgba(251,146,60,.75)">🩺 Health<span class="pillar-chevron nav-label">▾</span></li>
+    <li class="nav-item" style="position:relative"><div class="nav-link" data-page="med-surveillance"><span class="nav-icon">🩺</span><span class="nav-label">Medical Surveillance</span></div><span id="med-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
+    <li class="nav-item"><div class="nav-link" data-page="exposure"><span class="nav-icon">☢️</span><span class="nav-label">Exposure Monitoring</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="first-aid"><span class="nav-icon">🩹</span><span class="nav-label">First Aid Log</span></div></li>
+
     <li class="nav-section-label" data-pillar="social" style="color:rgba(96,165,250,.75)">🤝 Social<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item" style="position:relative"><div class="nav-link" data-page="training"><span class="nav-icon">🎓</span><span class="nav-label">Training Register</span></div><span id="training-badge" style="display:none;position:absolute;top:3px;right:3px;background:#ef4444;color:#fff;border-radius:10px;font-size:0.6rem;font-weight:700;padding:1px 5px;min-width:16px;text-align:center;line-height:1.4;">0</span></li>
     <li class="nav-item"><div class="nav-link" data-page="dei"><span class="nav-icon">🌈</span><span class="nav-label">DEI Metrics</span></div></li>
@@ -2726,6 +2731,9 @@
   <div class="mobile-nav-item" data-page="water"><span class="nav-icon">💧</span>H₂O</div>
   <div class="mobile-nav-item" data-page="env-aspects"><span class="nav-icon">🌍</span>Env</div>
   <div class="mobile-nav-item" data-page="waste"><span class="nav-icon">♻️</span>Waste</div>
+  <div class="mobile-nav-item" data-page="med-surveillance"><span class="nav-icon">🩺</span>Med</div>
+  <div class="mobile-nav-item" data-page="exposure"><span class="nav-icon">☢️</span>Exp</div>
+  <div class="mobile-nav-item" data-page="first-aid"><span class="nav-icon">🩹</span>FA</div>
   <div class="mobile-nav-item" data-page="training"><span class="nav-icon">🎓</span>Train</div>
   <div class="mobile-nav-item" data-page="dei"><span class="nav-icon">🌈</span>DEI</div>
   <div class="mobile-nav-item" data-page="wellness"><span class="nav-icon">🏥</span>Well</div>
@@ -3115,6 +3123,83 @@
       </div>
       <div class="pagination" id="ene-pagination"></div>
     </div>
+  </div>
+</div>
+
+<!-- ======= MEDICAL SURVEILLANCE ======= -->
+<div id="page-med-surveillance" class="page">
+  <div class="section-header">
+    <span class="section-title">🩺 Medical Surveillance Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('medSurveillance')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('ms-f-edit-id').value='';openModal('med-modal')">+ Add Medical Record</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="ms-search" placeholder="Search medical records…">
+    <select id="ms-filter-exam"><option value="">All Exam Types</option><option value="Pre-Employment">Pre-Employment</option><option value="Periodic">Periodic</option><option value="Exit">Exit</option><option value="Return to Work">Return to Work</option><option value="Special">Special</option></select>
+    <select id="ms-filter-result"><option value="">All Results</option><option value="Fit">Fit</option><option value="Fit with Restrictions">Fit with Restrictions</option><option value="Temporarily Unfit">Temporarily Unfit</option><option value="Unfit">Unfit</option></select>
+    <select id="ms-filter-status"><option value="">All Statuses</option><option value="Current">Current</option><option value="Due Soon">Due Soon</option><option value="Overdue">Overdue</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Employee</th><th>ID</th><th>Exam Type</th><th>Provider</th><th>Result</th><th>Restrictions</th><th>Next Due</th><th>Cert No.</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="ms-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="ms-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= EXPOSURE MONITORING ======= -->
+<div id="page-exposure" class="page">
+  <div class="section-header">
+    <span class="section-title">☢️ Exposure Monitoring Register</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('exposureLog')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('exp-f-edit-id').value='';openModal('exposure-modal')">+ Log Measurement</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="exp-search" placeholder="Search exposure records…">
+    <select id="exp-filter-agent"><option value="">All Agents</option><option value="Noise">Noise</option><option value="Dust">Dust</option><option value="Chemical">Chemical</option><option value="Heat Stress">Heat Stress</option><option value="Vibration">Vibration</option><option value="Radiation">Radiation</option><option value="Other">Other</option></select>
+    <select id="exp-filter-exceedance"><option value="">All</option><option value="true">Exceedance Only</option><option value="false">Within OEL</option></select>
+    <select id="exp-filter-status"><option value="">All Statuses</option><option value="Open">Open</option><option value="Closed">Closed</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Location</th><th>Agent</th><th>Detail</th><th>Measured</th><th>OEL</th><th>Exceedance</th><th>Sampler</th><th>Action Required</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="exp-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="exp-pagination"></div>
+  </div>
+</div>
+
+<!-- ======= FIRST AID LOG ======= -->
+<div id="page-first-aid" class="page">
+  <div class="section-header">
+    <span class="section-title">🩹 First Aid Treatment Log</span>
+    <div class="section-header-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV('firstAidLog')">⬇ CSV</button>
+      <button class="btn btn-primary" onclick="document.getElementById('fa-f-edit-id').value='';openModal('firstaid-modal')">+ Log Treatment</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <input type="text" id="fa-search" placeholder="Search first aid records…">
+    <select id="fa-filter-status"><option value="">All Statuses</option><option value="Treated">Treated</option><option value="Referred">Referred</option><option value="Follow-up Required">Follow-up Required</option></select>
+    <select id="fa-filter-referred"><option value="">All</option><option value="No">Not Referred</option><option value="Yes — Clinic">Referred to Clinic</option><option value="Yes — Hospital">Referred to Hospital</option></select>
+  </div>
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Date</th><th>Time</th><th>Employee</th><th>Description</th><th>Body Part</th><th>Treatment</th><th>First Aider</th><th>Referred</th><th>Follow-up</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="fa-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="fa-pagination"></div>
   </div>
 </div>
 
@@ -4451,6 +4536,121 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('supplier-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveSupplier()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEDICAL SURVEILLANCE MODAL -->
+<div class="modal-overlay" id="med-modal">
+  <div class="modal">
+    <div class="modal-title">Medical Surveillance Record <button class="modal-close" onclick="closeModal('med-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date of Exam</label><input type="date" id="ms-f-date"></div>
+      <div class="form-group"><label>Exam Type</label>
+        <select id="ms-f-exam"><option value="Pre-Employment">Pre-Employment</option><option value="Periodic">Periodic</option><option value="Exit">Exit</option><option value="Return to Work">Return to Work</option><option value="Special">Special</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Employee Name</label><input type="text" id="ms-f-name" placeholder="Full name"></div>
+      <div class="form-group"><label>Employee ID</label><input type="text" id="ms-f-empid" placeholder="e.g. EMP-007"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Medical Provider / Clinic</label><input type="text" id="ms-f-provider" placeholder="Clinic or doctor name"></div>
+      <div class="form-group"><label>Certificate No.</label><input type="text" id="ms-f-cert" placeholder="e.g. MED-2026-007"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Result</label>
+        <select id="ms-f-result"><option value="Fit">Fit</option><option value="Fit with Restrictions">Fit with Restrictions</option><option value="Temporarily Unfit">Temporarily Unfit</option><option value="Unfit">Unfit</option></select>
+      </div>
+      <div class="form-group"><label>Next Due Date</label><input type="date" id="ms-f-next-due"></div>
+    </div>
+    <div class="form-group"><label>Restrictions / Conditions <span style="font-size:10px;color:var(--muted)">(if any)</span></label><textarea id="ms-f-restrictions" placeholder="e.g. No heavy lifting >15kg; avoid prolonged standing…" rows="2"></textarea></div>
+    <div class="form-group"><label>Notes</label><textarea id="ms-f-notes" placeholder="Additional clinical notes…" rows="2"></textarea></div>
+    <input type="hidden" id="ms-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('med-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMedSurveillance()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPOSURE MONITORING MODAL -->
+<div class="modal-overlay" id="exposure-modal">
+  <div class="modal">
+    <div class="modal-title">Exposure Monitoring Record <button class="modal-close" onclick="closeModal('exposure-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="exp-f-date"></div>
+      <div class="form-group"><label>Agent Type</label>
+        <select id="exp-f-agent" onchange="expUpdateUnits()"><option value="Noise">Noise</option><option value="Dust">Dust</option><option value="Chemical">Chemical</option><option value="Heat Stress">Heat Stress</option><option value="Vibration">Vibration</option><option value="Radiation">Radiation</option><option value="Other">Other</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Location</label><input type="text" id="exp-f-location" placeholder="e.g. Turbine Hall — Bay A"></div>
+      <div class="form-group"><label>Agent Detail</label><input type="text" id="exp-f-detail" placeholder="e.g. Continuous turbine noise"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Measured Value</label><input type="number" id="exp-f-value" placeholder="0.0" step="0.01" oninput="expCheckExceedance()"></div>
+      <div class="form-group"><label>Unit</label><input type="text" id="exp-f-unit" placeholder="e.g. dB(A)"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>OEL / Limit</label><input type="number" id="exp-f-oel" placeholder="0.0" step="0.01" oninput="expCheckExceedance()"></div>
+      <div class="form-group"><label>Exceedance</label>
+        <input type="text" id="exp-f-exceedance-display" readonly style="background:var(--card2);font-weight:600">
+        <input type="hidden" id="exp-f-exceedance">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Sampler / Inspector</label><input type="text" id="exp-f-sampler" placeholder="Name or role"></div>
+      <div class="form-group"><label>Laboratory</label><input type="text" id="exp-f-lab" placeholder="Lab or in-house"></div>
+    </div>
+    <div class="form-group"><label>Action Required</label><textarea id="exp-f-action" placeholder="Controls, follow-up measurements, PPE requirements…" rows="2"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Status</label>
+        <select id="exp-f-status"><option value="Open">Open</option><option value="Closed">Closed</option></select>
+      </div>
+    </div>
+    <input type="hidden" id="exp-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('exposure-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExposure()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIRST AID MODAL -->
+<div class="modal-overlay" id="firstaid-modal">
+  <div class="modal">
+    <div class="modal-title">First Aid Treatment Record <button class="modal-close" onclick="closeModal('firstaid-modal')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="fa-f-date"></div>
+      <div class="form-group"><label>Time</label><input type="time" id="fa-f-time"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Employee Name</label><input type="text" id="fa-f-name" placeholder="Full name"></div>
+      <div class="form-group"><label>Employee ID</label><input type="text" id="fa-f-empid" placeholder="e.g. EMP-044"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Body Part Affected</label><input type="text" id="fa-f-bodypart" placeholder="e.g. Hand / Finger, Eye, Back…"></div>
+      <div class="form-group"><label>First Aider</label><input type="text" id="fa-f-aider" placeholder="Name of attending first aider"></div>
+    </div>
+    <div class="form-group"><label>Description of Injury / Complaint</label><textarea id="fa-f-description" placeholder="Describe what happened and the nature of the injury…" rows="2"></textarea></div>
+    <div class="form-group"><label>Treatment Given</label><textarea id="fa-f-treatment" placeholder="Describe treatment administered…" rows="2"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Referred?</label>
+        <select id="fa-f-referred"><option value="No">No</option><option value="Yes — Clinic">Yes — Clinic</option><option value="Yes — Hospital">Yes — Hospital</option></select>
+      </div>
+      <div class="form-group"><label>Referral Destination</label><input type="text" id="fa-f-referral" placeholder="Clinic / hospital name"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Follow-up Date</label><input type="date" id="fa-f-followup"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="fa-f-status"><option value="Treated">Treated</option><option value="Referred">Referred</option><option value="Follow-up Required">Follow-up Required</option></select>
+      </div>
+    </div>
+    <input type="hidden" id="fa-f-edit-id">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('firstaid-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFirstAid()">Save</button>
     </div>
   </div>
 </div>
@@ -5857,6 +6057,29 @@ function getDefaultData() {
       {id:'CM-004',date:'2026-03-15',community:'Matola Industrial Neighbours',issue_type:'Safety',description:'Neighbouring business raised concern about vehicle spillover traffic during shift change.',response:'Traffic management plan updated. Additional marshalls deployed at Gate 2 during peak hours. Review scheduled 2026-04-20.',responsible:'Security Manager',status:'Open'},
       {id:'CM-005',date:'2026-04-01',community:'Machava Ward — Informal Settlement',issue_type:'Environmental',description:'Water discolouration reported downstream of plant drainage outlet after heavy rain event.',response:'Water quality sample collected and sent to accredited lab. Results pending. Community notified within 24 hours per protocol.',responsible:'Environmental Officer',status:'Open'}
     ],
+    medSurveillance: [
+      {id:'MS-001',date:'2026-01-10',employee_name:'João Machava',employee_id:'EMP-003',exam_type:'Periodic',provider:'Clínica Maputo Saúde',result:'Fit',restrictions:'',next_due:'2027-01-10',certificate_no:'MED-2026-003',notes:'Annual periodic — all clear'},
+      {id:'MS-002',date:'2026-01-15',employee_name:'Carlos Tembe',employee_id:'EMP-007',exam_type:'Periodic',provider:'Clínica Maputo Saúde',result:'Fit with Restrictions',restrictions:'No prolonged standing >4h; avoid heavy lifting >15kg.',next_due:'2026-07-15',certificate_no:'MED-2026-007',notes:'Lower back condition noted. 6-month follow-up required.'},
+      {id:'MS-003',date:'2026-02-01',employee_name:'Pedro Mabunda',employee_id:'EMP-011',exam_type:'Pre-Employment',provider:'Clínica CUF Maputo',result:'Fit',restrictions:'',next_due:'2027-02-01',certificate_no:'MED-2026-011',notes:'New hire pre-employment clearance'},
+      {id:'MS-004',date:'2026-02-20',employee_name:'Lucia Bila',employee_id:'EMP-015',exam_type:'Periodic',provider:'Clínica Maputo Saúde',result:'Fit',restrictions:'',next_due:'2027-02-20',certificate_no:'MED-2026-015',notes:'Annual periodic — all clear'},
+      {id:'MS-005',date:'2025-03-10',employee_name:'Ricardo Guambe',employee_id:'EMP-022',exam_type:'Periodic',provider:'Clínica Maputo Saúde',result:'Fit',restrictions:'',next_due:'2026-03-10',certificate_no:'MED-2025-022',notes:'Overdue for renewal — employee on extended leave'},
+      {id:'MS-006',date:'2026-03-05',employee_name:'Ana Muchanga',employee_id:'EMP-031',exam_type:'Return to Work',provider:'Clínica CUF Maputo',result:'Fit with Restrictions',restrictions:'Light duties only for 4 weeks; no machinery operation.',next_due:'2026-04-30',certificate_no:'MED-2026-031',notes:'Return to work after fracture. Clearance review due April 2026.'}
+    ],
+    exposureLog: [
+      {id:'EXP-001',date:'2026-01-20',location:'Turbine Hall — Bay A',agent:'Noise',agent_detail:'Continuous turbine operational noise',measured_value:91,unit:'dB(A)',oel:85,exceedance:true,sampler:'SHEQ Officer',lab:'EnviroLab Mozambique',action_required:'Mandatory HPD enforcement; engineering controls review; audiometry for exposed workers.',status:'Open'},
+      {id:'EXP-002',date:'2026-01-20',location:'Turbine Hall — Bay B',agent:'Noise',agent_detail:'Continuous turbine operational noise',measured_value:88,unit:'dB(A)',oel:85,exceedance:true,sampler:'SHEQ Officer',lab:'EnviroLab Mozambique',action_required:'Mandatory HPD; hearing conservation programme enrolment.',status:'Open'},
+      {id:'EXP-003',date:'2026-02-05',location:'Water Treatment Plant',agent:'Chemical',agent_detail:'Chlorine gas — dosing area',measured_value:0.4,unit:'ppm',oel:0.5,exceedance:false,sampler:'Environmental Officer',lab:'In-house monitor',action_required:'No action required — within OEL. Continue monthly monitoring.',status:'Closed'},
+      {id:'EXP-004',date:'2026-02-18',location:'Workshop — Grinding Bay',agent:'Dust',agent_detail:'Metal grinding particulate (inhalable)',measured_value:4.2,unit:'mg/m³',oel:3.0,exceedance:true,sampler:'SHEQ Officer',lab:'EnviroLab Mozambique',action_required:'Enforce P2 respirator use; install LEV extraction; re-test after controls.',status:'Open'},
+      {id:'EXP-005',date:'2026-03-12',location:'Outdoor Plant — Gate 3',agent:'Heat Stress',agent_detail:'WBGT measurement — peak summer',measured_value:31.2,unit:'°C WBGT',oel:28.0,exceedance:true,sampler:'Occupational Health Nurse',lab:'In-house',action_required:'Implement mandatory rest schedule; hydration stations; shift to cooler hours.',status:'Open'},
+      {id:'EXP-006',date:'2026-03-25',location:'Control Room',agent:'Noise',agent_detail:'HVAC background noise',measured_value:62,unit:'dB(A)',oel:85,exceedance:false,sampler:'SHEQ Officer',lab:'In-house monitor',action_required:'Within OEL. No action required.',status:'Closed'}
+    ],
+    firstAidLog: [
+      {id:'FA-001',date:'2026-01-14',time:'09:15',employee_name:'Tiago Sitoe',employee_id:'EMP-044',description:'Superficial laceration to right index finger from sharp metal edge during maintenance.',body_part:'Hand / Finger',treatment:'Wound irrigated and cleaned; butterfly closure strips applied; sterile dressing.',first_aider:'Ana Muchanga',referred:'No',referral_destination:'',follow_up_date:'2026-01-17',status:'Treated'},
+      {id:'FA-002',date:'2026-01-28',time:'14:40',employee_name:'Sofia Cossa',employee_id:'EMP-019',description:'Eye irritation after chemical splash during water treatment dosing.',body_part:'Eye',treatment:'15-min eyewash station irrigation performed; eye checked — no foreign body.',first_aider:'Carlos Nhantumbo',referred:'Yes — Clinic',referral_destination:'Clínica Maputo Saúde',follow_up_date:'2026-01-29',status:'Referred'},
+      {id:'FA-003',date:'2026-02-09',time:'11:00',employee_name:'Manuel Dai',employee_id:'EMP-036',description:'Mild heat exhaustion — dizziness and nausea after outdoor work in peak heat.',body_part:'General',treatment:'Moved to cool area; oral rehydration; rest for 2 hours; vital signs monitored.',first_aider:'Ana Muchanga',referred:'No',referral_destination:'',follow_up_date:'2026-02-10',status:'Treated'},
+      {id:'FA-004',date:'2026-02-22',time:'08:30',employee_name:'Graça Mondlane',employee_id:'EMP-052',description:'Twisted ankle stepping off platform.',body_part:'Ankle / Foot',treatment:'RICE protocol applied; crepe bandage; advised to elevate.',first_aider:'Carlos Nhantumbo',referred:'Yes — Clinic',referral_destination:'Clínica Maputo Saúde',follow_up_date:'2026-02-25',status:'Follow-up Required'},
+      {id:'FA-005',date:'2026-03-18',time:'15:20',employee_name:'David Cumbe',employee_id:'EMP-028',description:'Minor burn to forearm from hot pipe surface contact.',body_part:'Forearm',treatment:'Cool running water applied for 20 minutes; non-adhesive dressing applied.',first_aider:'Ana Muchanga',referred:'No',referral_destination:'',follow_up_date:'2026-03-21',status:'Treated'}
+    ],
     ghgEntries: [
       {id:'GHG-001',date:'2026-01-15',scope:'Scope 1',source:'Diesel',quantity:850,unit:'litres',tCO2e:2.278,notes:'Generator fuel — January'},
       {id:'GHG-002',date:'2026-01-31',scope:'Scope 2',source:'Electricity',quantity:12400,unit:'kWh',tCO2e:11.16,notes:'Grid electricity — January'},
@@ -6461,7 +6684,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register','med-surveillance':'Medical Surveillance Register',exposure:'Exposure Monitoring Register','first-aid':'First Aid Treatment Log'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -6506,6 +6729,9 @@ function navigateTo(page){
   else if(page==='wellness')renderWellness();
   else if(page==='suppliers')renderSuppliers();
   else if(page==='community')renderCommunity();
+  else if(page==='med-surveillance'){renderMedSurveillance();checkMedBadge();}
+  else if(page==='exposure')renderExposure();
+  else if(page==='first-aid')renderFirstAid();
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>{ if(l.closest('.nav-link')?.style.cursor==='default') return; navigateTo(l.dataset.page); }));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -6688,6 +6914,22 @@ function renderDashboard(){
   const _wellMo=(d.wellness||[]).filter(r=>inPeriod(r.date));
   const _wellDays=_wellMo.reduce((s,r)=>s+(parseFloat(r.days_lost)||0),0);
   const _wellCount=_wellMo.length;
+
+  // --- Medical Surveillance ---
+  const _ms=(d.medSurveillance||[]).map(r=>({...r,_st:getMedStatus(r.next_due)}));
+  const _msOverdue=_ms.filter(r=>r._st==='Overdue').length;
+  const _msDueSoon=_ms.filter(r=>r._st==='Due Soon').length;
+  const _msCurrent=_ms.filter(r=>r._st==='Current').length;
+
+  // --- Exposure Monitoring ---
+  const _exp=(d.exposureLog||[]).filter(r=>inPeriod(r.date));
+  const _expExcOpen=_exp.filter(r=>r.exceedance&&r.status==='Open').length;
+  const _expTotal=_exp.length;
+
+  // --- First Aid ---
+  const _fa=(d.firstAidLog||[]).filter(r=>inPeriod(r.date));
+  const _faFollowUp=_fa.filter(r=>r.status==='Follow-up Required').length;
+  const _faReferred=_fa.filter(r=>r.referred&&r.referred!=='No').length;
 
   // --- Suppliers ---
   const _suppAll=d.suppliers||[];
@@ -6884,6 +7126,37 @@ function renderDashboard(){
       <div class="kpi-breakdown">
         <span class="kpib kpib-green">Approved: ${_suppApproved}</span>
         <span class="kpib ${_suppWarn>0?'kpib-red':'kpib-gray'}">Warnings: ${_suppWarn}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_msOverdue>0?'var(--red)':_msDueSoon>0?'var(--orange)':'var(--green)'}" onclick="navigateTo('med-surveillance')" title="Go to Medical Surveillance">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#ea580c,#fb923c)"></div>
+      <div class="kpi-label">Medical Surveillance</div>
+      <div class="kpi-value">${_ms.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-green">Current: ${_msCurrent}</span>
+        <span class="kpib kpib-yellow">Due Soon: ${_msDueSoon}</span>
+        <span class="kpib ${_msOverdue>0?'kpib-red':'kpib-gray'}">Overdue: ${_msOverdue}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_expExcOpen>0?'var(--red)':'var(--accent)'}" onclick="navigateTo('exposure')" title="Go to Exposure Monitoring">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#7c3aed,#c084fc)"></div>
+      <div class="kpi-label">Exposure Monitoring</div>
+      <div class="kpi-value">${_expTotal}</div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:3px">measurements</div>
+      <div class="kpi-breakdown">
+        <span class="kpib ${_expExcOpen>0?'kpib-red':'kpib-gray'}">OEL Exceeded: ${_expExcOpen}</span>
+      </div>
+      <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
+    </div>
+    <div class="kpi-card" style="--kpi-color:${_faFollowUp>0?'var(--orange)':'var(--accent)'}" onclick="navigateTo('first-aid')" title="Go to First Aid Log">
+      <div class="kpi-accent-bar" style="background:linear-gradient(90deg,#dc2626,#f87171)"></div>
+      <div class="kpi-label">First Aid</div>
+      <div class="kpi-value">${_fa.length}</div>
+      <div class="kpi-breakdown">
+        <span class="kpib kpib-orange">Follow-up: ${_faFollowUp}</span>
+        <span class="kpib kpib-yellow">Referred: ${_faReferred}</span>
       </div>
       <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:var(--muted);opacity:.6">→</span>
     </div>`;
@@ -8361,6 +8634,326 @@ function renderSuppliers(page=1){
 }
 document.getElementById('sup-search').addEventListener('input',()=>renderSuppliers(1));
 document.getElementById('sup-filter-standing').addEventListener('change',()=>renderSuppliers(1));
+
+// ============================================================
+// MEDICAL SURVEILLANCE REGISTER
+// ============================================================
+let msPage=1;
+function getMedStatus(next_due){
+  if(!next_due) return 'Unknown';
+  const diff=new Date(next_due)-new Date();
+  if(diff<0) return 'Overdue';
+  if(diff<30*86400000) return 'Due Soon';
+  return 'Current';
+}
+function checkMedBadge(){
+  const recs=getData()?.medSurveillance||[];
+  const alert=recs.filter(r=>{const s=getMedStatus(r.next_due);return s==='Overdue'||s==='Due Soon';}).length;
+  const badge=document.getElementById('med-badge');
+  if(badge){badge.style.display=alert>0?'inline-block':'none';badge.textContent=alert;}
+}
+const MED_RESULT_COLOR={'Fit':'kpib-green','Fit with Restrictions':'kpib-yellow','Temporarily Unfit':'kpib-orange','Unfit':'kpib-red'};
+const MED_STATUS_COLOR={'Current':'pill-green','Due Soon':'pill-yellow','Overdue':'pill-red','Unknown':'pill-gray'};
+function genMedId(arr){const n=(arr||[]).filter(r=>r.id&&r.id.startsWith('MS-')).length+1;return'MS-'+String(n).padStart(3,'0');}
+function saveMedSurveillance(){
+  if(!rateCheck('save-med',100))return;
+  if(!validateRequired([['ms-f-name','Employee Name'],['ms-f-next-due','Next Due Date']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.medSurveillance=d.medSurveillance||[];
+  const editId=document.getElementById('ms-f-edit-id').value;
+  const rec={
+    id:editId||genMedId(d.medSurveillance),
+    date:document.getElementById('ms-f-date').value||today(),
+    employee_name:document.getElementById('ms-f-name').value||'',
+    employee_id:document.getElementById('ms-f-empid').value||'',
+    exam_type:document.getElementById('ms-f-exam').value,
+    provider:document.getElementById('ms-f-provider').value||'',
+    result:document.getElementById('ms-f-result').value,
+    restrictions:document.getElementById('ms-f-restrictions').value||'',
+    next_due:document.getElementById('ms-f-next-due').value||'',
+    certificate_no:document.getElementById('ms-f-cert').value||'',
+    notes:document.getElementById('ms-f-notes').value||''
+  };
+  if(editId){const idx=d.medSurveillance.findIndex(x=>x.id===editId);if(idx>=0)d.medSurveillance[idx]=rec;else d.medSurveillance.push(rec);}
+  else d.medSurveillance.push(rec);
+  saveData(d);closeModal('med-modal');renderMedSurveillance(1);checkMedBadge();
+  secLog('DATA_WRITE',{module:'medSurveillance',id:rec.id,classification:'Personal'});
+}
+function deleteMedSurveillance(id){
+  if(!requireRole('delete','Delete Medical Record'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.medSurveillance||[]).find(x=>x.id===id);
+  if(!confirm('Delete medical record '+id+(r?' — '+r.employee_name:'')+'\nThis cannot be undone.'))return;
+  d.medSurveillance=(d.medSurveillance||[]).filter(x=>x.id!==id);
+  saveData(d);renderMedSurveillance(msPage);checkMedBadge();
+}
+function editMedSurveillance(id){
+  const d=getData()||getDefaultData();const r=(d.medSurveillance||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('ms-f-edit-id').value=id;
+  document.getElementById('ms-f-date').value=r.date||'';
+  document.getElementById('ms-f-name').value=r.employee_name||'';
+  document.getElementById('ms-f-empid').value=r.employee_id||'';
+  document.getElementById('ms-f-exam').value=r.exam_type||'Periodic';
+  document.getElementById('ms-f-provider').value=r.provider||'';
+  document.getElementById('ms-f-cert').value=r.certificate_no||'';
+  document.getElementById('ms-f-result').value=r.result||'Fit';
+  document.getElementById('ms-f-next-due').value=r.next_due||'';
+  document.getElementById('ms-f-restrictions').value=r.restrictions||'';
+  document.getElementById('ms-f-notes').value=r.notes||'';
+  openModal('med-modal');
+}
+function renderMedSurveillance(page=1){
+  msPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('ms-search').value||'').toLowerCase();
+  const fExam=document.getElementById('ms-filter-exam').value;
+  const fResult=document.getElementById('ms-filter-result').value;
+  const fStatus=document.getElementById('ms-filter-status').value;
+  let items=(d.medSurveillance||[]).map(r=>({...r,_status:getMedStatus(r.next_due)})).filter(r=>{
+    const ms=!search||[r.id,r.employee_name,r.employee_id,r.provider,r.certificate_no].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fExam||r.exam_type===fExam)&&(!fResult||r.result===fResult)&&(!fStatus||r._status===fStatus);
+  }).sort((a,b)=>(a.next_due||'').localeCompare(b.next_due||''));
+  const overdueCount=items.filter(r=>r._status==='Overdue').length;
+  const dueSoonCount=items.filter(r=>r._status==='Due Soon').length;
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('ms-tbody').innerHTML=rows.length?rows.map(r=>{
+    const sc=MED_STATUS_COLOR[r._status]||'pill-gray';
+    const rc=MED_RESULT_COLOR[r.result]||'kpib-gray';
+    const rowBg=r._status==='Overdue'?'background:#fff1f2':r._status==='Due Soon'?'background:#fffbeb':'';
+    return`<tr style="${rowBg}">
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)}</td>
+      <td>${maskPII?maskName(r.employee_name):escapeHtml(r.employee_name)}</td>
+      <td>${r.employee_id||'—'}</td>
+      <td><span class="kpib kpib-blue" style="font-size:10px">${r.exam_type}</span></td>
+      <td>${escapeHtml(r.provider||'—')}</td>
+      <td><span class="kpib ${rc}" style="font-size:10px">${r.result}</span></td>
+      <td style="max-width:160px;font-size:11px">${r.restrictions?truncate(r.restrictions,50):'<span style="color:var(--muted)">None</span>'}</td>
+      <td>${fmtDate(r.next_due)||'—'}</td>
+      <td style="font-size:11px">${r.certificate_no||'—'}</td>
+      <td><span class="pill ${sc}">${r._status}</span></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editMedSurveillance('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMedSurveillance('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:24px">No medical surveillance records found</td></tr>`;
+  renderPagination('ms-pagination',total,page,renderMedSurveillance);
+  const title=document.querySelector('#page-med-surveillance .section-title');
+  if(title){const alerts=overdueCount+dueSoonCount;title.textContent=`🩺 Medical Surveillance Register${alerts>0?' — '+alerts+' Require Attention':''}`;}
+}
+document.getElementById('ms-search').addEventListener('input',()=>renderMedSurveillance(1));
+document.getElementById('ms-filter-exam').addEventListener('change',()=>renderMedSurveillance(1));
+document.getElementById('ms-filter-result').addEventListener('change',()=>renderMedSurveillance(1));
+document.getElementById('ms-filter-status').addEventListener('change',()=>renderMedSurveillance(1));
+
+// ============================================================
+// EXPOSURE MONITORING REGISTER
+// ============================================================
+let expPage=1;
+const EXP_OEL_DEFAULTS={Noise:{unit:'dB(A)',oel:85},Dust:{unit:'mg/m³',oel:3.0},Chemical:{unit:'ppm',oel:1.0},'Heat Stress':{unit:'°C WBGT',oel:28.0},Vibration:{unit:'m/s²',oel:2.5},Radiation:{unit:'mSv/yr',oel:20},Other:{unit:'',oel:0}};
+function expUpdateUnits(){
+  const agent=document.getElementById('exp-f-agent').value;
+  const def=EXP_OEL_DEFAULTS[agent]||{unit:'',oel:0};
+  document.getElementById('exp-f-unit').value=def.unit;
+  document.getElementById('exp-f-oel').value=def.oel||'';
+  expCheckExceedance();
+}
+function expCheckExceedance(){
+  const val=parseFloat(document.getElementById('exp-f-value').value)||0;
+  const oel=parseFloat(document.getElementById('exp-f-oel').value)||0;
+  const exceeded=oel>0&&val>oel;
+  document.getElementById('exp-f-exceedance').value=exceeded?'true':'false';
+  const disp=document.getElementById('exp-f-exceedance-display');
+  disp.value=exceeded?'⚠️ YES — Exceeds OEL':'✓ Within OEL';
+  disp.style.color=exceeded?'#ef4444':'#22c55e';
+}
+function genExpId(arr){const n=(arr||[]).filter(r=>r.id&&r.id.startsWith('EXP-')).length+1;return'EXP-'+String(n).padStart(3,'0');}
+function saveExposure(){
+  if(!rateCheck('save-exposure',100))return;
+  if(!validateRequired([['exp-f-location','Location'],['exp-f-value','Measured Value']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.exposureLog=d.exposureLog||[];
+  const editId=document.getElementById('exp-f-edit-id').value;
+  const val=parseFloat(document.getElementById('exp-f-value').value)||0;
+  const oel=parseFloat(document.getElementById('exp-f-oel').value)||0;
+  const rec={
+    id:editId||genExpId(d.exposureLog),
+    date:document.getElementById('exp-f-date').value||today(),
+    location:document.getElementById('exp-f-location').value||'',
+    agent:document.getElementById('exp-f-agent').value,
+    agent_detail:document.getElementById('exp-f-detail').value||'',
+    measured_value:val,
+    unit:document.getElementById('exp-f-unit').value||'',
+    oel:oel,
+    exceedance:oel>0&&val>oel,
+    sampler:document.getElementById('exp-f-sampler').value||'',
+    lab:document.getElementById('exp-f-lab').value||'',
+    action_required:document.getElementById('exp-f-action').value||'',
+    status:document.getElementById('exp-f-status').value
+  };
+  if(editId){const idx=d.exposureLog.findIndex(x=>x.id===editId);if(idx>=0)d.exposureLog[idx]=rec;else d.exposureLog.push(rec);}
+  else d.exposureLog.push(rec);
+  saveData(d);closeModal('exposure-modal');renderExposure(1);
+}
+function deleteExposure(id){
+  if(!requireRole('delete','Delete Exposure Record'))return;
+  const d=getData()||getDefaultData();
+  if(!confirm('Delete exposure record '+id+'?\nThis cannot be undone.'))return;
+  d.exposureLog=(d.exposureLog||[]).filter(x=>x.id!==id);
+  saveData(d);renderExposure(expPage);
+}
+function editExposure(id){
+  const d=getData()||getDefaultData();const r=(d.exposureLog||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('exp-f-edit-id').value=id;
+  document.getElementById('exp-f-date').value=r.date||'';
+  document.getElementById('exp-f-location').value=r.location||'';
+  document.getElementById('exp-f-agent').value=r.agent||'Noise';
+  document.getElementById('exp-f-detail').value=r.agent_detail||'';
+  document.getElementById('exp-f-value').value=r.measured_value||'';
+  document.getElementById('exp-f-unit').value=r.unit||'';
+  document.getElementById('exp-f-oel').value=r.oel||'';
+  document.getElementById('exp-f-sampler').value=r.sampler||'';
+  document.getElementById('exp-f-lab').value=r.lab||'';
+  document.getElementById('exp-f-action').value=r.action_required||'';
+  document.getElementById('exp-f-status').value=r.status||'Open';
+  expCheckExceedance();
+  openModal('exposure-modal');
+}
+function renderExposure(page=1){
+  expPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('exp-search').value||'').toLowerCase();
+  const fAgent=document.getElementById('exp-filter-agent').value;
+  const fExc=document.getElementById('exp-filter-exceedance').value;
+  const fStatus=document.getElementById('exp-filter-status').value;
+  let items=(d.exposureLog||[]).filter(r=>{
+    const ms=!search||[r.id,r.location,r.agent,r.agent_detail,r.sampler].some(v=>(v||'').toLowerCase().includes(search));
+    const me=!fExc||(fExc==='true'?r.exceedance===true:r.exceedance===false);
+    return ms&&(!fAgent||r.agent===fAgent)&&me&&(!fStatus||r.status===fStatus);
+  }).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const excCount=items.filter(r=>r.exceedance&&r.status==='Open').length;
+  const {items:rows,total}=paginate(items,page);
+  document.getElementById('exp-tbody').innerHTML=rows.length?rows.map(r=>{
+    const pct=r.oel>0?Math.round(r.measured_value/r.oel*100):0;
+    const excBg=r.exceedance?'background:#fff1f2':'';
+    return`<tr style="${excBg}">
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)}</td>
+      <td>${escapeHtml(r.location)}</td>
+      <td><span class="kpib kpib-blue" style="font-size:10px">${r.agent}</span></td>
+      <td style="font-size:11px">${truncate(r.agent_detail,30)}</td>
+      <td><strong>${r.measured_value}</strong> ${r.unit}</td>
+      <td>${r.oel} ${r.unit}</td>
+      <td>${r.exceedance?'<span class="kpib kpib-red">⚠️ YES ('+pct+'%)</span>':'<span class="kpib kpib-green">✓ OK</span>'}</td>
+      <td>${escapeHtml(r.sampler||'—')}</td>
+      <td style="max-width:180px;font-size:11px">${truncate(r.action_required,60)||'—'}</td>
+      <td>${statusPill(r.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editExposure('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteExposure('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:24px">No exposure monitoring records found</td></tr>`;
+  renderPagination('exp-pagination',total,page,renderExposure);
+  const title=document.querySelector('#page-exposure .section-title');
+  if(title)title.textContent=`☢️ Exposure Monitoring Register${excCount>0?' — '+excCount+' Open Exceedance'+(excCount>1?'s':''):''}`;
+}
+document.getElementById('exp-search').addEventListener('input',()=>renderExposure(1));
+document.getElementById('exp-filter-agent').addEventListener('change',()=>renderExposure(1));
+document.getElementById('exp-filter-exceedance').addEventListener('change',()=>renderExposure(1));
+document.getElementById('exp-filter-status').addEventListener('change',()=>renderExposure(1));
+
+// ============================================================
+// FIRST AID TREATMENT LOG
+// ============================================================
+let faPage=1;
+function genFaId(arr){const n=(arr||[]).filter(r=>r.id&&r.id.startsWith('FA-')).length+1;return'FA-'+String(n).padStart(3,'0');}
+function saveFirstAid(){
+  if(!rateCheck('save-firstaid',100))return;
+  if(!validateRequired([['fa-f-name','Employee Name'],['fa-f-description','Description']]))return;
+  let d=getData();if(!d)d=getDefaultData();d.firstAidLog=d.firstAidLog||[];
+  const editId=document.getElementById('fa-f-edit-id').value;
+  const rec={
+    id:editId||genFaId(d.firstAidLog),
+    date:document.getElementById('fa-f-date').value||today(),
+    time:document.getElementById('fa-f-time').value||'',
+    employee_name:document.getElementById('fa-f-name').value||'',
+    employee_id:document.getElementById('fa-f-empid').value||'',
+    description:document.getElementById('fa-f-description').value||'',
+    body_part:document.getElementById('fa-f-bodypart').value||'',
+    treatment:document.getElementById('fa-f-treatment').value||'',
+    first_aider:document.getElementById('fa-f-aider').value||'',
+    referred:document.getElementById('fa-f-referred').value,
+    referral_destination:document.getElementById('fa-f-referral').value||'',
+    follow_up_date:document.getElementById('fa-f-followup').value||'',
+    status:document.getElementById('fa-f-status').value
+  };
+  if(editId){const idx=d.firstAidLog.findIndex(x=>x.id===editId);if(idx>=0)d.firstAidLog[idx]=rec;else d.firstAidLog.push(rec);}
+  else d.firstAidLog.push(rec);
+  saveData(d);closeModal('firstaid-modal');renderFirstAid(1);
+  secLog('DATA_WRITE',{module:'firstAidLog',id:rec.id,classification:'Personal'});
+}
+function deleteFirstAid(id){
+  if(!requireRole('delete','Delete First Aid Record'))return;
+  const d=getData()||getDefaultData();
+  const r=(d.firstAidLog||[]).find(x=>x.id===id);
+  if(!confirm('Delete first aid record '+id+(r?' — '+r.employee_name:'')+'\nThis cannot be undone.'))return;
+  d.firstAidLog=(d.firstAidLog||[]).filter(x=>x.id!==id);
+  saveData(d);renderFirstAid(faPage);
+}
+function editFirstAid(id){
+  const d=getData()||getDefaultData();const r=(d.firstAidLog||[]).find(x=>x.id===id);if(!r)return;
+  document.getElementById('fa-f-edit-id').value=id;
+  document.getElementById('fa-f-date').value=r.date||'';
+  document.getElementById('fa-f-time').value=r.time||'';
+  document.getElementById('fa-f-name').value=r.employee_name||'';
+  document.getElementById('fa-f-empid').value=r.employee_id||'';
+  document.getElementById('fa-f-description').value=r.description||'';
+  document.getElementById('fa-f-bodypart').value=r.body_part||'';
+  document.getElementById('fa-f-treatment').value=r.treatment||'';
+  document.getElementById('fa-f-aider').value=r.first_aider||'';
+  document.getElementById('fa-f-referred').value=r.referred||'No';
+  document.getElementById('fa-f-referral').value=r.referral_destination||'';
+  document.getElementById('fa-f-followup').value=r.follow_up_date||'';
+  document.getElementById('fa-f-status').value=r.status||'Treated';
+  openModal('firstaid-modal');
+}
+function renderFirstAid(page=1){
+  faPage=page;const d=getData()||getDefaultData();
+  const search=(document.getElementById('fa-search').value||'').toLowerCase();
+  const fStatus=document.getElementById('fa-filter-status').value;
+  const fReferred=document.getElementById('fa-filter-referred').value;
+  let items=(d.firstAidLog||[]).filter(r=>{
+    const ms=!search||[r.id,r.employee_name,r.employee_id,r.body_part,r.first_aider].some(v=>(v||'').toLowerCase().includes(search));
+    return ms&&(!fStatus||r.status===fStatus)&&(!fReferred||r.referred===fReferred);
+  }).sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.time||'').localeCompare(a.time||''));
+  const followUpDue=items.filter(r=>r.status==='Follow-up Required'&&r.follow_up_date&&r.follow_up_date<=today()).length;
+  const {items:rows,total}=paginate(items,page);
+  const FA_STATUS={'Treated':'pill-green','Referred':'pill-orange','Follow-up Required':'pill-yellow'};
+  document.getElementById('fa-tbody').innerHTML=rows.length?rows.map(r=>{
+    const rowBg=r.status==='Follow-up Required'&&r.follow_up_date&&r.follow_up_date<=today()?'background:#fffbeb':'';
+    return`<tr style="${rowBg}">
+      <td><strong>${r.id}</strong></td>
+      <td>${fmtDate(r.date)}</td>
+      <td>${r.time||'—'}</td>
+      <td>${maskPII?maskName(r.employee_name):escapeHtml(r.employee_name)}</td>
+      <td style="max-width:160px;font-size:11px">${truncate(r.description,60)}</td>
+      <td>${escapeHtml(r.body_part||'—')}</td>
+      <td style="max-width:150px;font-size:11px">${truncate(r.treatment,50)}</td>
+      <td>${escapeHtml(r.first_aider||'—')}</td>
+      <td>${r.referred==='No'?'<span class="kpib kpib-gray">No</span>':'<span class="kpib kpib-orange">'+escapeHtml(r.referred)+'</span>'}</td>
+      <td>${r.follow_up_date?fmtDate(r.follow_up_date):'—'}</td>
+      <td><span class="pill ${FA_STATUS[r.status]||'pill-gray'}">${r.status}</span></td>
+      <td>
+        <button class="btn btn-sm btn-ghost" onclick="editFirstAid('${r.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteFirstAid('${r.id}')">Del</button>
+      </td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:24px">No first aid records found</td></tr>`;
+  renderPagination('fa-pagination',total,page,renderFirstAid);
+  const title=document.querySelector('#page-first-aid .section-title');
+  if(title)title.textContent=`🩹 First Aid Treatment Log${followUpDue>0?' — '+followUpDue+' Follow-up Overdue':''}`;
+}
+document.getElementById('fa-search').addEventListener('input',()=>renderFirstAid(1));
+document.getElementById('fa-filter-status').addEventListener('change',()=>renderFirstAid(1));
+document.getElementById('fa-filter-referred').addEventListener('change',()=>renderFirstAid(1));
 
 // ============================================================
 // COMMUNITY ENGAGEMENT REGISTER
@@ -11347,7 +11940,7 @@ function importJSON(){
         const missing=REQUIRED_KEYS.filter(k=>!(k in data));
         if(missing.length&&!data.initialized){throw new Error('Not a valid ESG Management Systems - SHEQ backup file.');}
         // API-13: per-module schema validation
-        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics','wellness','suppliers','energyLog','communityLog'];
+        const ALL_ARRAY_KEYS=['observations','nearMisses','incidents','permits','risks','legalItems','capas','toolboxTalks','inductions','emergencyContacts','mocs','assets','investigations','audits','envAspects','wasteLog','workforceMetrics','stakeholders','ghgEntries','waterReg','trainingReg','deiMetrics','wellness','suppliers','energyLog','communityLog','medSurveillance','exposureLog','firstAidLog'];
         for(const k of ALL_ARRAY_KEYS){
           if(!(k in data)) continue;
           const check=_validateImportModule(k,data[k]);
@@ -11514,6 +12107,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     setTimeout(checkCapaBadge, 200);
     setTimeout(checkTrainingBadge, 200);
     setTimeout(checkLegalAlerts, 200);
+    setTimeout(checkMedBadge, 200);
     const k=sessionStorage.getItem('sheqai_apikey');
     if(k)document.getElementById('api-key-input').value=k;
     updateSyncStatus();
