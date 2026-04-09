@@ -2869,6 +2869,7 @@
 
     <li class="nav-section-label" data-pillar="reports">📁 Reports<span class="pillar-chevron nav-label">▾</span></li>
     <li class="nav-item"><div class="nav-link" data-page="report"><span class="nav-icon">📄</span><span class="nav-label">Monthly Report</span></div></li>
+    <li class="nav-item"><div class="nav-link" data-page="annual-report"><span class="nav-icon">📘</span><span class="nav-label">Annual ESG Report</span></div></li>
     <li class="nav-item"><div class="nav-link" data-page="calendar"><span class="nav-icon">📅</span><span class="nav-label">SHEQ Calendar</span></div></li>
   </ul>
   <div class="sidebar-footer">
@@ -3912,6 +3913,24 @@
     </div>
   </div>
   <div id="report-output"></div>
+</div>
+
+<!-- ======= ANNUAL ESG REPORT ======= -->
+<div id="page-annual-report" class="page">
+  <div class="section-header">
+    <span class="section-title">📘 Annual ESG Report</span>
+    <div class="section-header-right">
+      <button class="btn btn-primary" onclick="renderEsgAnnualReport('annual-report-output')">Generate Report</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print / Save PDF</button>
+    </div>
+  </div>
+  <div id="annual-report-output" style="padding:var(--sp-3)">
+    <div style="text-align:center;color:var(--muted);padding:var(--sp-4)">
+      <div style="font-size:48px;margin-bottom:var(--sp-2)">📘</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px">Annual ESG Report</div>
+      <div style="font-size:13px">Click <strong>Generate Report</strong> to compile 12 months of environmental, social and governance data into a GRI-aligned annual disclosure.</div>
+    </div>
+  </div>
 </div>
 
 <!-- ======= CAPA TRACKER ======= -->
@@ -7672,7 +7691,7 @@ function renderPagination(id,total,page,cb){
 // PAGE NAVIGATION
 // ============================================================
 let currentPage='dashboard';
-const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register','med-surveillance':'Medical Surveillance Register',exposure:'Exposure Monitoring Register','first-aid':'First Aid Treatment Log',calibration:'Calibration Register',documents:'Document & Policy Library','mgmt-review':'Management Review Log',objectives:'Objectives & Targets Register','emergency-drills':'Emergency Response & Drill Register',ncr:'Non-Conformance Register',lessons:'Lessons Learned Register',chemical:'Chemical & Hazardous Substances Register','env-monitoring':'Environmental Monitoring Register',communication:'Communication Register'};
+const pageTitles={dashboard:'Dashboard',observations:'Job Observations',nearmiss:'Near Miss Register',incidents:'Incident Register',permits:'Permit to Work',risks:'Risk Register',legal:'Legal & Compliance Register',calendar:'SHEQ Activity Calendar',report:'Monthly SHEQ Report',capa:'CAPA Tracker',toolbox:'Toolbox Talk Register',inductions:'Contractor, Visitor & Employee Inductions',emergency:'Emergency Contact Directory',moc:'Management of Change',assets:'Equipment & Asset Inspection Register',audits:'Audit & Inspection Checklists',chat:'ESG SHEQ AI Chat','env-aspects':'Environmental Aspects & Impacts Register',waste:'Waste Management Log',workforce:'Workforce & Social Metrics',stakeholder:'Stakeholder Engagement Log',ghg:'GHG Emissions Tracker',water:'Water Consumption Register',training:'Training & Competency Register',dei:'DEI Metrics Dashboard','esg-board':'ESG Board Dashboard',wellness:'Wellness & Absenteeism Register',suppliers:'Supplier Safety Scorecard',community:'Community Engagement Register','med-surveillance':'Medical Surveillance Register',exposure:'Exposure Monitoring Register','first-aid':'First Aid Treatment Log',calibration:'Calibration Register',documents:'Document & Policy Library','mgmt-review':'Management Review Log',objectives:'Objectives & Targets Register','emergency-drills':'Emergency Response & Drill Register',ncr:'Non-Conformance Register',lessons:'Lessons Learned Register',chemical:'Chemical & Hazardous Substances Register','env-monitoring':'Environmental Monitoring Register',communication:'Communication Register','annual-report':'Annual ESG Report'};
 
 function navigateTo(page){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -7730,6 +7749,7 @@ function navigateTo(page){
   else if(page==='chemical')renderChemical();
   else if(page==='env-monitoring')renderEnvMonitoring();
   else if(page==='communication')renderCommunication();
+  else if(page==='annual-report')renderEsgAnnualReport('annual-report-output');
 }
 document.querySelectorAll('[data-page]').forEach(l=>l.addEventListener('click',()=>{ if(l.closest('.nav-link')?.style.cursor==='default') return; navigateTo(l.dataset.page); }));
 document.getElementById('toggle-btn').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('collapsed'));
@@ -11369,7 +11389,7 @@ document.getElementById('comm2-filter-status').addEventListener('change',()=>ren
 // ============================================================
 // ANNUAL ESG REPORT
 // ============================================================
-function renderEsgAnnualReport(){
+function renderEsgAnnualReport(targetId){
   const d=getData()||getDefaultData();
   const year=new Date().getFullYear();
   const yrStart=year+'-01-01';
@@ -11397,8 +11417,10 @@ function renderEsgAnnualReport(){
   const wfLatest=(d.workforceMetrics||[]).sort((a,b)=>b.period.localeCompare(a.period))[0];
   const supWarnings=(d.suppliers||[]).filter(s=>getSupplierWarning(s)).length;
   const daysLost=(d.wellness||[]).filter(r=>inYear(r.date)).reduce((s,r)=>s+(r.days_lost||0),0);
-  // Render into esg-board-content as a full-page printable report
-  document.getElementById('esg-board-content').innerHTML=`
+  // Render into target container (defaults to esg-board-content)
+  const _targetEl=document.getElementById(targetId||'esg-board-content');
+  if(!_targetEl)return;
+  _targetEl.innerHTML=`
     <div style="font-family:serif;max-width:900px;margin:0 auto;padding:var(--sp-3)" id="esg-annual-report">
       <div style="border-bottom:3px solid #16a34a;padding-bottom:var(--sp-2);margin-bottom:var(--sp-3)">
         <div style="font-size:22px;font-weight:800;color:var(--fg)">Annual ESG Report — ${year}</div>
@@ -15153,8 +15175,8 @@ window.renderEmptyState = function(container, opts){
     {t:'Stakeholder Engagement',p:'stakeholder',i:'🤝',g:'Social'},
     {t:'Community',p:'community',i:'🏘️',g:'Social'},
     {t:'ESG Board',p:'esg-board',i:'📊',g:'Reports'},
-    {t:'ESG Annual Report',p:'esg-report',i:'📄',g:'Reports'},
-    {t:'Management Reviews',p:'mgmt-reviews',i:'🏛️',g:'Governance'},
+    {t:'Annual ESG Report',p:'annual-report',i:'📘',g:'Reports'},
+    {t:'Management Reviews',p:'mgmt-review',i:'🏛️',g:'Governance'},
     {t:'Objectives & Targets',p:'objectives',i:'🎯',g:'Governance'},
     {t:'Documents',p:'documents',i:'📂',g:'Quality'},
     {t:'Calibration',p:'calibration',i:'🔬',g:'Quality'},
