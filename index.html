@@ -1909,6 +1909,51 @@
     .mob-drawer-item:hover { background: var(--card2); color: var(--accent); }
     .mob-drawer-item.active { color: var(--accent); background: rgba(37,99,235,.07); }
 
+    /* ─── New 2-level mobile nav (P1-3) ───────────────────────── */
+    .mob-pillar-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 8px; padding: 12px 12px 6px;
+    }
+    .mob-pillar-card {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; padding: 14px 8px; border-radius: 12px;
+      background: var(--card2); border: 1px solid var(--border);
+      cursor: pointer; transition: transform .1s, background .15s, border-color .15s;
+      min-height: 76px;
+    }
+    .mob-pillar-card:active { transform: scale(.97); }
+    .mob-pillar-card:hover { background: rgba(37,99,235,.06); border-color: var(--accent); }
+    .mob-pillar-icon { font-size: 1.6rem; line-height: 1; }
+    .mob-pillar-label { font-size: .78rem; font-weight: 700; color: var(--text); text-align: center; }
+    .mob-pillar-count { font-size: .6rem; color: var(--muted); }
+
+    .mob-pillar-back {
+      display: flex; align-items: center; gap: 6px;
+      padding: 10px 14px; font-size: .75rem; font-weight: 600;
+      color: var(--accent); cursor: pointer; background: none; border: none;
+    }
+    .mob-pillar-back:hover { background: var(--card2); }
+
+    .mob-recent-row {
+      display: flex; gap: 6px; padding: 0 12px 4px;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .mob-recent-chip {
+      flex: 0 0 auto;
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 11px; border-radius: 999px;
+      background: var(--card2); border: 1px solid var(--border);
+      font-size: .68rem; font-weight: 600; color: var(--text);
+      cursor: pointer; white-space: nowrap;
+    }
+    .mob-recent-chip:hover { background: rgba(37,99,235,.07); color: var(--accent); }
+    .mob-recent-chip .nav-icon { font-size: .9rem; }
+
+    .mob-pillar-detail { display: none; }
+    .mob-pillar-detail.open { display: block; }
+    .mob-pillar-tiles { display: none; }
+    .mob-pillar-tiles.open { display: block; }
+
     /* ============================================================
        RESPONSIVE — MOBILE (max-width: 768px)
     ============================================================ */
@@ -2915,61 +2960,125 @@
   <span id="offline-queue-count" style="display:none;margin-left:8px;background:rgba(255,255,255,.25);padding:1px 7px;border-radius:10px;font-size:11px"></span>
 </div>
 
-<!-- Mobile overlay + drawer -->
+<!-- Mobile overlay + drawer (P1-3 — pillar drill-down + recents) -->
 <div id="mob-drawer-overlay" onclick="closeMobileDrawer()"></div>
-<div id="mobile-drawer">
+<div id="mobile-drawer" role="navigation" aria-label="Mobile module navigation">
   <div class="mob-drawer-handle"></div>
-  <div class="mob-drawer-section">🦺 Safety &amp; Health</div>
-  <div class="mob-drawer-grid">
-    <div class="mob-drawer-item" data-page="observations" onclick="closeMobileDrawer();navigateTo('observations')"><span class="nav-icon">👁️</span>Obs</div>
-    <div class="mob-drawer-item" data-page="nearmiss" onclick="closeMobileDrawer();navigateTo('nearmiss')"><span class="nav-icon">⚠️</span>Near Miss</div>
-    <div class="mob-drawer-item" data-page="permits" onclick="closeMobileDrawer();navigateTo('permits')"><span class="nav-icon">📋</span>PTW</div>
-    <div class="mob-drawer-item" data-page="emergency" onclick="closeMobileDrawer();navigateTo('emergency')"><span class="nav-icon">🚑</span>Emergency</div>
-    <div class="mob-drawer-item" data-page="toolbox" onclick="closeMobileDrawer();navigateTo('toolbox')"><span class="nav-icon">🗣️</span>Toolbox</div>
-    <div class="mob-drawer-item" data-page="inductions" onclick="closeMobileDrawer();navigateTo('inductions')"><span class="nav-icon">🪪</span>Inductions</div>
-    <div class="mob-drawer-item" data-page="emergency-drills" onclick="closeMobileDrawer();navigateTo('emergency-drills')"><span class="nav-icon">🧯</span>Drills</div>
-    <div class="mob-drawer-item" data-page="first-aid" onclick="closeMobileDrawer();navigateTo('first-aid')"><span class="nav-icon">🩹</span>First Aid</div>
-    <div class="mob-drawer-item" data-page="med-surveillance" onclick="closeMobileDrawer();navigateTo('med-surveillance')"><span class="nav-icon">🩺</span>Med Surv.</div>
-    <div class="mob-drawer-item" data-page="exposure" onclick="closeMobileDrawer();navigateTo('exposure')"><span class="nav-icon">☢️</span>Exposure</div>
-    <div class="mob-drawer-item" data-page="wellness" onclick="closeMobileDrawer();navigateTo('wellness')"><span class="nav-icon">🏥</span>Wellness</div>
-    <div class="mob-drawer-item" data-page="chemical" onclick="closeMobileDrawer();navigateTo('chemical')"><span class="nav-icon">⚗️</span>Chemical</div>
+
+  <!-- Recents row (rendered by mobNavRenderRecent()) -->
+  <div id="mob-recent-wrap" style="display:none">
+    <div class="mob-drawer-section" style="padding-bottom:6px">⏱ RECENT</div>
+    <div id="mob-recent-row" class="mob-recent-row"></div>
   </div>
-  <div class="mob-drawer-section">🌍 Environmental</div>
-  <div class="mob-drawer-grid">
-    <div class="mob-drawer-item" data-page="ghg" onclick="closeMobileDrawer();navigateTo('ghg')"><span class="nav-icon">🌱</span>GHG</div>
-    <div class="mob-drawer-item" data-page="water" onclick="closeMobileDrawer();navigateTo('water')"><span class="nav-icon">💧</span>Water</div>
-    <div class="mob-drawer-item" data-page="waste" onclick="closeMobileDrawer();navigateTo('waste')"><span class="nav-icon">♻️</span>Waste</div>
-    <div class="mob-drawer-item" data-page="env-aspects" onclick="closeMobileDrawer();navigateTo('env-aspects')"><span class="nav-icon">🌍</span>Env Aspects</div>
-    <div class="mob-drawer-item" data-page="env-monitoring" onclick="closeMobileDrawer();navigateTo('env-monitoring')"><span class="nav-icon">📡</span>Env Mon.</div>
+
+  <!-- Top-level pillar tiles (default view) -->
+  <div id="mob-pillar-tiles" class="mob-pillar-tiles open">
+    <div class="mob-drawer-section">📂 Browse by pillar</div>
+    <div class="mob-pillar-grid">
+      <button class="mob-pillar-card" onclick="mobNavOpenPillar('safety')" aria-label="Safety and Health pillar">
+        <span class="mob-pillar-icon">🦺</span>
+        <span class="mob-pillar-label">Safety &amp; Health</span>
+        <span class="mob-pillar-count">12 modules</span>
+      </button>
+      <button class="mob-pillar-card" onclick="mobNavOpenPillar('environmental')" aria-label="Environmental pillar">
+        <span class="mob-pillar-icon">🌍</span>
+        <span class="mob-pillar-label">Environmental</span>
+        <span class="mob-pillar-count">5 modules</span>
+      </button>
+      <button class="mob-pillar-card" onclick="mobNavOpenPillar('quality')" aria-label="Quality and Assets pillar">
+        <span class="mob-pillar-icon">✅</span>
+        <span class="mob-pillar-label">Quality &amp; Assets</span>
+        <span class="mob-pillar-count">7 modules</span>
+      </button>
+      <button class="mob-pillar-card" onclick="mobNavOpenPillar('social')" aria-label="Social and HR pillar">
+        <span class="mob-pillar-icon">👥</span>
+        <span class="mob-pillar-label">Social &amp; HR</span>
+        <span class="mob-pillar-count">7 modules</span>
+      </button>
+      <button class="mob-pillar-card" onclick="mobNavOpenPillar('governance')" aria-label="Governance and Reports pillar">
+        <span class="mob-pillar-icon">⚖️</span>
+        <span class="mob-pillar-label">Governance &amp; Reports</span>
+        <span class="mob-pillar-count">6 modules</span>
+      </button>
+      <button class="mob-pillar-card" onclick="closeMobileDrawer();openGlobalSearch()" aria-label="Search all modules">
+        <span class="mob-pillar-icon">🔍</span>
+        <span class="mob-pillar-label">Search</span>
+        <span class="mob-pillar-count">⌘K</span>
+      </button>
+    </div>
   </div>
-  <div class="mob-drawer-section">✅ Quality &amp; Assets</div>
-  <div class="mob-drawer-grid">
-    <div class="mob-drawer-item" data-page="audits" onclick="closeMobileDrawer();navigateTo('audits')"><span class="nav-icon">📝</span>Audits</div>
-    <div class="mob-drawer-item" data-page="ncr" onclick="closeMobileDrawer();navigateTo('ncr')"><span class="nav-icon">🚫</span>NCR</div>
-    <div class="mob-drawer-item" data-page="lessons" onclick="closeMobileDrawer();navigateTo('lessons')"><span class="nav-icon">💡</span>Lessons</div>
-    <div class="mob-drawer-item" data-page="assets" onclick="closeMobileDrawer();navigateTo('assets')"><span class="nav-icon">🔧</span>Assets</div>
-    <div class="mob-drawer-item" data-page="calibration" onclick="closeMobileDrawer();navigateTo('calibration')"><span class="nav-icon">🔬</span>Calibration</div>
-    <div class="mob-drawer-item" data-page="documents" onclick="closeMobileDrawer();navigateTo('documents')"><span class="nav-icon">📂</span>Documents</div>
-    <div class="mob-drawer-item" data-page="moc" onclick="closeMobileDrawer();navigateTo('moc')"><span class="nav-icon">🔄</span>MoC</div>
+
+  <!-- Pillar detail views (one per pillar; toggled by mobNavOpenPillar) -->
+  <div id="mob-pillar-safety" class="mob-pillar-detail">
+    <button class="mob-pillar-back" onclick="mobNavBack()" aria-label="Back to pillars">← Back</button>
+    <div class="mob-drawer-section">🦺 Safety &amp; Health</div>
+    <div class="mob-drawer-grid">
+      <div class="mob-drawer-item" data-page="observations" onclick="closeMobileDrawer();navigateTo('observations')"><span class="nav-icon">👁️</span>Obs</div>
+      <div class="mob-drawer-item" data-page="nearmiss" onclick="closeMobileDrawer();navigateTo('nearmiss')"><span class="nav-icon">⚠️</span>Near Miss</div>
+      <div class="mob-drawer-item" data-page="permits" onclick="closeMobileDrawer();navigateTo('permits')"><span class="nav-icon">📋</span>PTW</div>
+      <div class="mob-drawer-item" data-page="emergency" onclick="closeMobileDrawer();navigateTo('emergency')"><span class="nav-icon">🚑</span>Emergency</div>
+      <div class="mob-drawer-item" data-page="toolbox" onclick="closeMobileDrawer();navigateTo('toolbox')"><span class="nav-icon">🗣️</span>Toolbox</div>
+      <div class="mob-drawer-item" data-page="inductions" onclick="closeMobileDrawer();navigateTo('inductions')"><span class="nav-icon">🪪</span>Inductions</div>
+      <div class="mob-drawer-item" data-page="emergency-drills" onclick="closeMobileDrawer();navigateTo('emergency-drills')"><span class="nav-icon">🧯</span>Drills</div>
+      <div class="mob-drawer-item" data-page="first-aid" onclick="closeMobileDrawer();navigateTo('first-aid')"><span class="nav-icon">🩹</span>First Aid</div>
+      <div class="mob-drawer-item" data-page="med-surveillance" onclick="closeMobileDrawer();navigateTo('med-surveillance')"><span class="nav-icon">🩺</span>Med Surv.</div>
+      <div class="mob-drawer-item" data-page="exposure" onclick="closeMobileDrawer();navigateTo('exposure')"><span class="nav-icon">☢️</span>Exposure</div>
+      <div class="mob-drawer-item" data-page="wellness" onclick="closeMobileDrawer();navigateTo('wellness')"><span class="nav-icon">🏥</span>Wellness</div>
+      <div class="mob-drawer-item" data-page="chemical" onclick="closeMobileDrawer();navigateTo('chemical')"><span class="nav-icon">⚗️</span>Chemical</div>
+    </div>
   </div>
-  <div class="mob-drawer-section">👥 Social &amp; HR</div>
-  <div class="mob-drawer-grid">
-    <div class="mob-drawer-item" data-page="training" onclick="closeMobileDrawer();navigateTo('training')"><span class="nav-icon">🎓</span>Training</div>
-    <div class="mob-drawer-item" data-page="dei" onclick="closeMobileDrawer();navigateTo('dei')"><span class="nav-icon">🌈</span>DEI</div>
-    <div class="mob-drawer-item" data-page="workforce" onclick="closeMobileDrawer();navigateTo('workforce')"><span class="nav-icon">👥</span>Workforce</div>
-    <div class="mob-drawer-item" data-page="suppliers" onclick="closeMobileDrawer();navigateTo('suppliers')"><span class="nav-icon">🏭</span>Suppliers</div>
-    <div class="mob-drawer-item" data-page="stakeholder" onclick="closeMobileDrawer();navigateTo('stakeholder')"><span class="nav-icon">🤝</span>Stakeholder</div>
-    <div class="mob-drawer-item" data-page="community" onclick="closeMobileDrawer();navigateTo('community')"><span class="nav-icon">🏘️</span>Community</div>
-    <div class="mob-drawer-item" data-page="communication" onclick="closeMobileDrawer();navigateTo('communication')"><span class="nav-icon">📢</span>Comms</div>
+
+  <div id="mob-pillar-environmental" class="mob-pillar-detail">
+    <button class="mob-pillar-back" onclick="mobNavBack()" aria-label="Back to pillars">← Back</button>
+    <div class="mob-drawer-section">🌍 Environmental</div>
+    <div class="mob-drawer-grid">
+      <div class="mob-drawer-item" data-page="ghg" onclick="closeMobileDrawer();navigateTo('ghg')"><span class="nav-icon">🌱</span>GHG</div>
+      <div class="mob-drawer-item" data-page="water" onclick="closeMobileDrawer();navigateTo('water')"><span class="nav-icon">💧</span>Water</div>
+      <div class="mob-drawer-item" data-page="waste" onclick="closeMobileDrawer();navigateTo('waste')"><span class="nav-icon">♻️</span>Waste</div>
+      <div class="mob-drawer-item" data-page="env-aspects" onclick="closeMobileDrawer();navigateTo('env-aspects')"><span class="nav-icon">🌍</span>Env Aspects</div>
+      <div class="mob-drawer-item" data-page="env-monitoring" onclick="closeMobileDrawer();navigateTo('env-monitoring')"><span class="nav-icon">📡</span>Env Mon.</div>
+    </div>
   </div>
-  <div class="mob-drawer-section">⚖️ Governance &amp; Reports</div>
-  <div class="mob-drawer-grid">
-    <div class="mob-drawer-item" data-page="legal" onclick="closeMobileDrawer();navigateTo('legal')"><span class="nav-icon">⚖️</span>Legal</div>
-    <div class="mob-drawer-item" data-page="objectives" onclick="closeMobileDrawer();navigateTo('objectives')"><span class="nav-icon">🎯</span>Objectives</div>
-    <div class="mob-drawer-item" data-page="mgmt-review" onclick="closeMobileDrawer();navigateTo('mgmt-review')"><span class="nav-icon">🏛️</span>Mgmt Rev.</div>
-    <div class="mob-drawer-item" data-page="esg-board" onclick="closeMobileDrawer();navigateTo('esg-board')"><span class="nav-icon">📊</span>ESG Board</div>
-    <div class="mob-drawer-item" data-page="report" onclick="closeMobileDrawer();navigateTo('report')"><span class="nav-icon">📄</span>Report</div>
-    <div class="mob-drawer-item" data-page="calendar" onclick="closeMobileDrawer();navigateTo('calendar')"><span class="nav-icon">📅</span>Calendar</div>
+
+  <div id="mob-pillar-quality" class="mob-pillar-detail">
+    <button class="mob-pillar-back" onclick="mobNavBack()" aria-label="Back to pillars">← Back</button>
+    <div class="mob-drawer-section">✅ Quality &amp; Assets</div>
+    <div class="mob-drawer-grid">
+      <div class="mob-drawer-item" data-page="audits" onclick="closeMobileDrawer();navigateTo('audits')"><span class="nav-icon">📝</span>Audits</div>
+      <div class="mob-drawer-item" data-page="ncr" onclick="closeMobileDrawer();navigateTo('ncr')"><span class="nav-icon">🚫</span>NCR</div>
+      <div class="mob-drawer-item" data-page="lessons" onclick="closeMobileDrawer();navigateTo('lessons')"><span class="nav-icon">💡</span>Lessons</div>
+      <div class="mob-drawer-item" data-page="assets" onclick="closeMobileDrawer();navigateTo('assets')"><span class="nav-icon">🔧</span>Assets</div>
+      <div class="mob-drawer-item" data-page="calibration" onclick="closeMobileDrawer();navigateTo('calibration')"><span class="nav-icon">🔬</span>Calibration</div>
+      <div class="mob-drawer-item" data-page="documents" onclick="closeMobileDrawer();navigateTo('documents')"><span class="nav-icon">📂</span>Documents</div>
+      <div class="mob-drawer-item" data-page="moc" onclick="closeMobileDrawer();navigateTo('moc')"><span class="nav-icon">🔄</span>MoC</div>
+    </div>
+  </div>
+
+  <div id="mob-pillar-social" class="mob-pillar-detail">
+    <button class="mob-pillar-back" onclick="mobNavBack()" aria-label="Back to pillars">← Back</button>
+    <div class="mob-drawer-section">👥 Social &amp; HR</div>
+    <div class="mob-drawer-grid">
+      <div class="mob-drawer-item" data-page="training" onclick="closeMobileDrawer();navigateTo('training')"><span class="nav-icon">🎓</span>Training</div>
+      <div class="mob-drawer-item" data-page="dei" onclick="closeMobileDrawer();navigateTo('dei')"><span class="nav-icon">🌈</span>DEI</div>
+      <div class="mob-drawer-item" data-page="workforce" onclick="closeMobileDrawer();navigateTo('workforce')"><span class="nav-icon">👥</span>Workforce</div>
+      <div class="mob-drawer-item" data-page="suppliers" onclick="closeMobileDrawer();navigateTo('suppliers')"><span class="nav-icon">🏭</span>Suppliers</div>
+      <div class="mob-drawer-item" data-page="stakeholder" onclick="closeMobileDrawer();navigateTo('stakeholder')"><span class="nav-icon">🤝</span>Stakeholder</div>
+      <div class="mob-drawer-item" data-page="community" onclick="closeMobileDrawer();navigateTo('community')"><span class="nav-icon">🏘️</span>Community</div>
+      <div class="mob-drawer-item" data-page="communication" onclick="closeMobileDrawer();navigateTo('communication')"><span class="nav-icon">📢</span>Comms</div>
+    </div>
+  </div>
+
+  <div id="mob-pillar-governance" class="mob-pillar-detail">
+    <button class="mob-pillar-back" onclick="mobNavBack()" aria-label="Back to pillars">← Back</button>
+    <div class="mob-drawer-section">⚖️ Governance &amp; Reports</div>
+    <div class="mob-drawer-grid">
+      <div class="mob-drawer-item" data-page="legal" onclick="closeMobileDrawer();navigateTo('legal')"><span class="nav-icon">⚖️</span>Legal</div>
+      <div class="mob-drawer-item" data-page="objectives" onclick="closeMobileDrawer();navigateTo('objectives')"><span class="nav-icon">🎯</span>Objectives</div>
+      <div class="mob-drawer-item" data-page="mgmt-review" onclick="closeMobileDrawer();navigateTo('mgmt-review')"><span class="nav-icon">🏛️</span>Mgmt Rev.</div>
+      <div class="mob-drawer-item" data-page="esg-board" onclick="closeMobileDrawer();navigateTo('esg-board')"><span class="nav-icon">📊</span>ESG Board</div>
+      <div class="mob-drawer-item" data-page="report" onclick="closeMobileDrawer();navigateTo('report')"><span class="nav-icon">📄</span>Report</div>
+      <div class="mob-drawer-item" data-page="calendar" onclick="closeMobileDrawer();navigateTo('calendar')"><span class="nav-icon">📅</span>Calendar</div>
+    </div>
   </div>
 </div>
 
@@ -11963,7 +12072,8 @@ function toggleMobileDrawer(){
     overlay.classList.add('open');
     drawer.classList.add('open');
     if(btn) btn.style.color='var(--accent)';
-    // sync active state inside drawer
+    mobNavBack();          // always reset to top-level pillars on open
+    mobNavRenderRecent();  // refresh recents
     const cur=currentPage||'dashboard';
     document.querySelectorAll('.mob-drawer-item').forEach(el=>{
       el.classList.toggle('active',el.dataset.page===cur);
@@ -11976,6 +12086,72 @@ function closeMobileDrawer(){
   const btn=document.getElementById('mob-more-btn');
   if(btn) btn.style.color='';
 }
+
+/* ── Mobile nav 2-level pillar drill-down (P1-3) ─────────────── */
+function mobNavOpenPillar(pillarId){
+  const tiles=document.getElementById('mob-pillar-tiles');
+  if(tiles)tiles.classList.remove('open');
+  document.querySelectorAll('.mob-pillar-detail').forEach(el=>el.classList.remove('open'));
+  const target=document.getElementById('mob-pillar-'+pillarId);
+  if(target){ target.classList.add('open'); target.scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+function mobNavBack(){
+  document.querySelectorAll('.mob-pillar-detail').forEach(el=>el.classList.remove('open'));
+  const tiles=document.getElementById('mob-pillar-tiles');
+  if(tiles)tiles.classList.add('open');
+}
+
+/* Recents — last 6 unique pages, persisted in localStorage */
+const _MOB_RECENT_KEY='sheqai_mob_recent';
+const _MOB_RECENT_MAX=6;
+const _MOB_PAGE_LABELS={
+  dashboard:['📊','Dashboard'],observations:['👁️','Obs'],nearmiss:['⚠️','Near Miss'],
+  incidents:['🚨','Incidents'],permits:['📋','PTW'],risks:['🎯','Risks'],
+  capa:['✅','CAPA'],ncr:['🚫','NCR'],lessons:['💡','Lessons'],
+  legal:['⚖️','Legal'],calendar:['📅','Calendar'],report:['📄','Report'],
+  toolbox:['🗣️','Toolbox'],inductions:['🪪','Inductions'],emergency:['🚑','Emergency'],
+  moc:['🔄','MoC'],assets:['🔧','Assets'],audits:['📝','Audits'],
+  ghg:['🌱','GHG'],water:['💧','Water'],waste:['♻️','Waste'],
+  training:['🎓','Training'],dei:['🌈','DEI'],workforce:['👥','Workforce'],
+  suppliers:['🏭','Suppliers'],wellness:['🏥','Wellness'],stakeholder:['🤝','Stakeholder'],
+  community:['🏘️','Community'],communication:['📢','Comms'],'esg-board':['📊','ESG Board'],
+  'med-surveillance':['🩺','Med Surv.'],exposure:['☢️','Exposure'],'first-aid':['🩹','First Aid'],
+  calibration:['🔬','Calibration'],documents:['📂','Documents'],'mgmt-review':['🏛️','Mgmt Rev.'],
+  objectives:['🎯','Objectives'],'emergency-drills':['🧯','Drills'],chemical:['⚗️','Chemical'],
+  'env-aspects':['🌍','Env Aspects'],'env-monitoring':['📡','Env Mon.'],'annual-report':['📘','Annual']
+};
+function mobNavTrackVisit(page){
+  if(!page||page==='dashboard')return;
+  try{
+    const list=JSON.parse(localStorage.getItem(_MOB_RECENT_KEY)||'[]');
+    const filtered=list.filter(p=>p!==page);
+    filtered.unshift(page);
+    localStorage.setItem(_MOB_RECENT_KEY,JSON.stringify(filtered.slice(0,_MOB_RECENT_MAX)));
+  }catch(e){}
+}
+function mobNavRenderRecent(){
+  const wrap=document.getElementById('mob-recent-wrap');
+  const row=document.getElementById('mob-recent-row');
+  if(!wrap||!row)return;
+  let list=[];
+  try{ list=JSON.parse(localStorage.getItem(_MOB_RECENT_KEY)||'[]'); }catch(e){}
+  if(!list.length){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  row.innerHTML=list.map(p=>{
+    const meta=_MOB_PAGE_LABELS[p]||['📄',p];
+    return `<button class="mob-recent-chip" onclick="closeMobileDrawer();navigateTo('${p}')" aria-label="Open ${meta[1]}"><span class="nav-icon">${meta[0]}</span>${meta[1]}</button>`;
+  }).join('');
+}
+// Hook navigateTo to track recents on every navigation
+(function(){
+  const _nav=window.navigateTo;
+  if(typeof _nav!=='function')return;
+  window.navigateTo=function(page){
+    const r=_nav.apply(this,arguments);
+    try{ mobNavTrackVisit(page); }catch(e){}
+    return r;
+  };
+})();
 
 /* ── Incident → NCR → Lessons auto-chain ──────────────────── */
 function openAddNcr(){
