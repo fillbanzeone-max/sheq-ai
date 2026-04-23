@@ -34,47 +34,131 @@ const SMTP_USER   = defineSecret('SMTP_USER');
 const SMTP_PASS   = defineSecret('SMTP_PASS');
 
 // ============================================================
-// 1. SCHEDULED LOG RETENTION
-//    Runs every day at 02:00 UTC.
-//    Deletes sheqai/seclog/{uid} entries older than 90 days.
-//    After 365 days the record is fully removed (12-month archive
-//    requires exporting to Cloud Storage first — see TODO below).
+// 1. SCHEDULED LOG RETENTION  (ISO 27001 A.12.4)
+//    Runs daily at 02:00 UTC.
+//    Tier 1 (online, hot):     0–90 days   — Realtime Database
+//    Tier 2 (archive, cold):   90–365 days — Cloud Storage NDJSON
+//    Tier 3 (delete):          365+ days   — hard delete from both
+//
+//    Idempotent: re-running on the same day is safe (writes are
+//    keyed on log entry path; archive uses a date-bucketed prefix).
 // ============================================================
-exports.pruneSecLogs = onSchedule('every 24 hours', async () => {
-  const RETAIN_DAYS   = 90;
-  const ARCHIVE_DAYS  = 365;
-  const now           = Date.now();
-  const pruneCutoff   = new Date(now - RETAIN_DAYS  * 86400000).toISOString();
-  const archiveCutoff = new Date(now - ARCHIVE_DAYS * 86400000).toISOString();
+exports.pruneSecLogs = onSchedule(
+  { schedule: 'every 24 hours', timeZone: 'UTC', retryCount: 1 },
+  async () => {
+    const RETAIN_DAYS   = 90;
+    const ARCHIVE_DAYS  = 365;
+    const now           = Date.now();
+    const archiveCutoff = new Date(now - RETAIN_DAYS  * 86400000).toISOString();
+    const deleteCutoff  = new Date(now - ARCHIVE_DAYS * 86400000).toISOString();
 
-  const db        = admin.database();
-  const usersSnap = await db.ref('sheqai/seclog').once('value');
-  const users     = usersSnap.val() || {};
+    const db          = admin.database();
+    const bucket      = admin.storage().bucket();
+    const archiveRoot = 'seclog-archive';
+    const runId       = new Date().toISOString().substring(0, 10);
 
-  let pruned = 0;
+    const usersSnap = await db.ref('sheqai/seclog').once('value');
+    const users     = usersSnap.val() || {};
 
-  for (const uid of Object.keys(users)) {
-    const logRef = db.ref(`sheqai/seclog/${uid}`);
+    let archivedCount = 0;
+    let archivedBytes = 0;
+    let deletedCount  = 0;
+    let usersTouched  = 0;
+    const errors      = [];
 
-    // Delete entries older than ARCHIVE_DAYS (hard delete)
-    const archiveSnap = await logRef
-      .orderByChild('timestamp')
-      .endAt(archiveCutoff)
-      .once('value');
-    const archiveDels = [];
-    archiveSnap.forEach(snap => { archiveDels.push(snap.ref.remove()); pruned++; });
-    await Promise.all(archiveDels);
+    for (const uid of Object.keys(users)) {
+      const logRef = db.ref(`sheqai/seclog/${uid}`);
 
-    // TODO: Before deleting 90–365 day entries, export to
-    // Cloud Storage bucket for ISO 27001 A.12.4 12-month archive:
-    //   const bucket = admin.storage().bucket();
-    //   await bucket.file(`seclog/${uid}/${Date.now()}.json`)
-    //               .save(JSON.stringify(batchData));
-    // Then delete from Realtime DB.
+      try {
+        // ── Tier 2: archive entries older than 90 days ──────────
+        const archSnap = await logRef
+          .orderByChild('timestamp')
+          .endAt(archiveCutoff)
+          .once('value');
+
+        const toArchive = [];
+        archSnap.forEach(snap => {
+          const v = snap.val() || {};
+          // Skip entries already older than 365 days — those go to Tier 3
+          if (v.timestamp && v.timestamp < deleteCutoff) return;
+          toArchive.push({ key: snap.key, val: v });
+        });
+
+        if (toArchive.length > 0) {
+          // NDJSON append-friendly format. One file per (user, day) so re-runs
+          // don't produce duplicates within the same day.
+          const ndjson = toArchive
+            .map(e => JSON.stringify({ _key: e.key, ...e.val }))
+            .join('\n') + '\n';
+          const file = bucket.file(`${archiveRoot}/${uid}/${runId}.ndjson`);
+          await file.save(ndjson, {
+            contentType: 'application/x-ndjson',
+            resumable:   false,
+            metadata:    { metadata: { uid, runId, count: String(toArchive.length) } },
+          });
+          archivedBytes += Buffer.byteLength(ndjson);
+
+          // Delete originals from Realtime DB only after successful upload
+          const updates = {};
+          toArchive.forEach(e => { updates[e.key] = null; });
+          await logRef.update(updates);
+
+          archivedCount += toArchive.length;
+          usersTouched++;
+        }
+
+        // ── Tier 3: hard-delete entries older than 365 days ─────
+        const delSnap = await logRef
+          .orderByChild('timestamp')
+          .endAt(deleteCutoff)
+          .once('value');
+        const delUpdates = {};
+        let delThisUser = 0;
+        delSnap.forEach(snap => { delUpdates[snap.key] = null; delThisUser++; });
+        if (delThisUser > 0) {
+          await logRef.update(delUpdates);
+          deletedCount += delThisUser;
+        }
+
+        // Also purge archive files older than 365 days (Tier 3 in Storage)
+        const [files] = await bucket.getFiles({ prefix: `${archiveRoot}/${uid}/` });
+        const archiveDeletes = files.filter(f => {
+          // Filename is YYYY-MM-DD.ndjson — parseable
+          const m = f.name.match(/(\d{4}-\d{2}-\d{2})\.ndjson$/);
+          return m && new Date(m[1]).toISOString() < deleteCutoff;
+        });
+        if (archiveDeletes.length > 0) {
+          await Promise.all(archiveDeletes.map(f => f.delete().catch(() => {})));
+          deletedCount += archiveDeletes.length;
+        }
+      } catch (e) {
+        errors.push(`${uid}: ${e.message || e}`);
+      }
+    }
+
+    const summary = {
+      runId,
+      usersScanned: Object.keys(users).length,
+      usersTouched,
+      archivedCount,
+      archivedBytes,
+      deletedCount,
+      errorCount: errors.length,
+    };
+
+    // Audit trail: write the run summary back to RTDB so admins can see it
+    await db.ref('sheqai/admin/seclogRetention').push({
+      ...summary,
+      errors:    errors.slice(0, 20),    // cap log noise
+      completed: new Date().toISOString(),
+    }).catch(() => {});
+
+    console.log('pruneSecLogs:', JSON.stringify(summary));
+    if (errors.length > 0) {
+      console.warn('pruneSecLogs errors:', errors.slice(0, 5));
+    }
   }
-
-  console.log(`pruneSecLogs: removed ${pruned} log entries`);
-});
+);
 
 // ============================================================
 // 2. SERVER-SIDE EMAIL (replaces EmailJS)

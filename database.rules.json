@@ -31,6 +31,10 @@
           ".write": "auth != null && auth.uid == $uid"
         }
       },
+      "admin": {
+        ".read":  "auth != null && root.child('sheqai/users/' + auth.uid + '/role').val() == 'admin'",
+        ".write": false
+      },
       "$other": { ".validate": false }
     }
   }
