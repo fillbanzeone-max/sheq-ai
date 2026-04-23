@@ -2712,6 +2712,20 @@
     from { opacity: 0; transform: translateY(-4px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  /* P1-5: required-field marker + invalid border */
+  .form-group label.required-field::after {
+    content: ' *';
+    color: #dc2626;
+    font-weight: 700;
+    margin-left: 1px;
+  }
+  input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] {
+    border-color: #dc2626 !important;
+    background: #fef2f2 !important;
+  }
+  input[aria-invalid="true"]:focus, textarea[aria-invalid="true"]:focus, select[aria-invalid="true"]:focus {
+    box-shadow: 0 0 0 3px rgba(220,38,38,.15) !important;
+  }
   [aria-invalid="true"] {
     border-color: #dc2626 !important;
     box-shadow: 0 0 0 3px rgba(220,38,38,.15) !important;
@@ -16363,6 +16377,144 @@ console.log('[Design v2] runtime loaded — Ctrl+K for command palette');
       return _navOrig.apply(this, arguments);
     };
   }
+})();
+</script>
+<script>
+/* ── Form Polish Adapter (P1-5) ─────────────────────────────────
+   Runtime improvements applied to every modal form:
+   1. Mark labels with red asterisk when their field is required.
+   2. Convert obvious date text inputs to <input type="date">.
+   3. Inline blur-time validation: clears red border once user types
+      a non-empty value into a previously-flagged field.
+   4. ARIA wiring for screen readers.
+   No HTML edits required.
+─────────────────────────────────────────────────────────────── */
+(function(){
+  // Discover required field IDs from validateRequired() call sites.
+  // We can't statically parse them, so we maintain a manual registry
+  // that mirrors the most-common forms. Adding a new form to this list
+  // makes its required fields visually marked.
+  const REQUIRED_FIELDS = {
+    'obs-modal':            ['obs-f-observer','obs-f-location','obs-f-desc'],
+    'nm-modal':             ['nm-f-reporter','nm-f-location','nm-f-desc'],
+    'inc-modal':            ['inc-f-date','inc-f-location','inc-f-desc'],
+    'ptw-modal':            ['ptw-f-from','ptw-f-to','ptw-f-loc','ptw-f-desc'],
+    'risk-modal':           ['risk-f-activity','risk-f-hazard'],
+    'capa-modal':           ['capa-f-source','capa-f-action','capa-f-due'],
+    'legal-modal':          ['legal-f-instrument','legal-f-clause'],
+    'ghg-modal':            ['ghg-f-date','ghg-f-source','ghg-f-quantity'],
+    'water-modal':          ['water-f-date','water-f-volume'],
+    'waste-modal':          ['waste-f-date','waste-f-weight'],
+    'training-modal':       ['training-f-employee','training-f-type','training-f-expiry'],
+    'energy-modal':         ['energy-f-date','energy-f-quantity'],
+    'audit-modal':          ['audit-f-date','audit-f-auditor','audit-f-area'],
+    'wellness-modal':       ['wellness-f-employee','wellness-f-date'],
+    'objective-modal':      ['obj-f-objective','obj-f-kpi'],
+    'mgmt-review-modal':    ['mr-f-date','mr-f-chair'],
+    'lessons-modal':        ['ll-f-title','ll-f-lesson'],
+    'chemical-modal':       ['chem-f-name'],
+    'env-monitoring-modal': ['envm-f-parameter','envm-f-location'],
+    'communication-modal':  ['comm2-f-topic','comm2-f-audience'],
+    'calibration-modal':    ['cal-f-name','cal-f-asset-id'],
+  };
+  const ALL_REQUIRED = new Set();
+  Object.values(REQUIRED_FIELDS).forEach(arr => arr.forEach(id => ALL_REQUIRED.add(id)));
+
+  function _markLabel(input){
+    if (!input || !input.id) return;
+    const wrap = input.closest('.form-group');
+    const label = wrap && wrap.querySelector('label');
+    if (label && !label.classList.contains('required-field')) {
+      label.classList.add('required-field');
+      input.setAttribute('aria-required','true');
+    }
+  }
+
+  function _isDateField(input){
+    if (input.type === 'date') return false;
+    if (input.type !== 'text' && input.type !== '') return false;
+    const id = (input.id||'').toLowerCase();
+    const name = (input.name||'').toLowerCase();
+    const placeholder = (input.placeholder||'').toLowerCase();
+    return /(^|-)(date|due|expiry|expir|reviewdate|review-date|target-date|when|from|to|valid-until|next)\b/.test(id)
+      || /\bdate\b/.test(name)
+      || /yyyy.?mm.?dd/.test(placeholder)
+      || /dd.?mm.?yyyy/.test(placeholder)
+      || /\b(date|due)\b/.test(placeholder);
+  }
+
+  function _convertToDate(input){
+    if (input.type === 'date') return;
+    // Don't convert datetime fields or fields with non-date format hints
+    if (/time/i.test(input.id||'')) return;
+    try {
+      input.type = 'date';
+    } catch(e) { /* IE/old Safari */ }
+  }
+
+  function _wireBlurValidation(input){
+    if (input.dataset.blurWired) return;
+    input.dataset.blurWired = '1';
+    input.addEventListener('blur', function(){
+      if (input.getAttribute('aria-invalid') === 'true') {
+        const v = (input.value || '').trim();
+        if (v) {
+          input.removeAttribute('aria-invalid');
+          const wrap = input.closest('.form-group');
+          const err = wrap && wrap.querySelector('.field-error');
+          if (err) err.remove();
+        }
+      }
+    });
+  }
+
+  function _polishModal(modal){
+    if (!modal) return;
+    // 1. Mark required field labels
+    const required = REQUIRED_FIELDS[modal.id];
+    if (required) {
+      required.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) _markLabel(el);
+      });
+    }
+    // 2. Convert date-looking text inputs
+    modal.querySelectorAll('input').forEach(el => {
+      if (_isDateField(el)) _convertToDate(el);
+    });
+    // 3. Wire blur validation on all visible inputs
+    modal.querySelectorAll('input,textarea,select').forEach(el => {
+      _wireBlurValidation(el);
+    });
+  }
+
+  function _polishAllModals(){
+    document.querySelectorAll('.modal-overlay').forEach(_polishModal);
+  }
+
+  // Initial pass
+  _polishAllModals();
+
+  // Re-polish when new modals are added (consolidation/dynamic)
+  const mo = new MutationObserver(muts=>{
+    for (const m of muts) {
+      m.addedNodes && m.addedNodes.forEach(n=>{
+        if (n.nodeType === 1) {
+          if (n.classList && n.classList.contains('modal-overlay')) _polishModal(n);
+          else if (n.querySelectorAll) n.querySelectorAll('.modal-overlay').forEach(_polishModal);
+        }
+      });
+    }
+  });
+  mo.observe(document.body, { subtree:true, childList:true });
+
+  window._formPolishAdapter = {
+    REQUIRED_FIELDS,
+    polish: _polishModal,
+    polishAll: _polishAllModals,
+    isDateField: _isDateField,
+  };
+  console.log('[FormPolish] required-field markers, date pickers, blur validation active');
 })();
 </script>
 </body>
