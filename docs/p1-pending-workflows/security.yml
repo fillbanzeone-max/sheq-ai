@@ -1,0 +1,57 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  secret-scan:
+    name: Gitleaks secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dependency-review:
+    name: Dependency review (PR only)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+
+  rules-check:
+    name: Firebase rules sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rules must enforce auth on /sheqai/data
+        run: |
+          if ! node -e "
+            const r = JSON.parse(require('fs').readFileSync('database.rules.json','utf8'));
+            const data = r.rules && r.rules.sheqai && r.rules.sheqai.data;
+            if (!data || !data['.read'] || !data['.write']) { console.error('missing .read/.write on /sheqai/data'); process.exit(1); }
+            if (!data['.read'].includes('auth') || !data['.write'].includes('auth')) { console.error('rules do not require auth'); process.exit(1); }
+            console.log('rules enforce auth ✓');
+          "; then exit 1; fi
+      - name: Rules must restrict role mutation to admin
+        run: |
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('database.rules.json','utf8'));
+            const role = r.rules.sheqai.users['\$uid'].role;
+            if (!role || !role['.write'] || !role['.write'].includes('admin')) { console.error('role write not gated on admin'); process.exit(1); }
+            console.log('role mutation admin-gated ✓');
+          "

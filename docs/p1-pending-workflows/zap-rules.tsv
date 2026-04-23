@@ -1,0 +1,9 @@
+# ZAP Baseline rule overrides for SHEQ-AI
+# Format: <rule-id>	<threshold>	<comment>
+# Thresholds: IGNORE | INFO | WARN | FAIL
+# Reference: https://www.zaproxy.org/docs/alerts/
+
+10054	WARN	Cookie without SameSite — Firebase Auth cookie set by SDK, configurable only via Firebase
+10063	WARN	Permissions Policy header missing — GitHub Pages does not allow custom headers
+10038	WARN	CSP: Wildcard Directive — assessed acceptable; SRI present on all CDN scripts
+10202	WARN	Absence of Anti-CSRF Tokens — single-file PWA, no traditional forms

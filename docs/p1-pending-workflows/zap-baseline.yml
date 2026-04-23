@@ -1,0 +1,26 @@
+name: ZAP Baseline (DAST)
+
+on:
+  schedule:
+    # Sundays 02:00 UTC — weekly baseline against production
+    - cron: '0 2 * * 0'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  zap:
+    name: ZAP Baseline scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ZAP baseline scan against live URL
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'https://fillbanzeone-max.github.io/sheq-ai/'
+          rules_file_name: '.github/zap/rules.tsv'
+          fail_action: false
+          allow_issue_writing: true
+          issue_title: 'ZAP Baseline scan — alerts found'
