@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate repo state
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate database.rules.json is parseable JSON
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('database.rules.json','utf8')); console.log('rules JSON ok')"
+
+      - name: Validate firebase.json
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('firebase.json','utf8')); console.log('firebase.json ok')"
+
+      - name: SHEQ-AI.html and index.html must be byte-identical
+        run: |
+          if ! cmp -s SHEQ-AI.html index.html; then
+            echo "::error::SHEQ-AI.html and index.html have diverged. Run: cp SHEQ-AI.html index.html"
+            diff <(head -c 500 SHEQ-AI.html) <(head -c 500 index.html) || true
+            exit 1
+          fi
+          echo "mirrors match"
+
+      - name: File size guard (warn at 1.5 MB, fail at 2 MB)
+        run: |
+          size=$(stat -c%s SHEQ-AI.html)
+          echo "SHEQ-AI.html size: $size bytes"
+          if [ "$size" -gt 2097152 ]; then
+            echo "::error::SHEQ-AI.html exceeds 2 MB hard limit ($size bytes)"
+            exit 1
+          fi
+          if [ "$size" -gt 1572864 ]; then
+            echo "::warning::SHEQ-AI.html exceeds 1.5 MB soft limit ($size bytes) — consider splitting"
+          fi
+
+      - name: CSP meta tag must be present
+        run: |
+          if ! grep -q 'http-equiv="Content-Security-Policy"' SHEQ-AI.html; then
+            echo "::error::CSP meta tag missing from SHEQ-AI.html"
+            exit 1
+          fi
+          echo "CSP present"
+
+      - name: SRI hashes must be present on CDN scripts
+        run: |
+          missing=0
+          for cdn in 'cdn.jsdelivr.net/npm/chart.js' 'firebase-app-compat.js' 'firebase-database-compat.js' 'firebase-auth-compat.js'; do
+            line=$(grep "$cdn" SHEQ-AI.html | head -1)
+            if [ -z "$line" ]; then
+              echo "::error::CDN script missing entirely: $cdn"
+              missing=1
+            elif ! echo "$line" | grep -q 'integrity="sha384-'; then
+              echo "::error::SRI hash missing on: $cdn"
+              missing=1
+            fi
+          done
+          [ $missing -eq 0 ] && echo "all SRI hashes present"
+          exit $missing
+
+      - name: Service worker cache version must be a string literal
+        run: |
+          if ! grep -E "CACHE_NAME\s*=\s*'esg-sheq-v" sw.js > /dev/null; then
+            echo "::error::sw.js CACHE_NAME not found or wrong format"
+            exit 1
+          fi
+          echo "sw.js cache version: $(grep -E "CACHE_NAME\s*=" sw.js | head -1)"
+
+  audit-functions:
+    name: Audit Cloud Functions deps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'functions/package-lock.json'
+      - name: npm install (functions)
+        working-directory: functions
+        run: npm install --no-audit --no-fund
+      - name: npm audit (high+)
+        working-directory: functions
+        run: npm audit --audit-level=high
