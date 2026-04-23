@@ -6788,6 +6788,7 @@ async function restRead() {
     if (!fbData || !fbData.initialized) {
       restWrite(getData()); return;
     }
+    if (typeof fbData._rev === 'number') _lastKnownRev = fbData._rev;
     const localStr = localStorage.getItem(LS_KEY);
     const fbStr = JSON.stringify(fbData);
     if (fbStr !== localStr) {
@@ -6835,27 +6836,134 @@ function _retryPendingWrite(){
   if (_fbReady) saveData(d);
   else if (currentUser) restWrite(d);
 }
+
+// ── Optimistic concurrency control (P1-2) ───────────────────
+// Every snapshot is stamped with a monotonic _rev. Writes use a
+// Realtime DB transaction to reject stale writes from a second
+// editor. On conflict the user is asked: reload remote OR force.
+let _lastKnownRev = 0;
+let _staleWriteDialogOpen = false;
+function _stampRev(d, baseRev){
+  if (!d) return d;
+  d._rev    = (typeof baseRev === 'number' ? baseRev : (d._rev||0)) + 1;
+  d._revBy  = (currentUser && currentUser.uid) || 'anon';
+  d._revAt  = new Date().toISOString();
+  return d;
+}
+function _showStaleWriteDialog(localD, remoteD){
+  if (_staleWriteDialogOpen) return;
+  _staleWriteDialogOpen = true;
+  const remoteRev = (remoteD && remoteD._rev) || 0;
+  const remoteBy  = (remoteD && remoteD._revBy) || 'another user';
+  const remoteAt  = (remoteD && remoteD._revAt) || '';
+  const existing = document.getElementById('stale-write-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'stale-write-modal';
+  modal.className = 'modal-overlay active';
+  modal.style.display = 'flex';
+  modal.setAttribute('role','dialog');
+  modal.setAttribute('aria-modal','true');
+  modal.innerHTML = `
+    <div class="modal" style="max-width:540px">
+      <div class="modal-header">
+        <h3 id="stale-write-modal-title">⚠️ Newer version on server</h3>
+      </div>
+      <div class="modal-body" style="padding:var(--sp-3);font-size:14px;line-height:1.6">
+        <p>Someone else saved changes to the database while you were editing.</p>
+        <p style="background:var(--bg-soft);padding:var(--sp-2);border-radius:6px;font-size:13px">
+          Server version: <strong>r${remoteRev}</strong>
+          ${remoteBy?` &middot; saved by <code>${escapeHtml(String(remoteBy).substring(0,16))}</code>`:''}
+          ${remoteAt?`<br><span style="color:var(--muted)">at ${escapeHtml(remoteAt)}</span>`:''}
+        </p>
+        <p><strong>Choose:</strong></p>
+        <ul style="margin:8px 0 0 18px">
+          <li><strong>Reload</strong> — discard your edits and load the server version (recommended).</li>
+          <li><strong>Force save</strong> — overwrite the server version with your edits (other user's changes will be lost).</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="_resolveStaleWrite('reload')">Reload server version</button>
+        <button class="btn btn-danger" onclick="_resolveStaleWrite('force')">Force save my version</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal._localD  = localD;
+  modal._remoteD = remoteD;
+  secLog('WRITE_CONFLICT_DETECTED',{remoteRev,remoteBy:String(remoteBy).substring(0,32),classification:'Internal'});
+}
+function _resolveStaleWrite(choice){
+  const modal = document.getElementById('stale-write-modal');
+  if (!modal) { _staleWriteDialogOpen = false; return; }
+  const localD  = modal._localD;
+  const remoteD = modal._remoteD;
+  modal.remove();
+  _staleWriteDialogOpen = false;
+  if (choice === 'reload') {
+    secLog('WRITE_CONFLICT_RESOLVED',{action:'reload',classification:'Internal'});
+    if (remoteD) {
+      _lastKnownRev = remoteD._rev || 0;
+      localStorage.setItem(LS_KEY, JSON.stringify(remoteD));
+      const cur = document.querySelector('.page.active');
+      if (cur) navigateTo(cur.id.replace('page-',''));
+      if (typeof showToast === 'function') showToast('Loaded server version.','info',3000);
+    }
+  } else if (choice === 'force') {
+    secLog('WRITE_CONFLICT_RESOLVED',{action:'force',classification:'Internal'});
+    // Bump rev past remote so the force succeeds
+    const forced = _stampRev(localD, Math.max(_lastKnownRev, remoteD && remoteD._rev || 0));
+    _lastKnownRev = forced._rev;
+    localStorage.setItem(LS_KEY, JSON.stringify(forced));
+    if (_fbReady) {
+      _db.ref(FB_PATH).set(sanitizeForFirebase(forced))
+        .then(()=>{ if (typeof showToast === 'function') showToast('Force-saved your version.','warn',3500); })
+        .catch(()=>{ _writeFailureToast('Force save failed.','error',false); });
+    } else if (currentUser) restWrite(forced);
+  }
+}
+window._resolveStaleWrite = _resolveStaleWrite;
+
 function saveData(d) {
   let saveOk = true;
+  // Stamp rev locally (optimistic). The transaction below will reconcile.
+  _stampRev(d, _lastKnownRev);
   try { localStorage.setItem(LS_KEY, JSON.stringify(d)); }
   catch(e) {
     saveOk = false; console.error('Save failed', e);
     if (typeof showToast === 'function') showToast('Local storage full — export & clear data to continue.', 'error', 8000);
   }
   updateSyncStatus(saveOk);
-  secLog('DATA_WRITE', { status: saveOk ? 'ok' : 'local-storage-error', classification: 'Internal' });
+  secLog('DATA_WRITE', { status: saveOk ? 'ok' : 'local-storage-error', rev: d._rev, classification: 'Internal' });
   if (_fbReady) {
-    _db.ref(FB_PATH).set(sanitizeForFirebase(d))
-      .then(()=>{ _writeFailureCleared(); })
-      .catch(e => {
-        const code = (e && (e.code||e.message))||'';
-        secLog('DATA_WRITE_FAIL',{transport:'realtime',code:String(code),classification:'Internal'});
+    const expectedBaseRev = _lastKnownRev;
+    const sanitized = sanitizeForFirebase(d);
+    _db.ref(FB_PATH).transaction(remote => {
+      // First-write case: no remote yet
+      if (remote === null || remote === undefined) return sanitized;
+      const remoteRev = (remote && remote._rev) || 0;
+      // If remote moved past what we read, abort by returning undefined
+      if (remoteRev > expectedBaseRev) return; // signals abort to transaction
+      return sanitized;
+    }, (err, committed, snap) => {
+      if (err) {
+        const code = String((err && (err.code||err.message))||'');
+        secLog('DATA_WRITE_FAIL',{transport:'realtime',code,classification:'Internal'});
         if (/PERMISSION_DENIED/i.test(code)) {
           _writeFailureToast('Permission denied — your role cannot write to this database.', 'error', false);
         } else {
           _writeFailureToast('Cloud sync failed — changes saved locally and will retry.', 'warn', true);
         }
-      });
+        return;
+      }
+      if (!committed) {
+        // Conflict — remote was newer. Surface dialog.
+        const remoteD = snap && snap.val();
+        _showStaleWriteDialog(d, remoteD);
+        return;
+      }
+      _lastKnownRev = (snap && snap.val() && snap.val()._rev) || _lastKnownRev;
+      _writeFailureCleared();
+    }, false /* applyLocally — we already wrote local */);
   } else if (currentUser) {
     restWrite(d);
   }
@@ -15104,9 +15212,13 @@ window.addEventListener('DOMContentLoaded',()=>{
       _onFbReady();
       const fbData=snap.val();
       if(!fbData||!fbData.initialized){
-        _db.ref(FB_PATH).set(getData()).catch(()=>{});
+        const seed=getData();
+        _stampRev(seed, 0);
+        _lastKnownRev = seed._rev || 1;
+        _db.ref(FB_PATH).set(seed).catch(()=>{});
         return;
       }
+      _lastKnownRev = fbData._rev || _lastKnownRev;
       const localStr=localStorage.getItem(LS_KEY);
       const fbStr=JSON.stringify(fbData);
       if(fbStr!==localStr){
