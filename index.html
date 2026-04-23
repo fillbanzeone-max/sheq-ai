@@ -7,6 +7,37 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
     integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+  // Chart.js memory-leak guard: auto-destroy any prior chart bound to the same canvas
+  // before constructing a new one. Protects all call sites without per-site edits.
+  (function(){
+    if (typeof Chart === 'undefined') return;
+    const _OrigChart = Chart;
+    function _resolveCanvas(ctxOrCanvas){
+      if (!ctxOrCanvas) return null;
+      if (ctxOrCanvas instanceof HTMLCanvasElement) return ctxOrCanvas;
+      if (ctxOrCanvas.canvas instanceof HTMLCanvasElement) return ctxOrCanvas.canvas;
+      if (typeof ctxOrCanvas === 'string') return document.getElementById(ctxOrCanvas);
+      return null;
+    }
+    function PatchedChart(ctx, cfg){
+      const canvas = _resolveCanvas(ctx);
+      if (canvas) {
+        try {
+          const prior = (typeof _OrigChart.getChart === 'function') ? _OrigChart.getChart(canvas) : canvas._chart;
+          if (prior && typeof prior.destroy === 'function') prior.destroy();
+        } catch(e) { /* swallow — never block chart creation */ }
+      }
+      const inst = new _OrigChart(ctx, cfg);
+      if (canvas) canvas._chart = inst;
+      return inst;
+    }
+    PatchedChart.prototype = _OrigChart.prototype;
+    Object.setPrototypeOf(PatchedChart, _OrigChart);
+    Object.keys(_OrigChart).forEach(k=>{ try { PatchedChart[k] = _OrigChart[k]; } catch(e){} });
+    window.Chart = PatchedChart;
+  })();
+  </script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"
     integrity="sha384-HLJUgAQ2oo6rdMC4QW+Oz2qQfPOtu/lzncKG4sZiq8+2W9uOa3K0b3UGpckKqv7H"
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -703,12 +734,12 @@
       border-radius: 4px;
       white-space: nowrap;
     }
-    .kpib-green  { background:#dcfce7; color:#15803d; }
-    .kpib-red    { background:#fee2e2; color:#b91c1c; }
-    .kpib-orange { background:#ffedd5; color:#c2410c; }
-    .kpib-blue   { background:#dbeafe; color:#1d4ed8; }
-    .kpib-yellow { background:#fef9c3; color:#854d0e; }
-    .kpib-gray   { background:#f1f5f9; color:#475569; }
+    .kpib-green  { background:#dcfce7; color:#14532d; }   /* WCAG AA contrast */
+    .kpib-red    { background:#fee2e2; color:#7f1d1d; }   /* WCAG AA contrast */
+    .kpib-orange { background:#ffedd5; color:#7c2d12; }   /* WCAG AA contrast */
+    .kpib-blue   { background:#dbeafe; color:#1e3a8a; }   /* WCAG AA contrast */
+    .kpib-yellow { background:#fef9c3; color:#713f12; }   /* WCAG AA contrast */
+    .kpib-gray   { background:#f1f5f9; color:#1e293b; }   /* WCAG AA contrast */
     .kpib-teal   { background:#ccfbf1; color:#0f766e; }
 
     .dash-tab-bar { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:12px; overflow-x:auto; scrollbar-width:none; }
@@ -6723,7 +6754,8 @@ async function _restGetToken() {
   try { return await firebase.auth().currentUser?.getIdToken(); } catch(e) { return null; }
 }
 
-async function restWrite(d) {
+async function restWrite(d, attempt) {
+  attempt = attempt || 1;
   const token = await _restGetToken();
   if (!token) return;
   try {
@@ -6732,8 +6764,18 @@ async function restWrite(d) {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(sanitizeForFirebase(d))
     });
-    if (r.ok) { _restMode = true; updateSyncStatus(); }
-  } catch(e) { console.warn('REST write failed', e); }
+    if (r.ok) { _restMode = true; updateSyncStatus(); _writeFailureCleared(); return; }
+    if (r.status === 401 || r.status === 403) {
+      _writeFailureToast('Permission denied — your role cannot write to this database.', 'error', false);
+      secLog('DATA_WRITE_DENIED',{transport:'rest',status:r.status,classification:'Internal'});
+      return;
+    }
+    throw new Error('REST '+r.status);
+  } catch(e) {
+    secLog('DATA_WRITE_FAIL',{transport:'rest',attempt,err:String(e&&e.message||e),classification:'Internal'});
+    if (attempt < 3) { setTimeout(()=>restWrite(d, attempt+1), Math.min(1000*Math.pow(2,attempt), 8000)); }
+    else { _writeFailureToast('Cloud sync failed — changes saved locally and will retry.', 'warn', true); }
+  }
 }
 
 async function restRead() {
@@ -6767,14 +6809,53 @@ function startRestFallback() {
 }
 // -------------------------------------------------------------------------
 
+// Toast de-dup: avoid spamming the user when offline for an extended period
+let _lastWriteFailureAt = 0;
+let _pendingRetryHandle = null;
+function _writeFailureToast(msg, level, scheduleRetry){
+  const now = Date.now();
+  if (now - _lastWriteFailureAt > 15000) {
+    _lastWriteFailureAt = now;
+    if (typeof showToast === 'function') showToast(msg, level||'warn', 6000);
+  }
+  if (scheduleRetry && !_pendingRetryHandle) {
+    _pendingRetryHandle = setTimeout(()=>{ _pendingRetryHandle = null; _retryPendingWrite(); }, 30000);
+  }
+}
+function _writeFailureCleared(){
+  if (_lastWriteFailureAt && (Date.now()-_lastWriteFailureAt) < 60000) {
+    if (typeof showToast === 'function') showToast('Cloud sync restored.', 'success', 2500);
+  }
+  _lastWriteFailureAt = 0;
+  if (_pendingRetryHandle) { clearTimeout(_pendingRetryHandle); _pendingRetryHandle = null; }
+}
+function _retryPendingWrite(){
+  const d = getData();
+  if (!d) return;
+  if (_fbReady) saveData(d);
+  else if (currentUser) restWrite(d);
+}
 function saveData(d) {
   let saveOk = true;
   try { localStorage.setItem(LS_KEY, JSON.stringify(d)); }
-  catch(e) { saveOk = false; console.error('Save failed', e); }
+  catch(e) {
+    saveOk = false; console.error('Save failed', e);
+    if (typeof showToast === 'function') showToast('Local storage full — export & clear data to continue.', 'error', 8000);
+  }
   updateSyncStatus(saveOk);
   secLog('DATA_WRITE', { status: saveOk ? 'ok' : 'local-storage-error', classification: 'Internal' });
   if (_fbReady) {
-    _db.ref(FB_PATH).set(sanitizeForFirebase(d)).catch(e => console.warn('Firebase write failed', e));
+    _db.ref(FB_PATH).set(sanitizeForFirebase(d))
+      .then(()=>{ _writeFailureCleared(); })
+      .catch(e => {
+        const code = (e && (e.code||e.message))||'';
+        secLog('DATA_WRITE_FAIL',{transport:'realtime',code:String(code),classification:'Internal'});
+        if (/PERMISSION_DENIED/i.test(code)) {
+          _writeFailureToast('Permission denied — your role cannot write to this database.', 'error', false);
+        } else {
+          _writeFailureToast('Cloud sync failed — changes saved locally and will retry.', 'warn', true);
+        }
+      });
   } else if (currentUser) {
     restWrite(d);
   }
@@ -14704,7 +14785,9 @@ function resetData(){
 // CSV EXPORT
 // ============================================================
 function exportCSV(module){
+  if(!requireRole('export','Export CSV'))return;
   const d=getData()||getDefaultData();
+  secLog('DATA_EXPORT',{format:'csv',module,classification:'Internal'});
   let rows=[],cols=[];
   if(module==='obs'){
     cols=['ID','Observer','Date','Location','Activity','Type','Description','Action','CAPA','CAPA Ref','Priority'];
@@ -15712,6 +15795,164 @@ console.log('[Design v2] runtime loaded — Ctrl+K for command palette');
   else init();
 
   window._consolidation={GROUPS:GROUPS,hiddenPages:Array.from(hiddenPages)};
+})();
+</script>
+<script>
+/* ── A11y Adapter v1 ──────────────────────────────────────────
+   Runtime WCAG 2.1 AA fixes:
+   1. aria-label on icon-only nav links, KPI cards, btn-icon buttons
+   2. role="button" on clickable .kpi-card / .nav-link divs
+   3. Modal focus trap + Escape close + restore focus
+   4. Sets lang="en" on <html> if missing
+   No HTML edits required — applied at runtime + on DOM mutation.
+─────────────────────────────────────────────────────────────── */
+(function(){
+  if (document.documentElement && !document.documentElement.getAttribute('lang')) {
+    document.documentElement.setAttribute('lang','en');
+  }
+
+  function _labelFromTextNode(el){
+    // Prefer visible text content, ignoring icon characters
+    const txt = (el.textContent||'').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,'').trim();
+    return txt;
+  }
+  function _enrichEl(el){
+    if (!el || el.nodeType !== 1) return;
+    const tag = el.tagName;
+
+    // KPI cards: clickable divs need role + label
+    if (el.classList && el.classList.contains('kpi-card')) {
+      if (el.hasAttribute('onclick') && !el.hasAttribute('role')) el.setAttribute('role','button');
+      if (el.hasAttribute('onclick') && !el.hasAttribute('tabindex')) el.setAttribute('tabindex','0');
+      if (!el.hasAttribute('aria-label')) {
+        const label = el.querySelector('.kpi-label');
+        const value = el.querySelector('.kpi-value');
+        const a11y = [(label&&label.textContent||'').trim(), (value&&value.textContent||'').trim()].filter(Boolean).join(': ');
+        if (a11y) el.setAttribute('aria-label', a11y);
+      }
+      // Keyboard activation parity with click
+      if (!el.dataset.a11yKbd) {
+        el.dataset.a11yKbd='1';
+        el.addEventListener('keydown',function(e){
+          if ((e.key==='Enter'||e.key===' ') && el.hasAttribute('onclick')) {
+            e.preventDefault();
+            el.click();
+          }
+        });
+      }
+    }
+
+    // Nav links: icon + collapsible label → ensure label always exposed to AT
+    if (el.classList && (el.classList.contains('nav-link') || el.classList.contains('mobile-nav-item'))) {
+      if (!el.hasAttribute('aria-label')) {
+        const lbl = el.querySelector('.nav-label');
+        const txt = (lbl && lbl.textContent || _labelFromTextNode(el)).trim();
+        if (txt) el.setAttribute('aria-label', txt);
+      }
+      if (!el.hasAttribute('role') && el.tagName !== 'A' && el.tagName !== 'BUTTON') el.setAttribute('role','link');
+      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex','0');
+    }
+
+    // Bare buttons / icon buttons missing label
+    if ((tag === 'BUTTON' || (tag === 'A' && el.classList && el.classList.contains('btn'))) && !el.hasAttribute('aria-label')) {
+      const txt = _labelFromTextNode(el);
+      if (!txt && el.title) el.setAttribute('aria-label', el.title);
+      else if (!txt) el.setAttribute('aria-label','Action');
+    }
+
+    // Modal close (×) — strip ambiguous symbol, expose proper label
+    if (el.classList && el.classList.contains('modal-close') && !el.hasAttribute('aria-label')) {
+      el.setAttribute('aria-label','Close dialog');
+    }
+    if (el.classList && (el.classList.contains('modal') || el.classList.contains('modal-overlay')) && el.id && !el.hasAttribute('role')) {
+      el.setAttribute('role','dialog');
+      el.setAttribute('aria-modal','true');
+      // Look for a heading inside to wire up aria-labelledby
+      const heading = el.querySelector('h2,h3,.modal-title,[id$="-modal-title"]');
+      if (heading) {
+        if (!heading.id) heading.id = el.id+'-title';
+        el.setAttribute('aria-labelledby', heading.id);
+      }
+    }
+  }
+
+  function _walk(root){
+    if (!root) return;
+    if (root.nodeType === 1) _enrichEl(root);
+    if (root.querySelectorAll) {
+      root.querySelectorAll('.kpi-card,.nav-link,.mobile-nav-item,.modal-close,.modal,.modal-overlay,button,a.btn').forEach(_enrichEl);
+    }
+  }
+
+  // Initial pass
+  _walk(document.body);
+
+  // Re-apply on subtree changes (KPI cards re-render constantly)
+  const mo = new MutationObserver(muts=>{
+    for (const m of muts) {
+      m.addedNodes && m.addedNodes.forEach(n=>{ if (n.nodeType===1) _walk(n); });
+    }
+  });
+  mo.observe(document.body, {subtree:true, childList:true});
+
+  // ── Modal focus trap + Escape close ──────────────────────────
+  let _lastFocused = null;
+  function _focusable(modal){
+    return Array.from(modal.querySelectorAll(
+      'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),[tabindex]:not([tabindex="-1"])'
+    )).filter(el=>el.offsetParent !== null);
+  }
+  function _activeModal(){
+    return document.querySelector('.modal.active');
+  }
+  document.addEventListener('keydown', function(e){
+    const modal = _activeModal();
+    if (!modal) return;
+    if (e.key === 'Escape') {
+      const closer = modal.querySelector('.modal-close, .btn-ghost[onclick*="closeModal"]');
+      if (closer) { e.preventDefault(); closer.click(); }
+      return;
+    }
+    if (e.key === 'Tab') {
+      const list = _focusable(modal);
+      if (!list.length) return;
+      const first = list[0], last = list[list.length-1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  // Hook openModal / closeModal to capture/restore focus
+  const _open = window.openModal;
+  if (typeof _open === 'function') {
+    window.openModal = function(id){
+      _lastFocused = document.activeElement;
+      const r = _open.apply(this, arguments);
+      const modal = document.getElementById(id);
+      if (modal) {
+        _walk(modal);
+        setTimeout(()=>{
+          const list = _focusable(modal);
+          if (list.length) list[0].focus();
+        }, 50);
+      }
+      return r;
+    };
+  }
+  const _close = window.closeModal;
+  if (typeof _close === 'function') {
+    window.closeModal = function(id){
+      const r = _close.apply(this, arguments);
+      if (_lastFocused && typeof _lastFocused.focus === 'function') {
+        try { _lastFocused.focus(); } catch(e){}
+      }
+      _lastFocused = null;
+      return r;
+    };
+  }
+
+  window._a11yAdapter = { enrich: _enrichEl, walk: _walk };
+  console.log('[A11yAdapter] active');
 })();
 </script>
 </body>

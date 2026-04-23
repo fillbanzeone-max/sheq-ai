@@ -1,0 +1,37 @@
+{
+  "rules": {
+    "sheqai": {
+      "data": {
+        ".read":  "auth != null && root.child('sheqai/users/' + auth.uid + '/active').val() !== false",
+        ".write": "auth != null && root.child('sheqai/users/' + auth.uid + '/active').val() !== false && root.child('sheqai/users/' + auth.uid + '/role').val() != 'viewer'"
+      },
+      "users": {
+        ".read":  "auth != null && root.child('sheqai/users/' + auth.uid + '/role').val() == 'admin'",
+        "$uid": {
+          ".read":  "auth != null && (auth.uid == $uid || root.child('sheqai/users/' + auth.uid + '/role').val() == 'admin')",
+          ".write": "auth != null && (auth.uid == $uid || root.child('sheqai/users/' + auth.uid + '/role').val() == 'admin')",
+          "role": {
+            ".write": "auth != null && (root.child('sheqai/users/' + auth.uid + '/role').val() == 'admin' || (auth.uid == $uid && !data.exists()))",
+            ".validate": "newData.isString() && newData.val().matches(/^(viewer|reporter|sheq_manager|privacy_officer|admin)$/)"
+          },
+          "active": {
+            ".write": "auth != null && (root.child('sheqai/users/' + auth.uid + '/role').val() == 'admin' || (auth.uid == $uid && !data.exists()))",
+            ".validate": "newData.isBoolean()"
+          },
+          "email":     { ".validate": "newData.isString() && newData.val().length < 256" },
+          "name":      { ".validate": "newData.isString() && newData.val().length < 256" },
+          "lastLogin": { ".validate": "newData.isString()" },
+          "joinedAt":  { ".validate": "newData.isString()" },
+          "$other":    { ".validate": false }
+        }
+      },
+      "seclog": {
+        "$uid": {
+          ".read":  "auth != null && (auth.uid == $uid || root.child('sheqai/users/' + auth.uid + '/role').val() == 'admin' || root.child('sheqai/users/' + auth.uid + '/role').val() == 'privacy_officer')",
+          ".write": "auth != null && auth.uid == $uid"
+        }
+      },
+      "$other": { ".validate": false }
+    }
+  }
+}
