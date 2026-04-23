@@ -2461,6 +2461,18 @@
     from { background-position: 200% 0; }
     to   { background-position: -200% 0; }
   }
+  /* P1-4: skeleton primitives wired into hot renders */
+  .skel-line     { display:block; height:11px; border-radius:4px;
+                   background:linear-gradient(90deg,#f1f5f9 25%,#e8edf4 50%,#f1f5f9 75%);
+                   background-size:200% 100%; animation:shimmer 1.7s infinite; }
+  .skel-block    { width:100%; height:60px; border-radius:8px;
+                   background:linear-gradient(90deg,#f1f5f9 25%,#e8edf4 50%,#f1f5f9 75%);
+                   background-size:200% 100%; animation:shimmer 1.7s infinite; }
+  .skel-kpi-card { padding:18px; border-radius:14px; background:var(--card);
+                   border:1px solid var(--border); display:flex;
+                   flex-direction:column; gap:10px; min-height:104px; }
+  .skel-row td   { padding:12px 10px !important; }
+  .skel-row td .skel-line { width:80%; }
 
   /* ── Toast container ──────────────────────────────────────── */
   #toast-container {
@@ -16241,6 +16253,116 @@ console.log('[Design v2] runtime loaded — Ctrl+K for command palette');
 
   window._a11yAdapter = { enrich: _enrichEl, walk: _walk };
   console.log('[A11yAdapter] active');
+})();
+</script>
+<script>
+/* ── Skeleton helpers (P1-4) ────────────────────────────────────
+   Lightweight loading-state primitives for hot renders.
+   - skelHeroCards(n) → injects n skeleton KPI cards into #dash-hero-row
+   - skelTableRows(tbodyId, cols, n) → fills tbody with n shimmer rows
+   - showInitialLoadingOverlay() → full-screen scrim until first data
+   Hooked into the Firebase init flow so the user never sees the
+   "blank table for 0.5–2s" experience again.
+─────────────────────────────────────────────────────────────── */
+(function(){
+  function skelHeroCards(n){
+    const host = document.getElementById('dash-hero-row');
+    if (!host) return;
+    const html = [];
+    for (let i = 0; i < (n||6); i++) {
+      html.push(
+        '<div class="skel-kpi-card" aria-hidden="true">'
+        + '<span class="skel-line" style="width:60%;height:9px"></span>'
+        + '<span class="skel-line" style="width:40%;height:24px;margin-top:6px"></span>'
+        + '<span class="skel-line" style="width:75%;height:8px;margin-top:8px"></span>'
+        + '</div>'
+      );
+    }
+    host.innerHTML = html.join('');
+  }
+  function skelTableRows(tbodyId, cols, n){
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const rows = [];
+    const rowCount = n || 5;
+    for (let i = 0; i < rowCount; i++) {
+      const cells = [];
+      for (let c = 0; c < cols; c++) cells.push('<td><span class="skel-line"></span></td>');
+      rows.push('<tr class="skel-row" aria-hidden="true">' + cells.join('') + '</tr>');
+    }
+    tbody.innerHTML = rows.join('');
+  }
+  function showInitialLoadingOverlay(){
+    if (document.getElementById('initial-loading-overlay')) return;
+    const ov = document.createElement('div');
+    ov.id = 'initial-loading-overlay';
+    ov.setAttribute('aria-hidden','true');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,.85);'
+      + 'backdrop-filter:blur(2px);z-index:9999;display:flex;flex-direction:column;'
+      + 'align-items:center;justify-content:center;gap:12px;'
+      + 'transition:opacity .25s;pointer-events:none';
+    ov.innerHTML =
+      '<div style="width:48px;height:48px;border-radius:50%;'
+      + 'border:3px solid #e2e8f0;border-top-color:#2563eb;'
+      + 'animation:spin 0.8s linear infinite"></div>'
+      + '<div style="font-size:13px;color:#475569;font-weight:500">Loading your data…</div>'
+      + '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+    document.body.appendChild(ov);
+  }
+  function hideInitialLoadingOverlay(){
+    const ov = document.getElementById('initial-loading-overlay');
+    if (!ov) return;
+    ov.style.opacity = '0';
+    setTimeout(()=>{ if (ov.parentNode) ov.parentNode.removeChild(ov); }, 260);
+  }
+  // Show overlay immediately if user is logged in but data hasn't arrived yet
+  function _maybeShowOverlay(){
+    if (window._fbReady) return;
+    if (window.currentUser) showInitialLoadingOverlay();
+  }
+  // Auto-hide once Firebase has delivered initial data
+  // _fbReady is set inside the .on('value') listener — we poll briefly
+  let _polls = 0;
+  const _pollHandle = setInterval(()=>{
+    _polls++;
+    if (window._fbReady) { hideInitialLoadingOverlay(); clearInterval(_pollHandle); return; }
+    if (_polls > 60) { hideInitialLoadingOverlay(); clearInterval(_pollHandle); return; }
+  }, 250);
+  // Trigger initial overlay after auth state is known
+  setTimeout(_maybeShowOverlay, 300);
+
+  window.skelHeroCards = skelHeroCards;
+  window.skelTableRows = skelTableRows;
+  window.showInitialLoadingOverlay = showInitialLoadingOverlay;
+  window.hideInitialLoadingOverlay = hideInitialLoadingOverlay;
+
+  // Pre-render skeletons for hot tables / hero before real data arrives.
+  // Only triggers when Firebase isn't ready yet — otherwise the real render
+  // happens fast enough that skeletons would just flicker.
+  const PAGE_SKEL = {
+    dashboard:    { hero: 6 },
+    observations: { tbody: 'obs-tbody',         cols: 11 },
+    nearmiss:     { tbody: 'nm-tbody',          cols: 12 },
+    incidents:    { tbody: 'inc-tbody',         cols: 13 },
+    capa:         { tbody: 'capa-tbody',        cols: 9  },
+    permits:      { tbody: 'ptw-tbody',         cols: 9  },
+    risks:        { tbody: 'risks-tbody',       cols: 11 },
+  };
+  const _navOrig = window.navigateTo;
+  if (typeof _navOrig === 'function') {
+    window.navigateTo = function(page){
+      const cfg = PAGE_SKEL[page];
+      const dataMissing = !window._fbReady;
+      if (cfg && dataMissing) {
+        // Defer to next tick so the page becomes visible first
+        setTimeout(()=>{
+          if (cfg.hero) skelHeroCards(cfg.hero);
+          if (cfg.tbody && cfg.cols) skelTableRows(cfg.tbody, cfg.cols, 5);
+        }, 0);
+      }
+      return _navOrig.apply(this, arguments);
+    };
+  }
 })();
 </script>
 </body>
